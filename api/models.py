@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
 
+
     
 class Book(models.Model):
     '''
@@ -10,7 +11,11 @@ class Book(models.Model):
     ''' 
     title = models.CharField(max_length=100)
     author = models.CharField(max_length=100)
-    #placeholder for image file
+    description = models.TextField(max_length=2000)
+    isbn = models.CharField(max_length=100)
+    #placeholder for image file for cover picture
+    #also need to add genres possibly a relationship? needs to be choices and able to do multiple
+    #need relationship here for reviews should contain rating and review
 
 class SiteUser(AbstractUser):
     first_name = models.CharField(max_length=100)
@@ -18,7 +23,7 @@ class SiteUser(AbstractUser):
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField(default='2000-01-01')
     password = models.CharField(max_length=100)
-
+    #relationships here for users books multiple liked? currently reading? want to read?
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
