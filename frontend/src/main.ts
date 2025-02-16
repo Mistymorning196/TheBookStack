@@ -1,12 +1,16 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
+import App from './App.vue';
+import { createApp } from 'vue';
+import { createRouter, createWebHistory } from 'vue-router';
+import router from './router/index.ts';
+import { createPinia } from 'pinia';
 
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap';
+import routes from './router/index.ts'; // Ensure the correct path to the routes file
 
-const app = createApp(App)
+const app = createApp(App);
+const pinia = createPinia();
 
-app.use(router)
 
-app.mount('#app')
+
+app.use(pinia);
+app.use(router);
+app.mount('#app');

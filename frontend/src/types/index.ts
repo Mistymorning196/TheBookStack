@@ -1,4 +1,4 @@
-export interface SiteUser {
+export interface User {
     id: number;
     api: string;
     first_name: string;

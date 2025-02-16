@@ -21,7 +21,7 @@
                     </router-link>
 
                     <!-- Logout -->
-                    <!-- <a href= 'http://localhost:8000/logout/'>Log Out</a> -->
+                    <a href= 'http://localhost:8000/logout/'>Log Out</a>
                 </div>
         </div>
         <RouterView class="flex-shrink-0" />
@@ -41,14 +41,15 @@ export default defineComponent({
   <!--Styling for page and navbar mainly colour and positions-->
 <style scoped>
     main{
-        background-color: #B4DABA;
+        background-color: #EFE0CB;;
         font-family: Arial, Helvetica, sans-serif;
     }
     
     .navbar{
         display: flex;
-        background-color: #D9D9D9;
-        padding-left: 0.5rem
+        background-color: #542F2F;
+        padding-left: 0.5rem;
+        color: white;
     }
 
     .nav-parts{
@@ -59,9 +60,10 @@ export default defineComponent({
         padding: 0.5em;
         text-decoration: none;
         margin: 1em;
-        color: black;
+        color: white;
         font-size: 1rem;
-        background-color: #659A78;
+        border-style: ridge;
+        background-color: #955D5C;
         border: none;
     }
 </style>
