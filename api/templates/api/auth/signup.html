@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- Django SignUp Form. -->
+    <h3>For New Users: </h3>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <button id="submit-button" type="submit" value="Submit">Sign Up</button>
+        <input type="hidden" name="next" value="{{ next }}">
+        <p>{{ message }}</p>
+    </form>
+    <!-- Direct Old Users to Login. -->
+    <p>Already have an account?</p>
+    <button id="login-button"><a href = "{% url 'site user login' %}">Login Here</a></button>
+{% endblock %}
