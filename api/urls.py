@@ -1,25 +1,19 @@
-"""project URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.conf import settings
-from django.contrib import admin
+from django.contrib import admin, auth
 from django.urls import include, path
 from django.http import HttpResponse
 
-from .views import main_spa
+from .views import login_site_user, logout_site_user, signup_site_user, books_api, book_api, site_users_api, site_user_api
 
+# Listing route URLs to views.
 urlpatterns = [
-    path('', main_spa),
+    path('', login_site_user, name='site user login'),
+    path('login/', login_site_user, name='site user login'),
+    path('signup/', signup_site_user, name='site user signup'),
+    path('logout/', logout_site_user, name='site user logout'),
+    path('books/', books_api, name='books api'),
+    path('book/<int:book_id>/', book_api, name='book api'),
+    path('site_users/', site_users_api, name='site users api'),
+    path('site_user/<int:user_id>/', site_user_api, name='site user api'),
+
 ]
