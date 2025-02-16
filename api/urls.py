@@ -15,5 +15,4 @@ urlpatterns = [
     path('book/<int:book_id>/', book_api, name='book api'),
     path('site_users/', site_users_api, name='site users api'),
     path('site_user/<int:user_id>/', site_user_api, name='site user api'),
-
 ]

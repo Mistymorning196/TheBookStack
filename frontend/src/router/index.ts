@@ -8,6 +8,7 @@ import HomePage from '../pages/HomePage.vue';
 import BookPage from '../pages/BookPage.vue';
 import ProfilePage from '../pages/ProfilePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
+import BlogPage from '../pages/BlogPage.vue';
 
 let base = (import.meta.env.MODE == 'development') ? import.meta.env.BASE_URL : ''
 
@@ -21,6 +22,7 @@ const router = createRouter({
         { path: '/profile/', name: 'Profile Page', component: ProfilePage },
         { path: '/book/', name: 'Book Page', component: BookPage },
         { path: '/search/', name: 'Search Page', component: SearchPage },
+        { path: '/blog/', name: 'BlogPage', component: BlogPage},
     ]
 })
 
