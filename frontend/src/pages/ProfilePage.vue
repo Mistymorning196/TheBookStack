@@ -2,13 +2,7 @@
     <div class="body">
        <div id="profile-box">
           <h2>Welcome {{ user.first_name }}</h2>
-              <p>
-              Username: {{ user.username }}
-              
-              
-              
-              
-          </p>
+              <p>Username: {{ user.username }} </p>
           
             <p>
                 <span v-if="!editFirstName">First Name: {{ user.first_name }}</span>
@@ -50,15 +44,52 @@
      
            
       </div>
+
+     <!-- Toggle Buttons -->
+ 
+    <!-- Accepted Friends Section -->
+    <div v-if="activeTab === 'accepted'" class="friend-accepted">
+        <!-- Toggle Buttons -->
+        <button @click="activeTab = 'accepted'" class="chosenButton">Accepted Friends</button>
+        <button @click="activeTab = 'pending'">Pending Friends</button>
+        <div>
+            <h2>Accepted Friends</h2>
+        </div>
+        <ul v-for="(friendship, index) in friendships.filter(friendship => friendship.user === user.id && friendship.accepted)" :key="index" class="friends">
+            <li>
+                {{ friendship.username }}
+                <button @click="deleteFriendship(friendship.id)">Delete</button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Pending Friends Section -->
+    <div v-if="activeTab === 'pending'" class="friend-pending">
+        <!-- Toggle Buttons -->
+        <button @click="activeTab = 'accepted'">Accepted Friends</button>
+        <button @click="activeTab = 'pending'" class="chosenButton">Pending Friends</button>
+        <div>
+            <h2>Pending Friends</h2>
+        </div>
+        <ul v-for="(friendship, index) in friendships.filter(friendship => friendship.user === user.id && !friendship.accepted)" :key="index" class="friends">
+            <li>
+                {{ friendship.username }}
+                <button @click="acceptFriendship(friendship.id)">Accept</button>
+                <button @click="deleteFriendship(friendship.id)">Delete</button>
+            </li>
+        </ul>
+    </div>       
+    
     </div>
     
   </template>
   
   <script lang="ts">
     import { defineComponent } from "vue";
-    import { User } from "../types/index";
+    import { User, Friendship} from "../types/index";
     import { useUserStore } from "../stores/user";
     import { useUsersStore } from "../stores/users";
+    import { useFriendshipsStore } from "../stores/friendships";
     import VueCookies from 'vue-cookies';
   
     
@@ -71,7 +102,8 @@
             editLastName: false,
             editEmail: false,
             editDateOfBirth: false,
-            
+            activeTab: "accepted", // Default to Accepted Friends
+
             editedUser: {
                 first_name: "",
                 last_name: "",
@@ -93,6 +125,15 @@
             } catch (error) {
                 console.error("Error fetching user:", error);
             }
+
+            //fetch all the friendships
+            let responseFriendship = await fetch("http://localhost:8000/friendships/");
+            let dataFriendship = await responseFriendship.json();
+            let friendships = dataFriendship.friendships as Friendship[];
+    
+            const storeFriendships = useFriendshipsStore();
+            storeFriendships.saveFriendships(friendships);
+            console.log(storeFriendships)
         },
         methods: {
             toggleEditField(field: string) {
@@ -111,7 +152,7 @@
                     const payload = {
                         [field.toLowerCase()]: this.editedUser[field.toLowerCase()],
                     };
-                    console.log(payload)
+             
                     const response = await fetch(`http://localhost:8000/site_user/${this.user.id}/`, {
                         method: "PUT",
                         headers: {
@@ -122,8 +163,6 @@
                         credentials: 'include',
                         body: JSON.stringify(payload),
                     });
-                
-                    console.log("CSRF Token:", this.userStore.csrf);
   
                     if (!response.ok) {
                         throw new Error("Failed to update field");
@@ -140,7 +179,68 @@
                     console.error(error);
                     alert(`Failed to update ${field}.`);
                 }
-            }, 
+            },
+            
+            // Accepts the pending friendship between user and friend it then makes an accepted friendship between friend and user
+           //This means the friendship is symmetrical 
+           async acceptFriendship(friendshipId: number) {
+              try {
+                  const acceptResponse = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
+                      method: "PUT",
+                      headers: {
+                          "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+                          "Content-Type": "application/json",
+                          "X-CSRFToken": VueCookies.get("csrftoken"),
+                      },
+                      credentials: "include",
+                  });
+
+                  if (!acceptResponse.ok) {
+                      throw new Error("Failed to accept friendship.");
+                  }
+
+                  const dataAccept = await acceptResponse.json();
+                  const newAccept = dataAccept.friendship as Friendship;
+
+                  // Update the friendship in the store
+                  const friendshipsStore = useFriendshipsStore();
+                  friendshipsStore.addFriendship(newAccept);
+                  window.location.reload();
+                  alert(`Accepted successfully!`);
+              } catch (error) {
+                  console.error("Error accepting friendship:", error);
+                  alert("Failed to accept friendship. Please try again.");
+              }
+          },
+          //rejects the friendships between users and friend whether pending or accepted
+          async deleteFriendship(friendshipId: number) {
+            try {
+              const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
+                method: "DELETE",
+                headers: {
+                  "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": VueCookies.get("csrftoken"),
+                },
+                credentials: "include",
+              });
+
+              if (!response.ok) {
+                throw new Error("Failed to delete friendship");
+              }
+
+              //Remove the deleted friendship from the store
+              const friendshipsStore = useFriendshipsStore();
+              friendshipsStore.removeFriendship(friendshipId);
+
+              window.location.reload();
+              alert("Friendship deleted successfully!");
+            } catch (error) {
+              console.error("Error deleting friendship:", error);
+              alert("Failed to delete friendship. Please try again.");
+            }
+          },
+
   
         }, 
         computed: {
@@ -148,13 +248,17 @@
                 return this.userStore.user; // Bind to the fetched user data from Pinia store
             },
 
+            friendships(){
+              const friendshipsStore = useFriendshipsStore;
+              return this.friendshipsStore.friendships;
+          },
+
         },
         setup() {
             const userStore = useUserStore();
-
             const usersStore = useUsersStore();
-   
-            return { userStore , usersStore };
+            const friendshipsStore = useFriendshipsStore();
+            return { userStore , usersStore , friendshipsStore };
         },
     });
     </script>
@@ -163,55 +267,27 @@
   <style scoped>
     .body{
         font-family: Arial, Helvetica, sans-serif;
-        display: grid;
-        grid-template-columns: auto auto;
-        grid-template-rows: 10% 30% 20% 30% 10%;
-        gap: 1rem 0.25rem;
+        display: flex;
     }
-    #profile-box{
-        grid-column: 1;
-        grid-row: 1/span 2;
-    }
-  
-    #hobby{
-      grid-column: 1;
-        grid-row: 3;
-  
-    }
-  
-    #create-hobby{
-        grid-column: 1;
-        grid-row: 4;
-        padding-top: 0.5rem;
-    }
-    #create-hobby>h3{
-        text-align: center;
-        background-color: #D9D9D9;
-    }
-    #create-hobby>input{
-        margin-bottom: 1.5rem;
-    }
-    .friend-accepted{
-  
-        background-color: #D9D9D9;
-        grid-column: 2;
-        grid-row: 1/span 2;
-        padding-bottom: 2em;
-    }
-    .friend-pending{
-     
-        background-color: #D9D9D9;
-        grid-column: 2;
-        grid-row: 3/span 2;
-    }
+
     .body > div{
-        background-color: #659A78;
+        background-color: #2f4a54;
         margin:2em;
         padding:2em;
     }
+
+     .chosenButton{
+        background-color: white;
+        color:black;   
+    }
+
+    .friends{
+        background-color: #2f4a54;
+        padding:0.5em;
+    }
   
     a{
-        background-color: #659A78;
+        background-color: #2f4a54;
         margin:0.5em;
         text-decoration: none;
         color:black;
@@ -219,29 +295,35 @@
     }
   
     a:hover, button:hover{
-        color:white;
+        color:grey;
     }
   
-    .hobbies{
-        background-color: #B4DABA;
-    }
-  
-    h2, .friends, div>p {
-        background-color: #D9D9D9;
+    h2, div>p {
+        background-color: #71929f;
         margin:0.2em;
+        color: white;
     }
     h6{
         text-align: center;
     }
+
     li{
-        display:flex;
+        color: white;
+        style:none;
+    }
+
+    li>button{
+        background-color: #71929f;
+        margin-left: 0.5em;
     }
   
     button{
-        background-color:  #B4DABA;
+        background-color:  #2f4a54;
         font-size: 1rem;
         margin-bottom: 0.5rem;
         border: none;
+        color: white;
+        border-style:ridge;
     }
   
   </style>

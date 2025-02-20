@@ -12,6 +12,20 @@
                     >
                         Home
                     </router-link>
+                    <!-- Go to User Books Page-->
+                    <router-link
+                        class="link"
+                        :to="{name: 'List Page'}"
+                    >
+                        My Books
+                    </router-link>
+                      <!-- Go to Blog Page-->
+                      <router-link
+                        class="link"
+                        :to="{name: 'Blog Page'}"
+                    >
+                        Blog
+                    </router-link>
                       <!-- Go to Profile Page-->
                     <router-link
                         class="link"
@@ -41,7 +55,7 @@ export default defineComponent({
   <!--Styling for page and navbar mainly colour and positions-->
 <style scoped>
     main{
-        background-color: #EFE0CB;;
+        background-color: #EFE0CB;
         font-family: Arial, Helvetica, sans-serif;
     }
     
@@ -65,5 +79,9 @@ export default defineComponent({
         border-style: ridge;
         background-color: #955D5C;
         border: none;
+    }
+
+    .link:hover, a:hover{
+        color: grey;
     }
 </style>

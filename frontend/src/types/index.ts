@@ -17,3 +17,31 @@ export interface Book{
     isbn: string;
 }
 
+export interface Friendship{
+    id: number;
+    api: string;
+    user: number;
+    friend: number;
+    username: string;
+    accepted: boolean;
+}
+
+export interface UserBook{
+    id: number;
+    api: string;
+    user: number;
+    book: number;
+    status: string;
+}
+
+export interface Review{
+    id: number;
+    api: string;
+    book: number;
+    user: number;
+    title: string;
+    username: string;
+    rating: number;
+    message: string;
+}
+

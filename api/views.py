@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import Book, SiteUser
+from .models import Book, Friendship, Genre, Review, SiteUser, UserBook
 from .forms import LoginForm, SignUpForm
 
 # Authenticate login before Vue SPA redirect
@@ -192,3 +192,226 @@ def site_user_api(request: HttpRequest, user_id: int) -> JsonResponse:
 
     # GET method
     return JsonResponse(site_user.as_dict())
+
+
+# APIs for genre model below
+def genres_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the SiteUsers"""
+
+    if request.method == 'POST':
+        try:
+            POST = json.loads(request.body)
+            required_fields = ['type', 'description']
+            missing_fields = [field for field in required_fields if field not in POST]
+            if missing_fields:
+                return JsonResponse({"error": f"Missing fields: {', '.join(missing_fields)}"}, status=400)
+
+
+            genre = Genre.objects.create(
+                type=POST['type'],
+                description=POST['description'],
+            )
+
+            return JsonResponse(genre.as_dict(), status=201)
+    
+        #general error hendler 
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    # GET Method
+    return JsonResponse({
+        'genres': [
+            genre.as_dict()
+            for genre in Genre.objects.all()
+        ]
+    })
+
+def genre_api(request: HttpRequest, genre_id: int) -> JsonResponse:
+    """API endpoint for a single genre"""
+    try:
+        genre = Genre.objects.get(id=genre_id)
+    except Genre.DoesNotExist:
+        return JsonResponse({"error": "Genre not found."}, status=404)
+
+    # PUT method
+    if request.method == 'PUT':
+        try:
+            PUT = json.loads(request.body)
+            genre.type = PUT.get("type", genre.type)
+            genre.description = PUT.get("description",  genre.description)
+            genre.save()
+            return JsonResponse({"success": "Genre updated successfully."})
+  
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    # DELETE method
+    if request.method == 'DELETE':
+        genre.delete()
+        return JsonResponse({})
+
+    # GET method
+    return JsonResponse(genre.as_dict())
+
+
+# APIs for friendship model below
+def friendships_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the Friendship"""
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new friendship
+        POST = json.loads(request.body)
+        user = SiteUser.objects.get(id=POST.get("user_id"))
+        friend = SiteUser.objects.get(id=POST.get("friend_id"))
+
+        friendship = Friendship.objects.create(
+            user = user,
+            friend = friend,
+            accepted = POST['accepted'],
+        )
+        return JsonResponse(friendship.as_dict())
+
+    # GET method which allows the user to view all hobbies
+    return JsonResponse({
+        'friendships': [
+            friendship.as_dict()
+            for friendship in Friendship.objects.all()
+        ]
+    })
+
+def friendship_api(request: HttpRequest, friendship_id: int) -> JsonResponse:
+    """API endpoint for a single friendship"""
+    try:
+        friendship = Friendship.objects.get(id=friendship_id)
+    except Friendship.DoesNotExist:
+        return JsonResponse({"error": "Friendship not found."}, status=404)
+
+    if request.method == 'PUT':
+        # Ensure the user has permission to accept the friendship
+        if request.user.id != friendship.user.id:
+            return JsonResponse({"error": "Unauthorized to accept this friendship."}, status=403)
+
+        friendship.accepted = True
+        friendship.save()
+        return JsonResponse({"friendship": friendship.as_dict()})
+
+    elif request.method == 'DELETE':
+        # Ensure the user has permission to delete the friendship
+        if request.user.id != friendship.user.id:
+            return JsonResponse({"error": "Unauthorized to delete this friendship."}, status=403)
+
+        friendship.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(friendship.as_dict())
+
+# APIs for UserBook model below
+def user_books_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the UserBook"""
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new friendship
+        POST = json.loads(request.body)
+        user = SiteUser.objects.get(id=POST.get("user_id"))
+        book = Book.objects.get(id=POST.get("book_id"))
+
+        user_book = UserBook.objects.create(
+            user = user,
+            book = book,
+            status = POST['status'],
+        )
+        return JsonResponse(user_book.as_dict())
+
+    # GET method which allows the user to view all hobbies
+    return JsonResponse({
+        'user_books': [
+            user_book.as_dict()
+            for user_book in UserBook.objects.all()
+        ]
+    })
+
+def user_book_api(request: HttpRequest, user_book_id: int) -> JsonResponse:
+    """API endpoint for a single user_book"""
+    try:
+        user_book = UserBook.objects.get(id=user_book_id)
+    except UserBook.DoesNotExist:
+        return JsonResponse({"error": "User Book not found."}, status=404)
+
+    if request.method == 'PUT':
+        # Ensure the user has permission to edit user_book
+        if request.user.id != user_book.user.id:
+            return JsonResponse({"error": "Unauthorized to accept this user_book."}, status=403)
+        PUT = json.loads(request.body)
+        user_book.status = PUT.get("status", user_book.status)
+        user_book.save()
+        return JsonResponse({"User book": user_book.as_dict()})
+
+    elif request.method == 'DELETE':
+        # Ensure the user has permission to delete the user book
+        if request.user.id != user_book.user.id:
+            return JsonResponse({"error": "Unauthorized to delete this user_book."}, status=403)
+
+        user_book.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(user_book.as_dict())
+
+# APIs for review model below
+def reviews_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the review"""
+
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new review
+        POST = json.loads(request.body)
+        user = SiteUser.objects.get(id=POST.get("user_id"))
+        book = Book.objects.get(id=POST.get("book_id"))
+
+        review = Review.objects.create(
+            user = user,
+            book = book,
+            title = POST['title'],
+            rating = POST['rating'],
+            message = POST['message'],
+        )
+        return JsonResponse(review.as_dict())
+
+    # GET method which allows the user to view all hobbies
+    return JsonResponse({
+        'reviews': [
+            review.as_dict()
+            for review in Review.objects.all()
+        ]
+    })
+
+def review_api(request: HttpRequest, review_id: int) -> JsonResponse:
+    """API endpoint for a single review"""
+    try:
+        review = Review.objects.get(id=review_id)
+    except Review.DoesNotExist:
+        return JsonResponse({"error": "Review not found."}, status=404)
+
+    if request.method == 'PUT':
+        # Ensure the user has permission to edit the review
+        if request.user.id != review.user.id:
+            return JsonResponse({"error": "Unauthorized to accept this review."}, status=403)
+
+        PUT = json.loads(request.body)
+        review.title = PUT.get("title", review.title)
+        review.rating = PUT.get("rating", review.rating)
+        review.message = PUT.get("message", review.message)
+        review.save()
+        return JsonResponse({"Review": review.as_dict()})
+
+    elif request.method == 'DELETE':
+        # Ensure the user has permission to delete this review
+        if request.user.id != review.user.id:
+            return JsonResponse({"error": "Unauthorized to delete this Review."}, status=403)
+
+        review.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(review.as_dict())

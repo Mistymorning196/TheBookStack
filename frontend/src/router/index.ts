@@ -9,6 +9,9 @@ import BookPage from '../pages/BookPage.vue';
 import ProfilePage from '../pages/ProfilePage.vue';
 import SearchPage from '../pages/SearchPage.vue';
 import BlogPage from '../pages/BlogPage.vue';
+import MessagePage from '../pages/MessagePage.vue';
+import ListPage from '../pages/ListPage.vue';
+import UserPage from '../pages/UserPage.vue';
 
 let base = (import.meta.env.MODE == 'development') ? import.meta.env.BASE_URL : ''
 
@@ -20,9 +23,12 @@ const router = createRouter({
     routes: [
         { path: '/', name: 'Home Page', component: HomePage },
         { path: '/profile/', name: 'Profile Page', component: ProfilePage },
-        { path: '/book/', name: 'Book Page', component: BookPage },
+        { path: '/book/:id', name: 'Book Page', component: BookPage },
+        { path: '/user/:id', name: 'User Page', component: UserPage },
         { path: '/search/', name: 'Search Page', component: SearchPage },
-        { path: '/blog/', name: 'BlogPage', component: BlogPage},
+        { path: '/blog/', name: 'Blog Page', component: BlogPage},
+        { path: '/message/', name: 'Message Page', component: MessagePage},
+        { path: '/myBooks/', name: 'List Page', component: ListPage},
     ]
 })
 
