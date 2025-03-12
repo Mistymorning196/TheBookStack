@@ -27,6 +27,7 @@ class SiteUser(AbstractUser):
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField(default='2000-01-01')
     password = models.CharField(max_length=100)
+    messages = models.ManyToManyField("self", through="Message", symmetrical=False, related_name="messages_with+")
     #need relationship for blog posts
     #also need to come up with permissions for readers
     user_books = models.ManyToManyField("Book", through="UserBook")
@@ -78,7 +79,8 @@ class Friendship(models.Model):
     """
     user = models.ForeignKey(SiteUser, related_name="from_user", on_delete=models.CASCADE)
     friend = models.ForeignKey(SiteUser, related_name="to_user", on_delete=models.CASCADE)
-    username = models.CharField(max_length=100, default="username")
+    userUsername = models.CharField(max_length=100, default="username")
+    friendUsername = models.CharField(max_length=100, default="username")
     accepted = models.BooleanField(default=False)
 
     def as_dict(self):
@@ -87,8 +89,31 @@ class Friendship(models.Model):
             'api': reverse('friendship api', args=[self.id]),
             'user': self.user.id,
             'friend': self.friend.id,
-            'username': self.friend.username,
+            'userUsername': self.user.username,
+            'friendUsername': self.friend.username,
             'accepted': self.accepted,
+        }
+    
+class Message(models.Model):
+    """
+    This class is the Message Model which is a through model 
+    which creates a many-to-many relationship between site user and friend.
+    """
+    user = models.ForeignKey(SiteUser, related_name="messages_from", on_delete=models.CASCADE)
+    friend = models.ForeignKey(SiteUser, related_name="messages_to", on_delete=models.CASCADE)
+    userUsername = models.CharField(max_length=100, default="username")
+    friendUsername = models.CharField(max_length=100, default="username")
+    message = models.TextField(max_length=1000)
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('friendship api', args=[self.id]),
+            'user': self.user.id,
+            'friend': self.friend.id,
+            'userUsername': self.user.username,
+            'friendUsername': self.friend.username,
+            'message': self.message,
         }
 
 # UserBook Model

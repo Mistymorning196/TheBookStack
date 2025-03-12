@@ -22,7 +22,8 @@ export interface Friendship{
     api: string;
     user: number;
     friend: number;
-    username: string;
+    userUsername: string;
+    friendUsername: string;
     accepted: boolean;
 }
 
@@ -42,6 +43,16 @@ export interface Review{
     title: string;
     username: string;
     rating: number;
+    message: string;
+}
+
+export interface Message{
+    id: number;
+    api: string;
+    user: number;
+    friend: number;
+    userUsername: string;
+    friendUsername: string;
     message: string;
 }
 

@@ -1,13 +1,13 @@
 <template>
     <section>
-        <h2>Your Books:</h2> 
+        <h2>Your Books:</h2>
     </section>
     <h3>Currently Reading</h3>
-    <section  class="display">
+    <section class="display">
         <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === user_id)" :key="index">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
-                <p>Title: {{ books[userBook.book - 1]?.title }}</p>
-                <p>Author: {{ books[userBook.book - 1]?.author }}</p>
+                <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
+                <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
             </router-link>
         </div>
     </section>
@@ -15,8 +15,8 @@
     <section class="display">
         <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === user_id)" :key="index">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
-                <p>Title: {{ books[userBook.book - 1]?.title }}</p>
-                <p>Author: {{ books[userBook.book - 1]?.author }}</p>
+                <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
+                <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
             </router-link>
         </div>
     </section>
@@ -24,8 +24,8 @@
     <section class="display">
         <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === user_id)" :key="index">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
-                <p>Title: {{ books[userBook.book - 1]?.title }}</p>
-                <p>Author: {{ books[userBook.book - 1]?.author }}</p>
+                <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
+                <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
             </router-link>
         </div>
     </section>
@@ -33,22 +33,19 @@
   
 <script lang="ts">
   import { defineComponent } from "vue";
- 
   import { User , Book , UserBook} from "../types/index.ts";
   import {useUsersStore} from "../stores/users.ts"
   import {useBooksStore} from "../stores/books.ts"
   import {useUserBooksStore} from "../stores/userBooks.ts"
   import VueCookies from 'vue-cookies';
 
-  
   export default defineComponent({
     data() {
         return{
             user_id : Number(window.sessionStorage.getItem("user_id")),
         }
-    
     },
-  
+
     async mounted() {
       let response = await fetch("http://localhost:8000/site_users/");
       let data = await response.json();
@@ -67,70 +64,172 @@
       let userBooks = dataUserBook.user_books as UserBook[];
       const storeUserBook = useUserBooksStore()
       storeUserBook.saveUserBooks(userBooks)  
-  
     },
-  
+
     computed: {
-        books(){
-              const storeBook = useBooksStore();
-              return this.storeBook.books;
+        books() {
+            const storeBook = useBooksStore();
+            return this.storeBook.books;
         },
-        userBooks(){
+        userBooks() {
             const storeUserBook = useUserBooksStore();
             return this.storeUserBook.userBooks;
         },
-      
     },
-  
-    methods: {
-      
-      },
-      setup() {
-            const storeBook = useBooksStore();
-            const storeUserBook = useUserBooksStore();
-            return {storeBook , storeUserBook};
     
-        },
+    setup() {
+        const storeBook = useBooksStore();
+        const storeUserBook = useUserBooksStore();
+        return {storeBook, storeUserBook};
     },
-      
-           
-  
-  
-  );
-  </script>
-  
-  <style scoped>
-    .body{
-        font-family: Arial, Helvetica, sans-serif;
+  });
+</script>
+
+<style scoped>
+/* Body Styling */
+.body {
+    font-family: 'Arial', Helvetica, sans-serif;
+    background-color: #EFE0CB; /* Light background */
+    min-height: 100vh;
+    padding: 0.1rem; /* Further reduced padding */
+    margin: 0;
+}
+
+/* Specific adjustments for h3 (for "Reading", "WishList", "Completed") */
+h3 {
+    font-size: 1.1rem; /* Smaller font size */
+    margin-bottom: 0.2em; /* Reduced bottom margin */
+    max-width: 80%; /* Limit width to make it more compact */
+    text-align: center; /* Center the headings */
+    margin-left: auto; /* Center horizontally */
+    margin-right: auto; /* Center horizontally */
+}
+
+/* Optional Hover Effect for h3 */
+h3:hover {
+    background: linear-gradient(135deg, #955D5C, #542F2F); /* Inverted gradient on hover */
+    transform: scale(1.05); /* Slight zoom effect */
+}
+
+
+/* Section Titles Styling */
+h2, h3 {
+    background: linear-gradient(135deg, #542F2F, #955D5C); /* Gradient background */
+    color: #ffffff; /* White text */
+    padding: 0.2rem 0.5rem; /* Reduced padding */
+    margin: 0.4em 0; /* Reduced margins */
+    border-radius: 8px; /* Slightly reduced border-radius */
+    font-size: 1.3rem; /* Smaller font size for better fit */
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Subtle text shadow */
+    border-bottom: 3px solid #955D5C;
+    position: relative;
+    display: inline-block;
+    width: auto; /* Reduce width of headings */
+}
+
+/* Optional Hover Effect for Headings */
+h2:hover, h3:hover {
+    background: linear-gradient(135deg, #955D5C, #542F2F);
+    transform: scale(1.05); /* Slight zoom effect */
+}
+
+/* Smaller h2 */
+h2 {
+    font-size: 1.5rem; /* Reduced font size */
+    margin-top: 0.8em; /* Reduced top margin */
+}
+
+/* Smaller h3 */
+h3 {
+    font-size: 1.1rem; /* Reduced font size */
+    margin-bottom: 0.2em; /* Reduced bottom margin */
+}
+
+/* General Display Section Styling */
+.display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem; /* Reduced space between items */
+    justify-content: start;
+}
+
+/* Book Card Styling */
+.display > div {
+    background-color: #2f4a54; /* Book container background */
+    padding: 0.5rem; /* Reduced padding */
+    margin: 0.2rem; /* Further reduced margin */
+    border-radius: 8px; /* Slightly reduced border-radius */
+    flex-basis: 28%; /* Adjusted width of each item */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Slightly lighter shadow */
+    transition: all 0.3s ease-in-out;
+    max-height: 150px; /* Further reduced max height */
+    overflow: hidden; /* Hide overflow */
+}
+
+/* Book Card Hover Effect */
+.display > div:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Elevated effect */
+}
+
+/* Book Link Styling */
+.book-link {
+    text-decoration: none;
+    color: white;
+    font-size: 0.9rem; /* Smaller font size */
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+/* Book Link Hover Effect */
+.book-link:hover {
+    color: #f0b400;
+    transform: scale(1.05);
+}
+
+/* Book Title Styling */
+.book-title {
+    background-color: #71929f; /* Lighter background for title */
+    padding: 0.3em; /* Reduced padding */
+    margin: 0.2em 0; /* Reduced margin */
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 1rem; /* Slightly smaller font size */
+}
+
+/* Book Author Styling */
+.book-author {
+    background-color: #71929f; /* Lighter background for author */
+    padding: 0.3em; /* Reduced padding */
+    margin: 0.2em 0; /* Reduced margin */
+    border-radius: 5px;
+    font-size: 1rem; /* Adjusted font size */
+    color: #c1d3d9; /* Soft color for author */
+}
+
+/* Responsive Layout for Smaller Screens */
+@media (max-width: 768px) {
+    .display {
+        flex-direction: column;
+        align-items: center;
     }
 
-    div{
-        background-color: #2f4a54;
-        margin:0.2em;
-        padding:0.2em;
+    .display > div {
+        flex-basis: 100%; /* Stack items on smaller screens */
+        max-height: none; /* Remove max height */
     }
 
-    h2, h3, div>p, .book-link>p {
-        background-color: #71929f;
-        margin:0.2em;
+    h2, h3 {
+        font-size: 1.1rem; /* Reduced heading size */
+        width: 90%; /* Reduced width of headings */
     }
+}
 
-    h2, h3, div>p{
-        color: white;
-    }
-    .book-link{
-        text-decoration: none;
-        color: white;
-    }
 
-    .book-link:hover {
-        color: grey;
-    }
+</style>
 
-    .display{
-        display: flex;
-    }
-  
-  
-  </style>
+
   

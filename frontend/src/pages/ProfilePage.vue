@@ -1,330 +1,373 @@
 <template>
-    <div class="body">
-       <div id="profile-box">
-          <h2>Welcome {{ user.first_name }}</h2>
-              <p>Username: {{ user.username }} </p>
-          
-            <p>
-                <span v-if="!editFirstName">First Name: {{ user.first_name }}</span>
-                    <span v-else>
-                        First Name:
-                        <input v-model="editedUser.first_name" type="text" />
-                    </span>
-                    <button v-if="!editFirstName" @click="toggleEditField('FirstName')">Edit</button>
-                    <button v-else @click="saveField('first_name')">Save</button>
-            </p>
-            
-            <p>
-                <span v-if="!editLastName">Last Name: {{ user.last_name }}</span>
-                    <span v-else>
-                        Last Name:
-                        <input v-model="editedUser.last_name" type="text" />
-                    </span>
-                    <button v-if="!editLastName" @click="toggleEditField('LastName')">Edit</button>
-                    <button v-else @click="saveField('last_name')">Save</button>
-            </p>
-            <p>
-                <span v-if="!editEmail">Email: {{ user.email }}</span>
-                <span v-else>
-                    Email:
-                    <input v-model="editedUser.email" type="email" />
-                </span>
-                <button v-if="!editEmail" @click="toggleEditField('Email')">Edit</button>
-                <button v-else @click="saveField('email')">Save</button>
-            </p>
-            <p>
-            <span v-if="!editDateOfBirth">Date of Birth: {{ user.date_of_birth }}</span>
-                <span v-else>
-                    {{ user.date_of_birth }}
-                    <input v-model="editedUser.date_of_birth" type="date" />
-                </span>
-                <button v-if="!editDateOfBirth" @click="toggleEditField('DateOfBirth')">Edit</button>
-                <button v-else @click="saveField('date_of_birth')">Save</button>
-            </p>
-     
-           
+  <div class="body">
+    <div id="profile-box">
+      <h2>Welcome {{ user.first_name }}</h2>
+      <p>Username: {{ user.username }}</p>
+
+      <p v-for="field in editableFields" :key="field.key">
+        <span v-if="!field.isEditing">{{ field.label }}: {{ user[field.key] }}</span>
+        <span v-else>
+          {{ field.label }}:
+          <input v-model="editedUser[field.key]" :type="field.type" />
+        </span>
+        <button v-if="!field.isEditing" @click="toggleEditField(field.key)">Edit</button>
+        <button v-else @click="saveField(field.key)">Save</button>
+      </p>
+    </div>
+
+    <!-- Followers & Following Section -->
+    <div id="connections-box">
+      <h2>Connections</h2>
+      <div class="tabs">
+        <div class="tab-group">
+          <button @click="activeTab = 'following'" :class="{ chosenButton: activeTab === 'following' }">Following</button>
+          <button @click="activeTab = 'requested'" :class="{ chosenButton: activeTab === 'requested' }">Requested</button>
+        </div>
+
+        <div class="tab-group">
+          <button @click="activeTabFollowers = 'followers'" :class="{ chosenButton: activeTabFollowers === 'followers' }">Followers</button>
+          <button @click="activeTabFollowers = 'pending'" :class="{ chosenButton: activeTabFollowers === 'pending' }">Pending</button>
+        </div>
       </div>
 
-     <!-- Toggle Buttons -->
- 
-    <!-- Accepted Friends Section -->
-    <div v-if="activeTab === 'accepted'" class="friend-accepted">
-        <!-- Toggle Buttons -->
-        <button @click="activeTab = 'accepted'" class="chosenButton">Accepted Friends</button>
-        <button @click="activeTab = 'pending'">Pending Friends</button>
-        <div>
-            <h2>Accepted Friends</h2>
-        </div>
-        <ul v-for="(friendship, index) in friendships.filter(friendship => friendship.user === user.id && friendship.accepted)" :key="index" class="friends">
-            <li>
-                {{ friendship.username }}
-                <button @click="deleteFriendship(friendship.id)">Delete</button>
+      <!-- Following, Requested, and Followers - Grid Layout -->
+      <div class="connections-grid">
+        <div v-if="activeTab === 'following'" class="connections-card">
+          <h3>Following</h3>
+          <ul>
+            <li v-for="(friendship, index) in filteredFollowing" :key="index">
+              <span>{{ friendship.friendUsername }}</span>
+              <button @click="deleteFriendship(friendship.id)">Unfollow</button>
             </li>
-        </ul>
-    </div>
-
-    <!-- Pending Friends Section -->
-    <div v-if="activeTab === 'pending'" class="friend-pending">
-        <!-- Toggle Buttons -->
-        <button @click="activeTab = 'accepted'">Accepted Friends</button>
-        <button @click="activeTab = 'pending'" class="chosenButton">Pending Friends</button>
-        <div>
-            <h2>Pending Friends</h2>
+          </ul>
         </div>
-        <ul v-for="(friendship, index) in friendships.filter(friendship => friendship.user === user.id && !friendship.accepted)" :key="index" class="friends">
-            <li>
-                {{ friendship.username }}
-                <button @click="acceptFriendship(friendship.id)">Accept</button>
-                <button @click="deleteFriendship(friendship.id)">Delete</button>
+
+        <div v-if="activeTab === 'requested'" class="connections-card">
+          <h3>Requested</h3>
+          <ul>
+            <li v-for="(friendship, index) in filteredRequested" :key="index">
+              <span>{{ friendship.friendUsername }}</span>
+              <button @click="deleteFriendship(friendship.id)">Cancel Request</button>
             </li>
-        </ul>
-    </div>       
-    
+          </ul>
+        </div>
+
+        <div v-if="activeTabFollowers === 'followers'" class="connections-card">
+          <h3>Followers</h3>
+          <ul>
+            <li v-for="(friendship, index) in filteredFollowers" :key="index">
+              <span>{{ friendship.userUsername }}</span>
+              <button v-if="activeTabFollowers === 'pending'" @click="acceptFriendship(friendship.id)">Accept</button>
+              <button @click="deleteFriendship(friendship.id)">Remove</button>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
-    
-  </template>
-  
-  <script lang="ts">
-    import { defineComponent } from "vue";
-    import { User, Friendship} from "../types/index";
-    import { useUserStore } from "../stores/user";
-    import { useUsersStore } from "../stores/users";
-    import { useFriendshipsStore } from "../stores/friendships";
-    import VueCookies from 'vue-cookies';
-  
-    
-  
-  
-    export default defineComponent({
-        data() {
-            return {
-            editFirstName: false,
-            editLastName: false,
-            editEmail: false,
-            editDateOfBirth: false,
-            activeTab: "accepted", // Default to Accepted Friends
+  </div>
+</template>
 
-            editedUser: {
-                first_name: "",
-                last_name: "",
-                email: "",
-                date_of_birth: "",                
-            },
-            user_id : Number(window.sessionStorage.getItem("user_id")),
+<script lang="ts">
+import { defineComponent } from "vue";
+import { useUserStore } from "../stores/user";
+import { useFriendshipsStore } from "../stores/friendships";
+import VueCookies from "vue-cookies";
 
-            
-            };
-        },
-        async mounted() {
-            try {
-                console.log("Fetching fresh user data...");
-                const userId = Number(window.sessionStorage.getItem("user_id"));
-                const user = await this.userStore.fetchUserReturn(userId);
-                this.userStore.user = user; // Ensure store is updated with new data
-                console.log("Updated User:", this.userStore.user);
-            } catch (error) {
-                console.error("Error fetching user:", error);
-            }
+export default defineComponent({
+  data() {
+    return {
+      editableFields: [
+        { key: "first_name", label: "First Name", type: "text", isEditing: false },
+        { key: "last_name", label: "Last Name", type: "text", isEditing: false },
+        { key: "email", label: "Email", type: "email", isEditing: false },
+        { key: "date_of_birth", label: "Date of Birth", type: "date", isEditing: false },
+      ],
+      editedUser: {} as Record<string, string>,
+      activeTab: "following",
+      activeTabFollowers: "followers",
+      user_id: Number(window.sessionStorage.getItem("user_id")),
+    };
+  },
+  async mounted() {
+    try {
+      const userId = this.user_id;
+      const user = await this.userStore.fetchUserReturn(userId);
+      this.userStore.user = user;
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
 
-            //fetch all the friendships
-            let responseFriendship = await fetch("http://localhost:8000/friendships/");
-            let dataFriendship = await responseFriendship.json();
-            let friendships = dataFriendship.friendships as Friendship[];
-    
-            const storeFriendships = useFriendshipsStore();
-            storeFriendships.saveFriendships(friendships);
-            console.log(storeFriendships)
-        },
-        methods: {
-            toggleEditField(field: string) {
-              console.log(typeof field)
-                this[`edit${field}`] = !this[`edit${field}`];
-                if (this[`edit${field}`]) {
-                    this.editedUser[field.toLowerCase()] = this.user[field.toLowerCase()];
-                }
-                //this.editPassword = !this.editPassword; // Toggle edit mode
-            },
-            
-            async saveField(field: string) {
-               
-                try {
-                    
-                    const payload = {
-                        [field.toLowerCase()]: this.editedUser[field.toLowerCase()],
-                    };
-             
-                    const response = await fetch(`http://localhost:8000/site_user/${this.user.id}/`, {
-                        method: "PUT",
-                        headers: {
-                            'Authorization': `Bearer ${VueCookies.get('access_token')}`,
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': VueCookies.get('csrftoken'),
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify(payload),
-                    });
-  
-                    if (!response.ok) {
-                        throw new Error("Failed to update field");
-                    }
-  
-                    const updatedUser = await response.json();
-                    console.log(updatedUser)
-                    this.userStore = this.userStore.saveUsers(updatedUser); // Update the user state in the store
-                    console.log("Reloading...");
-                    window.location.reload(true);
-                
-                    alert(`${field} updated successfully!`);
-                } catch (error) {
-                    console.error(error);
-                    alert(`Failed to update ${field}.`);
-                }
-            },
-            
-            // Accepts the pending friendship between user and friend it then makes an accepted friendship between friend and user
-           //This means the friendship is symmetrical 
-           async acceptFriendship(friendshipId: number) {
-              try {
-                  const acceptResponse = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
-                      method: "PUT",
-                      headers: {
-                          "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-                          "Content-Type": "application/json",
-                          "X-CSRFToken": VueCookies.get("csrftoken"),
-                      },
-                      credentials: "include",
-                  });
-
-                  if (!acceptResponse.ok) {
-                      throw new Error("Failed to accept friendship.");
-                  }
-
-                  const dataAccept = await acceptResponse.json();
-                  const newAccept = dataAccept.friendship as Friendship;
-
-                  // Update the friendship in the store
-                  const friendshipsStore = useFriendshipsStore();
-                  friendshipsStore.addFriendship(newAccept);
-                  window.location.reload();
-                  alert(`Accepted successfully!`);
-              } catch (error) {
-                  console.error("Error accepting friendship:", error);
-                  alert("Failed to accept friendship. Please try again.");
-              }
+    const response = await fetch("http://localhost:8000/friendships/");
+    const data = await response.json();
+    this.friendshipsStore.saveFriendships(data.friendships);
+  },
+  computed: {
+    user() {
+      return this.userStore.user;
+    },
+    friendships() {
+      return this.friendshipsStore.friendships;
+    },
+    filteredFollowing() {
+      return this.friendships.filter(f => f.user === this.user.id && f.accepted === true);
+    },
+    filteredRequested() {
+      return this.friendships.filter(f => f.user === this.user.id && f.accepted === false);
+    },
+    filteredFollowers() {
+      return this.friendships.filter(f => f.friend === this.user.id && f.accepted === true);
+    },
+  },
+  methods: {
+    toggleEditField(fieldKey: string) {
+      const field = this.editableFields.find(f => f.key === fieldKey);
+      if (field) {
+        field.isEditing = !field.isEditing;
+        if (field.isEditing) {
+          this.editedUser[fieldKey] = this.user[fieldKey];
+        }
+      }
+    },
+    async saveField(fieldKey: string) {
+      try {
+        const payload = { [fieldKey]: this.editedUser[fieldKey] };
+        const response = await fetch(`http://localhost:8000/site_user/${this.user.id}/`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": VueCookies.get("csrftoken"),
           },
-          //rejects the friendships between users and friend whether pending or accepted
-          async deleteFriendship(friendshipId: number) {
-            try {
-              const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
-                method: "DELETE",
-                headers: {
-                  "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-                  "Content-Type": "application/json",
-                  "X-CSRFToken": VueCookies.get("csrftoken"),
-                },
-                credentials: "include",
-              });
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
 
-              if (!response.ok) {
-                throw new Error("Failed to delete friendship");
-              }
+        if (!response.ok) throw new Error("Failed to update field");
 
-              //Remove the deleted friendship from the store
-              const friendshipsStore = useFriendshipsStore();
-              friendshipsStore.removeFriendship(friendshipId);
-
-              window.location.reload();
-              alert("Friendship deleted successfully!");
-            } catch (error) {
-              console.error("Error deleting friendship:", error);
-              alert("Failed to delete friendship. Please try again.");
-            }
+        this.userStore.saveUsers(await response.json());
+        window.location.reload();
+      } catch (error) {
+        console.error(error);
+        alert(`Failed to update ${fieldKey}.`);
+      }
+    },
+    async acceptFriendship(friendshipId: number) {
+      try {
+        const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": VueCookies.get("csrftoken"),
           },
+          credentials: "include",
+        });
 
-  
-        }, 
-        computed: {
-            user() {
-                return this.userStore.user; // Bind to the fetched user data from Pinia store
-            },
+        if (!response.ok) throw new Error("Failed to accept friendship.");
 
-            friendships(){
-              const friendshipsStore = useFriendshipsStore;
-              return this.friendshipsStore.friendships;
+        this.friendshipsStore.addFriendship(await response.json());
+        window.location.reload();
+      } catch (error) {
+        console.error(error);
+        alert("Failed to accept friendship.");
+      }
+    },
+    async deleteFriendship(friendshipId: number) {
+      try {
+        const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": VueCookies.get("csrftoken"),
           },
+          credentials: "include",
+        });
 
-        },
-        setup() {
-            const userStore = useUserStore();
-            const usersStore = useUsersStore();
-            const friendshipsStore = useFriendshipsStore();
-            return { userStore , usersStore , friendshipsStore };
-        },
-    });
-    </script>
-  
-  
-  <style scoped>
-    .body{
-        font-family: Arial, Helvetica, sans-serif;
-        display: flex;
-    }
+        if (!response.ok) throw new Error("Failed to delete friendship");
 
-    .body > div{
-        background-color: #2f4a54;
-        margin:2em;
-        padding:2em;
-    }
+        this.friendshipsStore.removeFriendship(friendshipId);
+        window.location.reload();
+      } catch (error) {
+        console.error("Error deleting friendship:", error);
+        alert("Failed to delete friendship.");
+      }
+    },
+  },
+  setup() {
+    return {
+      userStore: useUserStore(),
+      friendshipsStore: useFriendshipsStore(),
+    };
+  },
+});
+</script>
 
-     .chosenButton{
-        background-color: white;
-        color:black;   
-    }
+<style scoped>
+/* General Styles */
+.body {
+  font-family: 'Arial', sans-serif;
+  display: flex;
+  justify-content: center;
+  gap: 1em; 
+  padding: 1.5em; 
+  background-color: #EFE0CB; 
+  flex-wrap: wrap;
+  min-height: 100vh;
+}
 
-    .friends{
-        background-color: #2f4a54;
-        padding:0.5em;
-    }
-  
-    a{
-        background-color: #2f4a54;
-        margin:0.5em;
-        text-decoration: none;
-        color:black;
-        padding: 0.2em;
-    }
-  
-    a:hover, button:hover{
-        color:grey;
-    }
-  
-    h2, div>p {
-        background-color: #71929f;
-        margin:0.2em;
-        color: white;
-    }
-    h6{
-        text-align: center;
-    }
+#profile-box,
+#connections-box {
+  background-color: #2f4a54;
+  padding: 1em;
+  border-radius: 12px;
+  width: 45%;
+  min-width: 300px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 400px; /* Reduced max-height */
+  overflow-y: auto; /* Enables scrolling if content overflows */
+}
 
-    li{
-        color: white;
-        style:none;
-    }
+h2 {
+  font-size: 1.6em;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 0.8em; 
+  font-weight: 600;
+}
 
-    li>button{
-        background-color: #71929f;
-        margin-left: 0.5em;
-    }
-  
-    button{
-        background-color:  #2f4a54;
-        font-size: 1rem;
-        margin-bottom: 0.5rem;
-        border: none;
-        color: white;
-        border-style:ridge;
-    }
-  
-  </style>
-  
+h3 {
+  font-size: 1.2em;
+  color: #ffffff;
+  margin-bottom: 0.8em; 
+  font-weight: 600;
+}
+
+#profile-box p {
+  color: #ffffff;
+  background-color: #1e3640;
+  padding: 0.5em;
+  border-radius: 8px;
+  margin-bottom: 0.3em; 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#profile-box input {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 0.3em;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5em;
+  margin-bottom: 1em; 
+}
+
+.tab-group {
+  display: flex;
+  gap: 0.5em;
+}
+
+.connections-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1em;
+  max-height: 300px; /* Reduced max-height */
+  overflow-y: auto; /* Add scroll if needed */
+}
+
+.connections-card {
+  background-color: #1e3640;
+  padding: 1em;
+  border-radius: 12px;
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
+  max-height: 250px; /* Reduced max-height */
+  overflow-y: auto;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4em 0;
+  border-bottom: 1px solid #56707d;
+}
+
+li:last-child {
+  border-bottom: none;
+}
+
+button {
+  background-color: #71929f;
+  color: white;
+  border: none;
+  padding: 0.3em 0.6em;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 1em;
+  transition: all 0.3s ease-in-out;
+}
+
+button:hover {
+  background-color: #5a7c89;
+  transform: scale(1.05);
+}
+
+.chosenButton {
+  background-color: #ffffff;
+  color: #2f4a54;
+  font-weight: bold;
+  border: 2px solid #71929f;
+}
+
+button:disabled {
+  background-color: #d1d8e1;
+  cursor: not-allowed;
+}
+
+button + button {
+  margin-left: 8px;
+}
+
+@media (max-width: 768px) {
+  .body {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #profile-box,
+  #connections-box {
+    width: 90%;
+  }
+
+  .tabs {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tab-group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .connections-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+
+
+

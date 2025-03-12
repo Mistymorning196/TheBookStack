@@ -27,7 +27,7 @@ const router = createRouter({
         { path: '/user/:id', name: 'User Page', component: UserPage },
         { path: '/search/', name: 'Search Page', component: SearchPage },
         { path: '/blog/', name: 'Blog Page', component: BlogPage},
-        { path: '/message/', name: 'Message Page', component: MessagePage},
+        { path: '/message/:id', name: 'Message Page', component: MessagePage},
         { path: '/myBooks/', name: 'List Page', component: ListPage},
     ]
 })

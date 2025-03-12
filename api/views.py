@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import Book, Friendship, Genre, Review, SiteUser, UserBook
+from .models import Book, Friendship, Genre, Review, SiteUser, UserBook, Message
 from .forms import LoginForm, SignUpForm
 
 # Authenticate login before Vue SPA redirect
@@ -289,7 +289,7 @@ def friendship_api(request: HttpRequest, friendship_id: int) -> JsonResponse:
 
     if request.method == 'PUT':
         # Ensure the user has permission to accept the friendship
-        if request.user.id != friendship.user.id:
+        if request.user.id != friendship.friend.id:
             return JsonResponse({"error": "Unauthorized to accept this friendship."}, status=403)
 
         friendship.accepted = True
@@ -298,13 +298,65 @@ def friendship_api(request: HttpRequest, friendship_id: int) -> JsonResponse:
 
     elif request.method == 'DELETE':
         # Ensure the user has permission to delete the friendship
-        if request.user.id != friendship.user.id:
+        if request.user.id != friendship.user.id and request.user.id != friendship.friend.id:
             return JsonResponse({"error": "Unauthorized to delete this friendship."}, status=403)
 
         friendship.delete()
         return JsonResponse({}, status=204)  # 204 No Content
 
     return JsonResponse(friendship.as_dict())
+
+# APIs for message model below
+def messages_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the Message"""
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new message
+        POST = json.loads(request.body)
+        user = SiteUser.objects.get(id=POST.get("user"))
+        friend = SiteUser.objects.get(id=POST.get("friend"))
+
+        message = Message.objects.create(
+            user = user,
+            friend = friend,
+            message = POST['message'],
+        )
+        return JsonResponse(message.as_dict())
+
+    # GET method which allows the user to view all hobbies
+    return JsonResponse({
+        'messages': [
+            message.as_dict()
+            for message in Message.objects.all()
+        ]
+    })
+
+def message_api(request: HttpRequest, message_id: int) -> JsonResponse:
+    """API endpoint for a single friendship"""
+    try:
+        message = Message.objects.get(id=message_id)
+    except Message.DoesNotExist:
+        return JsonResponse({"error": "Message not found."}, status=404)
+
+    if request.method == 'PUT':
+        # Ensure the user has permission to accept the friendship
+        # if request.user.id != friendship.friend.id:
+        #     return JsonResponse({"error": "Unauthorized to accept this friendship."}, status=403)
+
+        message.message = PUT.get("message", message.message)
+        message.save()
+        return JsonResponse({"message": message.as_dict()})
+
+    elif request.method == 'DELETE':
+        # Ensure the user has permission to delete the friendship
+        # if request.user.id != friendship.user.id and request.user.id != friendship.friend.id:
+        #     return JsonResponse({"error": "Unauthorized to delete this friendship."}, status=403)
+
+        message.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(message.as_dict())
 
 # APIs for UserBook model below
 def user_books_api(request: HttpRequest) -> JsonResponse:
