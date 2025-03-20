@@ -54,8 +54,3 @@ class SignUpForm(forms.Form):
         widget=forms.PasswordInput()
     )
 
-#    hobbies = forms.ModelMultipleChoiceField(
- #       queryset=Hobby.objects.all(),
-  #      widget=forms.Select,  # Can use other widgets like SelectMultiple
-        
-   # )

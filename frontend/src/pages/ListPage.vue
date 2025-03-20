@@ -9,6 +9,8 @@
                 <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
                 <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
             </router-link>
+            <button @click="updateUserBookStatus(userBook, 'COMPLETED')">Completed</button>
+            <button @click="deleteUserBook(userBook.id)">Delete</button>
         </div>
     </section>
     <h3>WishList</h3>
@@ -18,6 +20,8 @@
                 <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
                 <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
             </router-link>
+            <button @click="updateUserBookStatus(userBook, 'READING')">Reading</button>
+            <button @click="deleteUserBook(userBook.id)">Delete</button>
         </div>
     </section>
     <h3>Completed</h3>
@@ -27,6 +31,7 @@
                 <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
                 <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
             </router-link>
+            <button @click="deleteUserBook(userBook.id)">Delete</button>
         </div>
     </section>
 </template>
@@ -35,6 +40,7 @@
   import { defineComponent } from "vue";
   import { User , Book , UserBook} from "../types/index.ts";
   import {useUsersStore} from "../stores/users.ts"
+   import {useUserStore} from "../stores/user.ts"
   import {useBooksStore} from "../stores/books.ts"
   import {useUserBooksStore} from "../stores/userBooks.ts"
   import VueCookies from 'vue-cookies';
@@ -64,6 +70,114 @@
       let userBooks = dataUserBook.user_books as UserBook[];
       const storeUserBook = useUserBooksStore()
       storeUserBook.saveUserBooks(userBooks)  
+    },
+    methods: {
+        async updateUserBookStatus(userBook: UserBook, newStatus: string) {
+            try {
+                const response = await fetch(`http://localhost:8000/user_book/${userBook.id}/`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": VueCookies.get("csrftoken"),
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        status: newStatus,
+                    }),
+                });
+
+                if (response.ok) {
+                    if (newStatus === "COMPLETED") {
+                        // Fetch user data first
+                        const userResponse = await fetch(`http://localhost:8000/site_user/${this.user_id}/`, {
+                            headers: {
+                                "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+                                "Content-Type": "application/json",
+                            },
+                        });
+
+                        if (userResponse.ok) {
+                            const userData = await userResponse.json();
+                            const updatedBookCount = userData.book_count + 1;
+
+                            // Update user's book count
+                            await fetch(`http://localhost:8000/site_user/${this.user_id}/`, {
+                                method: "PUT",
+                                headers: {
+                                    "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+                                    "Content-Type": "application/json",
+                                    "X-CSRFToken": VueCookies.get("csrftoken"),
+                                },
+                                credentials: "include",
+                                body: JSON.stringify({
+                                    book_count: updatedBookCount,
+                                }),
+                            });
+                        }
+                    }
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error("Failed to update book status:", error);
+            }
+        },
+
+
+        async deleteUserBook(userBookId: number) {
+            try {
+                 // Find the book to check its status
+                const userBook = this.userBooks.find(book => book.id === userBookId);
+
+                const response = await fetch(`http://localhost:8000/user_book/${userBookId}/`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": VueCookies.get("csrftoken"),
+                },
+                credentials: "include",
+                });
+
+                if (!response.ok) throw new Error("Failed to delete user book relationship");
+
+                if (response.ok) {
+                    if (userBook && userBook.status === "COMPLETED") {
+                        // Fetch user data first
+                        const userResponse = await fetch(`http://localhost:8000/site_user/${this.user_id}/`, {
+                            headers: {
+                                "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+                                "Content-Type": "application/json",
+                            },
+                        });
+
+                        if (userResponse.ok) {
+                                const userData = await userResponse.json();
+                                const updatedBookCount = Math.max(userData.book_count - 1, 0); // Ensure count doesn't go below 0
+
+                                // Update user's book count
+                                await fetch(`http://localhost:8000/site_user/${this.user_id}/`, {
+                                    method: "PUT",
+                                    headers: {
+                                        "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+                                        "Content-Type": "application/json",
+                                        "X-CSRFToken": VueCookies.get("csrftoken"),
+                                    },
+                                    credentials: "include",
+                                    body: JSON.stringify({
+                                        book_count: updatedBookCount,
+                                    }),
+                                });
+                            }
+                        }
+                    }
+              
+                window.location.reload();
+            } catch (error) {
+                console.error("Error deleting user book relationship:", error);
+                alert("Failed to delete user book relationship.");
+            }
+        },
     },
 
     computed: {

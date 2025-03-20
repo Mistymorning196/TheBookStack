@@ -1,71 +1,86 @@
 <template>
   <div class="body">
-    <div id="profile-box">
-      <h2>Welcome {{ user.first_name }}</h2>
-      <p>Username: {{ user.username }}</p>
+    <div class="top-section">
+      <!-- Profile Box -->
+      <div id="profile-box">
+        <h2>Welcome {{ user.first_name }}</h2>
+        <p>Username: {{ user.username }}</p>
 
-      <p v-for="field in editableFields" :key="field.key">
-        <span v-if="!field.isEditing">{{ field.label }}: {{ user[field.key] }}</span>
-        <span v-else>
-          {{ field.label }}:
-          <input v-model="editedUser[field.key]" :type="field.type" />
-        </span>
-        <button v-if="!field.isEditing" @click="toggleEditField(field.key)">Edit</button>
-        <button v-else @click="saveField(field.key)">Save</button>
-      </p>
+        <p v-for="field in editableFields" :key="field.key">
+          <span v-if="!field.isEditing">{{ field.label }}: {{ user[field.key] }}</span>
+          <span v-else>
+            {{ field.label }}:
+            <input v-model="editedUser[field.key]" :type="field.type" />
+          </span>
+          <button v-if="!field.isEditing" @click="toggleEditField(field.key)">Edit</button>
+          <button v-else @click="saveField(field.key)">Save</button>
+        </p>
+      </div>
+
+      <!-- Connections Box -->
+      <div id="connections-box">
+        <h2>Connections</h2>
+        <div class="tabs">
+          <div class="tab-group">
+            <button @click="activeTab = 'following'" :class="{ chosenButton: activeTab === 'following' }">Following</button>
+            <button @click="activeTab = 'requested'" :class="{ chosenButton: activeTab === 'requested' }">Requested</button>
+          </div>
+
+          <div class="tab-group">
+            <button @click="activeTabFollowers = 'followers'" :class="{ chosenButton: activeTabFollowers === 'followers' }">Followers</button>
+            <button @click="activeTabFollowers = 'pending'" :class="{ chosenButton: activeTabFollowers === 'pending' }">Pending</button>
+          </div>
+        </div>
+
+        <div class="connections-grid">
+          <div v-if="activeTab === 'following'" class="connections-card">
+            <h3>Following</h3>
+            <ul>
+              <li v-for="(friendship, index) in filteredFollowing" :key="index">
+                <span>{{ friendship.friendUsername }}</span>
+                <button @click="deleteFriendship(friendship.id)">Unfollow</button>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="activeTab === 'requested'" class="connections-card">
+            <h3>Requested</h3>
+            <ul>
+              <li v-for="(friendship, index) in filteredRequested" :key="index">
+                <span>{{ friendship.friendUsername }}</span>
+                <button @click="deleteFriendship(friendship.id)">Cancel Request</button>
+              </li>
+            </ul>
+          </div>
+
+          <div v-if="activeTabFollowers === 'followers'" class="connections-card">
+            <h3>Followers</h3>
+            <ul>
+              <li v-for="(friendship, index) in filteredFollowers" :key="index">
+                <span>{{ friendship.userUsername }}</span>
+                <button v-if="activeTabFollowers === 'pending'" @click="acceptFriendship(friendship.id)">Accept</button>
+                <button @click="deleteFriendship(friendship.id)">Remove</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Followers & Following Section -->
-    <div id="connections-box">
-      <h2>Connections</h2>
-      <div class="tabs">
-        <div class="tab-group">
-          <button @click="activeTab = 'following'" :class="{ chosenButton: activeTab === 'following' }">Following</button>
-          <button @click="activeTab = 'requested'" :class="{ chosenButton: activeTab === 'requested' }">Requested</button>
-        </div>
-
-        <div class="tab-group">
-          <button @click="activeTabFollowers = 'followers'" :class="{ chosenButton: activeTabFollowers === 'followers' }">Followers</button>
-          <button @click="activeTabFollowers = 'pending'" :class="{ chosenButton: activeTabFollowers === 'pending' }">Pending</button>
-        </div>
+    <!-- Book Count Section -->
+    <div class="book-count-display">
+      <div class="book-count-badge">
+        <span>{{ user.book_count }}</span> Books Read
       </div>
-
-      <!-- Following, Requested, and Followers - Grid Layout -->
-      <div class="connections-grid">
-        <div v-if="activeTab === 'following'" class="connections-card">
-          <h3>Following</h3>
-          <ul>
-            <li v-for="(friendship, index) in filteredFollowing" :key="index">
-              <span>{{ friendship.friendUsername }}</span>
-              <button @click="deleteFriendship(friendship.id)">Unfollow</button>
-            </li>
-          </ul>
-        </div>
-
-        <div v-if="activeTab === 'requested'" class="connections-card">
-          <h3>Requested</h3>
-          <ul>
-            <li v-for="(friendship, index) in filteredRequested" :key="index">
-              <span>{{ friendship.friendUsername }}</span>
-              <button @click="deleteFriendship(friendship.id)">Cancel Request</button>
-            </li>
-          </ul>
-        </div>
-
-        <div v-if="activeTabFollowers === 'followers'" class="connections-card">
-          <h3>Followers</h3>
-          <ul>
-            <li v-for="(friendship, index) in filteredFollowers" :key="index">
-              <span>{{ friendship.userUsername }}</span>
-              <button v-if="activeTabFollowers === 'pending'" @click="acceptFriendship(friendship.id)">Accept</button>
-              <button @click="deleteFriendship(friendship.id)">Remove</button>
-            </li>
-          </ul>
-        </div>
+      <div class="book-count-progress">
+        <div class="progress-bar" :style="{ width: bookProgressWidth + '%' }"></div>
       </div>
+      <p v-if="user.book_count > 0" class="milestone-message">{{ bookMilestone }}</p>
     </div>
   </div>
 </template>
+
+
 
 <script lang="ts">
 import { defineComponent } from "vue";
@@ -117,6 +132,27 @@ export default defineComponent({
     filteredFollowers() {
       return this.friendships.filter(f => f.friend === this.user.id && f.accepted === true);
     },
+    bookMilestone() {
+      const milestones = [10, 20, 50, 100, 200, 500, 1000];
+      const currentCount = this.user.book_count;
+      const nextMilestone = milestones.find(m => m > currentCount);
+      
+      if (nextMilestone) {
+        return `You're ${nextMilestone - currentCount} books away from your next milestone of ${nextMilestone} books! Keep going! 🎉`;
+      }
+      return "You've reached an incredible milestone! Keep reading! 📚";
+    },
+    bookProgressWidth() {
+      const milestones = [10, 20, 50, 100, 200, 500, 1000];
+      const currentCount = this.user.book_count;
+      const nextMilestone = milestones.find(m => m > currentCount);
+      
+      if (nextMilestone) {
+        return Math.min((currentCount / nextMilestone) * 100, 100); // Progress bar percentage
+      }
+      return 100; // If no next milestone, show full progress
+    },
+  
   },
   methods: {
     toggleEditField(fieldKey: string) {
@@ -208,47 +244,92 @@ export default defineComponent({
 .body {
   font-family: 'Arial', sans-serif;
   display: flex;
-  justify-content: center;
-  gap: 1em; 
-  padding: 1.5em; 
-  background-color: #EFE0CB; 
-  flex-wrap: wrap;
-  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;  /* Reduced gap between elements */
+  padding: 0.5em;  /* Reduced padding */
+  background-color: #EFE0CB;
+
+}
+
+.top-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5em;  /* Reduced gap between profile and connections */
+  width: 100%;
 }
 
 #profile-box,
 #connections-box {
   background-color: #2f4a54;
-  padding: 1em;
+  padding: 0.6em;  /* Reduced padding */
   border-radius: 12px;
   width: 45%;
-  min-width: 300px;
+  min-width: 280px;  /* Adjusted width for better fit */
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
-  max-height: 400px; /* Reduced max-height */
-  overflow-y: auto; /* Enables scrolling if content overflows */
+  max-height: 350px;  /* Reduced max-height */
 }
 
-h2 {
-  font-size: 1.6em;
+#connections-box {
+  overflow-y: auto;
+}
+
+.milestone-message {
+  color: #ffd700; /* Gold color for highlighting */
+  font-weight: bold;
+  margin-top: 0.2em;  /* Reduced margin */
+  text-align: center;
+}
+
+.book-count-display {
+  background-color: #2f4a54; /* Same as profile and connections */
+  padding: 0.8em;  /* Reduced padding */
+  border-radius: 12px;
+  width: 50%;
+  max-width: 450px;  /* Reduced max width */
+  text-align: center;
+  margin-top: 0.3em;  /* Reduced margin */
+}
+
+.book-count-badge {
+  background-color: #ffd700;
+  padding: 0.4em 0.8em;  /* Reduced padding */
+  border-radius: 50px;
+  color: #2f4a54;
+  font-weight: bold;
+  font-size: 1em;
+  margin-bottom: 0.2em;
+}
+
+.book-count-progress {
+  background-color: #ddd;
+  height: 15px;  /* Reduced height */
+  border-radius: 10px;
+  width: 100%;
+  margin: 0.3em 0;  /* Reduced margin */
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #71929f;
+  border-radius: 10px;
+}
+
+h2,
+h3 {
+  font-size: 1.4em;  /* Reduced font size */
   color: #ffffff;
   text-align: center;
-  margin-bottom: 0.8em; 
-  font-weight: 600;
-}
-
-h3 {
-  font-size: 1.2em;
-  color: #ffffff;
-  margin-bottom: 0.8em; 
+  margin-bottom: 0.6em;  /* Reduced margin */
   font-weight: 600;
 }
 
 #profile-box p {
   color: #ffffff;
   background-color: #1e3640;
-  padding: 0.5em;
+  padding: 0.4em;  /* Reduced padding */
   border-radius: 8px;
-  margin-bottom: 0.3em; 
+  margin-bottom: 0.3em;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -265,29 +346,29 @@ h3 {
 .tabs {
   display: flex;
   justify-content: space-between;
-  gap: 0.5em;
-  margin-bottom: 1em; 
+  gap: 0.4em;  /* Reduced gap */
+  margin-bottom: 0.8em;  /* Reduced margin */
 }
 
 .tab-group {
   display: flex;
-  gap: 0.5em;
+  gap: 0.4em;
 }
 
 .connections-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1em;
-  max-height: 300px; /* Reduced max-height */
-  overflow-y: auto; /* Add scroll if needed */
+  gap: 0.8em;  /* Reduced gap */
+  max-height: 280px;  /* Reduced max height */
+  overflow-y: auto;
 }
 
 .connections-card {
   background-color: #1e3640;
-  padding: 1em;
+  padding: 0.8em;  /* Reduced padding */
   border-radius: 12px;
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
-  max-height: 250px; /* Reduced max-height */
+  max-height: 230px;  /* Reduced max height */
   overflow-y: auto;
 }
 
@@ -301,7 +382,7 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.4em 0;
+  padding: 0.3em 0;  /* Reduced padding */
   border-bottom: 1px solid #56707d;
 }
 
@@ -338,11 +419,11 @@ button:disabled {
 }
 
 button + button {
-  margin-left: 8px;
+  margin-left: 6px;  /* Reduced margin */
 }
 
 @media (max-width: 768px) {
-  .body {
+  .top-section {
     flex-direction: column;
     align-items: center;
   }
@@ -365,9 +446,9 @@ button + button {
   .connections-grid {
     grid-template-columns: 1fr;
   }
+
+  .book-count-display {
+    width: 80%;
+  }
 }
 </style>
-
-
-
-

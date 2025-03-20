@@ -129,7 +129,7 @@
         computed: {
             site_users() {
                 const usersStore = useUsersStore();
-                return usersStore.users || []; // Return an empty array if `users` is undefined
+                return usersStore.users || []; // Return an empty array if users is undefined
             },
             filtered_users() {
                   // Ensure users are available before calling filter()

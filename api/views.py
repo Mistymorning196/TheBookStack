@@ -146,6 +146,7 @@ def site_users_api(request: HttpRequest) -> JsonResponse:
                 email=POST['email'],
                 date_of_birth=POST['date_of_birth'],
                 password=POST['password'],
+                book_count=0,
             )
 
             return JsonResponse(site_user.as_dict(), status=201)
@@ -178,6 +179,7 @@ def site_user_api(request: HttpRequest, user_id: int) -> JsonResponse:
             site_user.email = PUT.get("email", site_user.email)
             site_user.date_of_birth = PUT.get("date_of_birth", site_user.date_of_birth)
             site_user.password = PUT.get("password", site_user.password)
+            site_user.book_count = PUT.get("book_count", site_user.book_count)
 
             site_user.save()
             return JsonResponse({"success": "Site User updated successfully."})

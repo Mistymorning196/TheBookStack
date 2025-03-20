@@ -27,6 +27,7 @@ class SiteUser(AbstractUser):
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField(default='2000-01-01')
     password = models.CharField(max_length=100)
+    book_count = models.IntegerField(default=0)
     messages = models.ManyToManyField("self", through="Message", symmetrical=False, related_name="messages_with+")
     #need relationship for blog posts
     #also need to come up with permissions for readers
@@ -45,7 +46,10 @@ class SiteUser(AbstractUser):
             'email': self.email,
             'date_of_birth': self.date_of_birth,
             'password': self.password,
+            'book_count': self.book_count,
         }
+    
+
 
 # Book Model
 class Book(models.Model):
