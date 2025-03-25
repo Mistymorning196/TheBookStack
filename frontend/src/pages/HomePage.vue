@@ -14,9 +14,9 @@
     <h2>Users:</h2>
     <section class="display">
 
-        <div v-for="(site_user, index) in filtered_users" :key="index">
-          <router-link :to="`/user/${site_user.id}`" class="user-link">
-            <p>Username: {{ site_user.username }}</p>
+        <div v-for="(reader, index) in filtered_readers" :key="index">
+          <router-link :to="`/user/${reader.id}`" class="user-link">
+            <p>Username: {{ reader.username }}</p>
           </router-link>
         </div>
 
@@ -26,10 +26,10 @@
 
 <script lang="ts">
     import { defineComponent } from "vue";
-    import { useUserStore } from "../stores/user";
-    import { useUsersStore } from "../stores/users";
+    import { useReaderStore } from "../stores/reader";
+    import { useReadersStore } from "../stores/readers";
     import { useBooksStore } from "../stores/books"
-    import { Book, User } from "../types/index";
+    import { Book, Reader } from "../types/index";
     
 
     //This home page will display user lists of books
@@ -38,7 +38,7 @@
         data() {
             return {
 
-                user_id : Number(window.sessionStorage.getItem("user_id")),
+                reader_id : Number(window.sessionStorage.getItem("reader_id")),
 
             
             };
@@ -60,10 +60,10 @@
             const previousSessionid : string | null = window.sessionStorage.getItem("session_id")
             // Loading values from user store if sessionId matches
             if(currentSessionid == previousSessionid){
-                const userId = Number(window.sessionStorage.getItem("user_id"));
+                const readerId = Number(window.sessionStorage.getItem("reader_id"));
                 try {
-                    const userCookie = await this.userStore.fetchUserReturn(Number(window.sessionStorage.getItem("user_id")));
-                    console.log("Fetched User:", userCookie);
+                    const readerCookie = await this.readerStore.fetchreaderReturn(Number(window.sessionStorage.getItem("reader_id")));
+                    console.log("Fetched User:", readerCookie);
                 } catch (error) {
                     console.error("Error fetching user:", error);
                 }
@@ -73,14 +73,14 @@
             else{
                 // Extracting user id from url query
                 const params = new URLSearchParams(window.location.search);
-                const userId: number = parseInt(params.get("u") || "0");
-                console.log(userId)
+                const readerId: number = parseInt(params.get("u") || "0");
+                console.log(readerId)
                 // Fetch user data using url query information on mount
-                let user = await this.userStore.fetchUserReturn(userId);
-                console.log(user)
-                this.userStore.user = user;
+                let reader = await this.readerStore.fetchReaderReturn(readerId);
+                console.log(reader)
+                this.readerStore.reader = reader;
                 // Set session variable
-                sessionStorage.setItem("user_id", userId.toString());
+                sessionStorage.setItem("reader_id", readerId.toString());
                 
                 // Fetching csrf token using session cookie information on mount
                 const session_cookie = (document.cookie).split(';');
@@ -91,9 +91,9 @@
                     cookie = cookie.trim();
                     console.log(cookie)
                     if (cookie.startsWith("csrftoken" + "=")) {
-                        this.userStore.setCsrfToken(cookie.substring("csrftoken".length + 1));
+                        this.readerStore.setCsrfToken(cookie.substring("csrftoken".length + 1));
 
-                        console.log(this.userStore.csrf)
+                        console.log(this.readerStore.csrf)
                     }
                     //Update sessionStorage state in UserStore with CSRF token
                     console.log(cookie)
@@ -113,12 +113,12 @@
             storeBook.saveBooks(books)
 
             //gets all of the users
-            let responseUser = await fetch("http://localhost:8000/site_users/");
-            let dataUser = await responseUser.json();
-            let site_users = dataUser.site_users as User[];
-            console.log(site_users)
-            const usersStore = useUsersStore()
-            usersStore.saveUsers(site_users)
+            let responseReader = await fetch("http://localhost:8000/readers/");
+            let dataReader = await responseReader.json();
+            let readers = dataReader.readers as Reader[];
+            console.log(readers)
+            const readersStore = useReadersStore()
+            readersStore.saveReaders(readers)
 
         
         },
@@ -127,14 +127,14 @@
             
         }, 
         computed: {
-            site_users() {
-                const usersStore = useUsersStore();
-                return usersStore.users || []; // Return an empty array if users is undefined
+            readers() {
+                const readersStore = useReadersStore();
+                return readersStore.readers || []; // Return an empty array if users is undefined
             },
-            filtered_users() {
+            filtered_readers() {
                   // Ensure users are available before calling filter()
-                  if (this.site_users.length > 0) {
-                      return this.site_users.filter(site_user => site_user.id !== this.user_id);
+                  if (this.readers.length > 0) {
+                      return this.readers.filter(reader => reader.id !== this.reader_id);
                   }
                   return [];  // Return an empty array if users are not loaded
             },
@@ -145,11 +145,11 @@
         },
 
         setup() {
-            const userStore = useUserStore();
-            const usersStore = useUsersStore();
+            const readerStore = useReaderStore();
+            const readersStore = useReadersStore();
             const storeBook = useBooksStore();
     
-            return { userStore , usersStore, storeBook };
+            return { readerStore , readersStore, storeBook };
         },
     });
   </script>

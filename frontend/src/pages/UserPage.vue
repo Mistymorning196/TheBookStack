@@ -2,20 +2,20 @@
     <div class="body">
        <div id="profile-box">
           <h2>User Info</h2>
-          <p>Username: {{ user.username}}</p>
+          <p>Username: {{ reader.username}}</p>
        
-           <button @click="addFriendship(user.id)" v-if="hasFriendship === null">Request</button>
+           <button @click="addFriendship(reader.id)" v-if="hasFriendship === null">Request</button>
            <div v-else>
                 <p v-if="hasFriendship === true">FOLLOWING</p>
                 <p v-else>REQUESTED</p>
-                <router-link :to="`/message/${user.id}`" class="message-link"> Message </router-link>
+                <router-link :to="`/message/${reader.id}`" class="message-link"> Message </router-link>
            </div>
        </div>
 
  
         <div class="display-books">
         <h2>Wishlist</h2>
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === user.id)" 
+        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === reader.id)" 
                 :key="index"
                 class="book-container">
                 <router-link :to="`/book/${userBook.book}`" class="book-link">
@@ -26,7 +26,7 @@
         </div>
 
         <h2>Reading</h2>
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === user.id)" 
+        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === reader.id)" 
                 :key="index"
                 class="book-container">
                 <router-link :to="`/book/${userBook.book}`" class="book-link">
@@ -36,7 +36,7 @@
             
         </div>
         <h2>Completed</h2>
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === user.id)" 
+        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === reader.id)" 
                 :key="index"
                 class="book-container">
                 <router-link :to="`/book/${userBook.book}`" class="book-link">
@@ -51,11 +51,11 @@
   
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useUserStore } from "../stores/user";
+import { useReaderStore } from "../stores/reader.ts";
 
 import { useRoute } from "vue-router";
 import VueCookies from "vue-cookies";
-import { User, Friendship } from "../types";
+import { Reader, Friendship } from "../types";
 import { useFriendshipsStore } from "../stores/friendships";
 import {useBooksStore} from "../stores/books.ts"
 import {useUserBooksStore} from "../stores/userBooks.ts"
@@ -64,15 +64,15 @@ import {useUserBooksStore} from "../stores/userBooks.ts"
 export default defineComponent({
     data() {
         return {
-            user_id: Number(window.sessionStorage.getItem("user_id")),
+            reader_id: Number(window.sessionStorage.getItem("reader_id")),
 
         };
     },
     async mounted() {
         //gets the user information 
         const route = useRoute();
-        const userId = parseInt(route.params.id);
-        let user = await this.userStore.fetchUserReturn(userId);
+        const readerId = parseInt(route.params.id);
+        let reader = await this.readerStore.fetchReaderReturn(readerId);
 
         //fetch all the friendships
         let responseFriendship = await fetch("http://localhost:8000/friendships/");
@@ -99,7 +99,7 @@ export default defineComponent({
         async addFriendship(friend_id: number) {
             console.log(friend_id)
             const payload = {
-            user_id: this.user_id,
+            user_id: this.reader_id,
             friend_id: friend_id,
             accepted: false,
             };
@@ -131,15 +131,15 @@ export default defineComponent({
         
     },
     computed: {
-        user() {
-            return this.userStore.user;
+        reader() {
+            return this.readerStore.reader;
         },
         friendships(){
             return this.friendshipsStore.friendships;
         },
         hasFriendship() {
             const friendship = this.friendships.find(friendship => 
-            friendship.friend === this.user.id && friendship.user === this.user_id
+            friendship.friend === this.reader.id && friendship.user === this.reader_id
             );
             return friendship ? friendship.accepted : null; // Returns `true`, `false`, or `null`
         },
@@ -154,11 +154,11 @@ export default defineComponent({
         
     },
     setup() {
-        const userStore = useUserStore();
+        const readerStore = useReaderStore();
         const friendshipsStore = useFriendshipsStore();
         const storeBook = useBooksStore();
         const storeUserBook = useUserBooksStore();
-        return { userStore , friendshipsStore, storeBook, storeUserBook };
+        return { readerStore , friendshipsStore, storeBook, storeUserBook };
     }
 });
 </script>

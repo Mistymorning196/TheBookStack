@@ -20,7 +20,7 @@
         <!-- Scrollable Container for Reviews -->
         <div class="reviews-container">
           <div v-for="(review, index) in reviews.filter(review => review.book === book.id)" :key="index">
-            <p v-if="review.user === user_id">
+            <p v-if="review.user === reader_id">
               <span v-if="!editTitle">Title: {{ review.title }}</span>
               <span v-else>
                 Title:
@@ -32,7 +32,7 @@
             <p v-else>Title: {{ review.title }}</p>
   
             <p>Username: {{ review.username }}</p>
-            <p v-if="review.user === user_id">
+            <p v-if="review.user === reader_id">
               <span v-if="!editRating">Rating: {{ review.rating }} Stars</span>
               <span v-else>
                 Rating:
@@ -44,7 +44,7 @@
               <button v-else @click="saveField('rating', review.id)">Save</button>
             </p>
             <p v-else>Rating: {{ review.rating }} Stars</p>
-            <p v-if="review.user === user_id">
+            <p v-if="review.user === reader_id">
               <span v-if="!editMessage">Message: {{ review.message }} </span>
               <span v-else>
                 Message:
@@ -55,7 +55,7 @@
             </p>
             <p v-else>Message: {{ review.message }} </p>
   
-            <button v-if="review.user === user_id" @click="deleteReview(review.id)">Delete</button>
+            <button v-if="review.user === reader_id" @click="deleteReview(review.id)">Delete</button>
           </div>
         </div>
       </section>
@@ -89,7 +89,7 @@
   export default defineComponent({
     data() {
       return {
-        user_id: Number(window.sessionStorage.getItem("user_id")),
+        reader_id: Number(window.sessionStorage.getItem("reader_id")),
   
         // for making a new review
         showModal: false,
@@ -98,7 +98,7 @@
           message: "",
           rating: 5,
           book: null,
-          user: this.user_id,
+          user: this.reader_id,
         },
   
         // for editing a review
@@ -189,7 +189,7 @@
   
         // Check if user already left a review for this book
         const existingReview = this.reviews.find(
-          (review) => review.book === this.newReview.book && review.user === this.user_id
+          (review) => review.book === this.newReview.book && review.user === this.reader_id
         );
   
         if (existingReview) {
@@ -198,7 +198,7 @@
         }
   
         const reviewData = {
-          user_id: this.user_id,
+          user_id: this.reader_id,
           book_id: this.newReview.book,
           title: this.newReview.title,
           message: this.newReview.message,
@@ -225,7 +225,7 @@
             message: "",
             rating: 5,
             book: this.newReview.book,
-            user: this.user_id,
+            user: this.reader_id,
           };
           window.location.reload();
           alert("Review added successfully");
@@ -267,7 +267,7 @@
         try {
           // Check if the book is already in userBooks
           const existingEntry = this.userBooks.find(
-            (entry) => entry.user === this.user_id && entry.book === this.book.id
+            (entry) => entry.user === this.reader_id && entry.book === this.book.id
           );
   
           if (existingEntry) {
@@ -277,7 +277,7 @@
   
           // New userBook data
           const userBookData = {
-            user_id: this.user_id,
+            user_id: this.reader_id,
             book_id: this.book.id,
             status: "WISHLIST",
           };
@@ -324,7 +324,7 @@
       },
       statusBook() {
         const userBookEntry = this.userBooks.find(
-          (entry) => entry.user === this.user_id && entry.book === this.book.id
+          (entry) => entry.user === this.reader_id && entry.book === this.book.id
         );
         return userBookEntry ? userBookEntry.status : undefined;
       },

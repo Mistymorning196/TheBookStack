@@ -3,14 +3,14 @@
     <div class="top-section">
       <!-- Profile Box -->
       <div id="profile-box">
-        <h2>Welcome {{ user.first_name }}</h2>
-        <p>Username: {{ user.username }}</p>
+        <h2>Welcome {{ reader.first_name }}</h2>
+        <p>Username: {{ reader.username }}</p>
 
         <p v-for="field in editableFields" :key="field.key">
-          <span v-if="!field.isEditing">{{ field.label }}: {{ user[field.key] }}</span>
+          <span v-if="!field.isEditing">{{ field.label }}: {{ reader[field.key] }}</span>
           <span v-else>
             {{ field.label }}:
-            <input v-model="editedUser[field.key]" :type="field.type" />
+            <input v-model="editedReader[field.key]" :type="field.type" />
           </span>
           <button v-if="!field.isEditing" @click="toggleEditField(field.key)">Edit</button>
           <button v-else @click="saveField(field.key)">Save</button>
@@ -70,12 +70,12 @@
     <!-- Book Count Section -->
     <div class="book-count-display">
       <div class="book-count-badge">
-        <span>{{ user.book_count }}</span> Books Read
+        <span>{{ reader.book_count }}</span> Books Read
       </div>
       <div class="book-count-progress">
         <div class="progress-bar" :style="{ width: bookProgressWidth + '%' }"></div>
       </div>
-      <p v-if="user.book_count > 0" class="milestone-message">{{ bookMilestone }}</p>
+      <p v-if="reader.book_count > 0" class="milestone-message">{{ bookMilestone }}</p>
     </div>
   </div>
 </template>
@@ -84,7 +84,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import { useUserStore } from "../stores/user";
+import { useReaderStore } from "../stores/reader";
 import { useFriendshipsStore } from "../stores/friendships";
 import VueCookies from "vue-cookies";
 
@@ -97,17 +97,17 @@ export default defineComponent({
         { key: "email", label: "Email", type: "email", isEditing: false },
         { key: "date_of_birth", label: "Date of Birth", type: "date", isEditing: false },
       ],
-      editedUser: {} as Record<string, string>,
+      editedReader: {} as Record<string, string>,
       activeTab: "following",
       activeTabFollowers: "followers",
-      user_id: Number(window.sessionStorage.getItem("user_id")),
+      reader_id: Number(window.sessionStorage.getItem("reader_id")),
     };
   },
   async mounted() {
     try {
-      const userId = this.user_id;
-      const user = await this.userStore.fetchUserReturn(userId);
-      this.userStore.user = user;
+      const readerId = this.reader_id;
+      const reader = await this.readerStore.fetchReaderReturn(readerId);
+      this.readerStore.reader = reader;
     } catch (error) {
       console.error("Error fetching user:", error);
     }
@@ -117,24 +117,24 @@ export default defineComponent({
     this.friendshipsStore.saveFriendships(data.friendships);
   },
   computed: {
-    user() {
-      return this.userStore.user;
+    reader() {
+      return this.readerStore.reader;
     },
     friendships() {
       return this.friendshipsStore.friendships;
     },
     filteredFollowing() {
-      return this.friendships.filter(f => f.user === this.user.id && f.accepted === true);
+      return this.friendships.filter(f => f.user === this.reader.id && f.accepted === true);
     },
     filteredRequested() {
-      return this.friendships.filter(f => f.user === this.user.id && f.accepted === false);
+      return this.friendships.filter(f => f.user === this.reader.id && f.accepted === false);
     },
     filteredFollowers() {
-      return this.friendships.filter(f => f.friend === this.user.id && f.accepted === true);
+      return this.friendships.filter(f => f.friend === this.reader.id && f.accepted === true);
     },
     bookMilestone() {
       const milestones = [10, 20, 50, 100, 200, 500, 1000];
-      const currentCount = this.user.book_count;
+      const currentCount = this.reader.book_count;
       const nextMilestone = milestones.find(m => m > currentCount);
       
       if (nextMilestone) {
@@ -144,7 +144,7 @@ export default defineComponent({
     },
     bookProgressWidth() {
       const milestones = [10, 20, 50, 100, 200, 500, 1000];
-      const currentCount = this.user.book_count;
+      const currentCount = this.reader.book_count;
       const nextMilestone = milestones.find(m => m > currentCount);
       
       if (nextMilestone) {
@@ -160,14 +160,14 @@ export default defineComponent({
       if (field) {
         field.isEditing = !field.isEditing;
         if (field.isEditing) {
-          this.editedUser[fieldKey] = this.user[fieldKey];
+          this.editedReader[fieldKey] = this.reader[fieldKey];
         }
       }
     },
     async saveField(fieldKey: string) {
       try {
-        const payload = { [fieldKey]: this.editedUser[fieldKey] };
-        const response = await fetch(`http://localhost:8000/site_user/${this.user.id}/`, {
+        const payload = { [fieldKey]: this.editedReader[fieldKey] };
+        const response = await fetch(`http://localhost:8000/reader/${this.reader.id}/`, {
           method: "PUT",
           headers: {
             "Authorization": `Bearer ${VueCookies.get("access_token")}`,
@@ -180,7 +180,7 @@ export default defineComponent({
 
         if (!response.ok) throw new Error("Failed to update field");
 
-        this.userStore.saveUsers(await response.json());
+        this.readerStore.saveReaders(await response.json());
         window.location.reload();
       } catch (error) {
         console.error(error);
@@ -232,7 +232,7 @@ export default defineComponent({
   },
   setup() {
     return {
-      userStore: useUserStore(),
+      readerStore: useReaderStore(),
       friendshipsStore: useFriendshipsStore(),
     };
   },

@@ -11,7 +11,7 @@
         <!-- Display messages between the current user and their friend -->
         <div v-for="message in filteredMessages" 
              :key="message.id" 
-             :class="['message', message.user === user_id ? 'outgoing' : 'incoming']">
+             :class="['message', message.user === reader_id ? 'outgoing' : 'incoming']">
           <p><strong>{{ message.userUsername }}:</strong> {{ message.message }}</p>
         </div>
       </div>
@@ -27,21 +27,21 @@
   <script lang="ts">
   import { defineComponent, nextTick } from "vue";
   import { useMessagesStore } from "../stores/messages";
-  import { useUserStore } from "../stores/user";
+  import { useReaderStore } from "../stores/reader";
   import { useRoute } from "vue-router";
   import VueCookies from "vue-cookies";
   
   export default defineComponent({
     data() {
       return {
-        user_id: Number(window.sessionStorage.getItem("user_id")),
+        reader_id: Number(window.sessionStorage.getItem("reader_id")),
         newMessageText: "", // New message input
       };
     },
     async mounted() {
       const route = useRoute();
-      const userId = parseInt(route.params.id);
-      let user = await this.userStore.fetchUserReturn(userId);
+      const readerId = parseInt(route.params.id);
+      let reader = await this.readerStore.fetchReaderReturn(readerId);
   
       let responseMessage = await fetch("http://localhost:8000/messages/");
       let dataMessage = await responseMessage.json();
@@ -55,8 +55,8 @@
     methods: {
       async sendMessage() {
         const newMessage = {
-          user: this.user_id,
-          friend: this.user.id,
+          user: this.reader_id,
+          friend: this.reader.id,
           message: this.newMessageText,
         };
   
@@ -98,8 +98,8 @@
       },
     },
     computed: {
-      user() {
-        return this.userStore.user;
+      reader() {
+        return this.readerStore.reader;
       },
       messages() {
         return this.messagesStore.messages;
@@ -107,15 +107,15 @@
       filteredMessages() {
         return this.messages.filter(
           (message) =>
-            (message.user === this.user.id && message.friend === this.user_id) ||
-            (message.friend === this.user.id && message.user === this.user_id)
+            (message.user === this.reader.id && message.friend === this.reader_id) ||
+            (message.friend === this.reader.id && message.user === this.reader_id)
         );
       },
     },
     setup() {
-      const userStore = useUserStore();
+      const readerStore = useReaderStore();
       const messagesStore = useMessagesStore();
-      return { userStore, messagesStore };
+      return { readerStore, messagesStore };
     }
   });
   </script>

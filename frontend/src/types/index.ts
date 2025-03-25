@@ -1,4 +1,4 @@
-export interface User {
+export interface Reader {
     id: number;
     api: string;
     first_name: string;

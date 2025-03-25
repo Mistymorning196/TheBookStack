@@ -27,12 +27,6 @@ class SiteUser(AbstractUser):
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField(default='2000-01-01')
     password = models.CharField(max_length=100)
-    book_count = models.IntegerField(default=0)
-    messages = models.ManyToManyField("self", through="Message", symmetrical=False, related_name="messages_with+")
-    #need relationship for blog posts
-    #also need to come up with permissions for readers
-    user_books = models.ManyToManyField("Book", through="UserBook")
-    friends = models.ManyToManyField("self", through="Friendship", symmetrical=False, related_name="friends_with+")
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -46,9 +40,49 @@ class SiteUser(AbstractUser):
             'email': self.email,
             'date_of_birth': self.date_of_birth,
             'password': self.password,
-            'book_count': self.book_count,
+ 
         }
-    
+
+class Reader(SiteUser):
+    """
+    Reader model extending SiteUser with additional attributes.
+    """
+    book_count = models.IntegerField(default=0)
+    messages = models.ManyToManyField("self", through="Message", symmetrical=False, related_name="messages_with+")
+    user_books = models.ManyToManyField("Book", through="UserBook")
+    friends = models.ManyToManyField("self", through="Friendship", symmetrical=False, related_name="friends_with+")
+
+    class Meta:
+        verbose_name = "Reader"
+        verbose_name_plural = "Readers"
+
+    def __str__(self):
+        return f"Reader: {self.first_name} {self.last_name}"
+
+    def as_dict(self):
+        data = super().as_dict()  # Get the parent class dictionary
+        data.update({
+            'book_count': self.book_count,
+        })
+        return data
+
+class Author(SiteUser):
+    """
+    Author model extending SiteUser with additional attributes.
+    """
+    pass
+
+    class Meta:
+        verbose_name = "Author"
+        verbose_name_plural = "Authors"
+
+    def __str__(self):
+        return f"Author: {self.first_name} {self.last_name}"
+
+    def as_dict(self):
+        data = super().as_dict()  # Get the parent class dictionary
+ 
+        return data   
 
 
 # Book Model
@@ -62,7 +96,7 @@ class Book(models.Model):
     isbn = models.CharField(max_length=100)
     #placeholder for image file for cover picture
     #also need to add genres possibly a relationship? needs to be choices and able to do multiple
-    reviews = models.ManyToManyField(SiteUser, through="Review")  # Proper Many-to-Many with Review
+    reviews = models.ManyToManyField(Reader, through="Review")  # Proper Many-to-Many with Review
 
     def as_dict(self):
         return {
@@ -81,8 +115,8 @@ class Friendship(models.Model):
     This class is the Friendship Model which is a through model 
     which creates a many-to-many relationship between site user and friend.
     """
-    user = models.ForeignKey(SiteUser, related_name="from_user", on_delete=models.CASCADE)
-    friend = models.ForeignKey(SiteUser, related_name="to_user", on_delete=models.CASCADE)
+    user = models.ForeignKey(Reader, related_name="from_user", on_delete=models.CASCADE)
+    friend = models.ForeignKey(Reader, related_name="to_user", on_delete=models.CASCADE)
     userUsername = models.CharField(max_length=100, default="username")
     friendUsername = models.CharField(max_length=100, default="username")
     accepted = models.BooleanField(default=False)
@@ -103,8 +137,8 @@ class Message(models.Model):
     This class is the Message Model which is a through model 
     which creates a many-to-many relationship between site user and friend.
     """
-    user = models.ForeignKey(SiteUser, related_name="messages_from", on_delete=models.CASCADE)
-    friend = models.ForeignKey(SiteUser, related_name="messages_to", on_delete=models.CASCADE)
+    user = models.ForeignKey(Reader, related_name="messages_from", on_delete=models.CASCADE)
+    friend = models.ForeignKey(Reader, related_name="messages_to", on_delete=models.CASCADE)
     userUsername = models.CharField(max_length=100, default="username")
     friendUsername = models.CharField(max_length=100, default="username")
     message = models.TextField(max_length=1000)
@@ -132,7 +166,7 @@ class UserBook(models.Model):  # Corrected from models.model to models.Model
         ("WISHLIST", 'Wishlist'),
     ]
 
-    user = models.ForeignKey(SiteUser, on_delete=models.CASCADE)
+    user = models.ForeignKey(Reader, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="START")
 
@@ -160,7 +194,7 @@ class Review(models.Model):  # Corrected from models.model to models.Model
         (5, '5 Stars'),
     ]
 
-    user = models.ForeignKey(SiteUser, on_delete=models.CASCADE)  # Added on_delete to prevent migration errors
+    user = models.ForeignKey(Reader, on_delete=models.CASCADE)  # Added on_delete to prevent migration errors
     book = models.ForeignKey(Book, on_delete=models.CASCADE)  # Foreign key for book reference
     title = models.CharField(max_length=100, default='Title')
     username = models.CharField(max_length=100, default='username')

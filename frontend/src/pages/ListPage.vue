@@ -4,7 +4,7 @@
     </section>
     <h3>Currently Reading</h3>
     <section class="display">
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === user_id)" :key="index">
+        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === reader_id)" :key="index">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
                 <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
                 <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
@@ -15,7 +15,7 @@
     </section>
     <h3>WishList</h3>
     <section class="display">
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === user_id)" :key="index">
+        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === reader_id)" :key="index">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
                 <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
                 <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
@@ -26,7 +26,7 @@
     </section>
     <h3>Completed</h3>
     <section class="display">
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === user_id)" :key="index">
+        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === reader_id)" :key="index">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
                 <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
                 <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
@@ -38,9 +38,9 @@
   
 <script lang="ts">
   import { defineComponent } from "vue";
-  import { User , Book , UserBook} from "../types/index.ts";
-  import {useUsersStore} from "../stores/users.ts"
-   import {useUserStore} from "../stores/user.ts"
+  import { Reader , Book , UserBook} from "../types/index.ts";
+  import {useReadersStore} from "../stores/readers.ts"
+   import {useReaderStore} from "../stores/reader.ts"
   import {useBooksStore} from "../stores/books.ts"
   import {useUserBooksStore} from "../stores/userBooks.ts"
   import VueCookies from 'vue-cookies';
@@ -48,16 +48,16 @@
   export default defineComponent({
     data() {
         return{
-            user_id : Number(window.sessionStorage.getItem("user_id")),
+            reader_id : Number(window.sessionStorage.getItem("reader_id")),
         }
     },
 
     async mounted() {
-      let response = await fetch("http://localhost:8000/site_users/");
+      let response = await fetch("http://localhost:8000/readers/");
       let data = await response.json();
-      let users = data.users as User[];
-      const store = useUsersStore()
-      store.saveUsers(users)
+      let readers = data.users as Reader[];
+      const store = useReadersStore()
+      store.saveReaders(readers)
 
       let responseBook = await fetch("http://localhost:8000/books/");
       let dataBook = await responseBook.json();
@@ -90,7 +90,7 @@
                 if (response.ok) {
                     if (newStatus === "COMPLETED") {
                         // Fetch user data first
-                        const userResponse = await fetch(`http://localhost:8000/site_user/${this.user_id}/`, {
+                        const userResponse = await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
                             headers: {
                                 "Authorization": `Bearer ${VueCookies.get("access_token")}`,
                                 "Content-Type": "application/json",
@@ -102,7 +102,7 @@
                             const updatedBookCount = userData.book_count + 1;
 
                             // Update user's book count
-                            await fetch(`http://localhost:8000/site_user/${this.user_id}/`, {
+                            await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
                                 method: "PUT",
                                 headers: {
                                     "Authorization": `Bearer ${VueCookies.get("access_token")}`,
@@ -144,7 +144,7 @@
                 if (response.ok) {
                     if (userBook && userBook.status === "COMPLETED") {
                         // Fetch user data first
-                        const userResponse = await fetch(`http://localhost:8000/site_user/${this.user_id}/`, {
+                        const userResponse = await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
                             headers: {
                                 "Authorization": `Bearer ${VueCookies.get("access_token")}`,
                                 "Content-Type": "application/json",
@@ -156,7 +156,7 @@
                                 const updatedBookCount = Math.max(userData.book_count - 1, 0); // Ensure count doesn't go below 0
 
                                 // Update user's book count
-                                await fetch(`http://localhost:8000/site_user/${this.user_id}/`, {
+                                await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
                                     method: "PUT",
                                     headers: {
                                         "Authorization": `Bearer ${VueCookies.get("access_token")}`,
