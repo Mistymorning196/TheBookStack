@@ -1,6 +1,6 @@
 /* General and Headers Page Styling*/
 body{
-    background-color: #B4DABA;
+    background-color: #EFE0CB;
     color: black;
     font-family: Arial, Helvetica, sans-serif;
 }
@@ -16,8 +16,8 @@ h3{
 }
 
 /* Form Styling*/
-form{
-    background-color: #659A78;
+#login-form{
+    background-color: #2f4a54;
     color: white;
     margin: auto;
     border-radius: 3rem;
@@ -41,8 +41,8 @@ input{
     margin-bottom: 5rem;
 }
 #submit-button, #login-button,#signup-button{
-    background-color: #D9D9D9;
-    color: black;
+    background-color: #71929f;
+    color: white;
     border: none;
     display: block;
     margin: auto;
@@ -67,5 +67,5 @@ p{
 }
 a{
     text-decoration: none;
-    color: black;
+    color: white;
 }
