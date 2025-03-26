@@ -58,12 +58,22 @@
             <ul>
               <li v-for="(friendship, index) in filteredFollowers" :key="index">
                 <span>{{ friendship.userUsername }}</span>
-                <button v-if="activeTabFollowers === 'pending'" @click="acceptFriendship(friendship.id)">Accept</button>
+                <button @click="deleteFriendship(friendship.id)">Remove</button>
+              </li>
+            </ul>
+          </div>
+          <div v-if="activeTabFollowers === 'pending'" class="connections-card">
+            <h3>Pending Followers</h3>
+            <ul>
+              <li v-for="(friendship, index) in filteredPending" :key="index">
+                <span>{{ friendship.userUsername }}</span>
+                <button @click="acceptFriendship(friendship.id)">Accept</button>
                 <button @click="deleteFriendship(friendship.id)">Remove</button>
               </li>
             </ul>
           </div>
         </div>
+        
       </div>
     </div>
 
@@ -132,6 +142,10 @@ export default defineComponent({
     filteredFollowers() {
       return this.friendships.filter(f => f.friend === this.reader.id && f.accepted === true);
     },
+    filteredPending() {
+      console.log(this.friendships);
+      return this.friendships.filter(f => f.friend === this.reader.id && f.accepted === false);
+    },
     bookMilestone() {
       const milestones = [10, 20, 50, 100, 200, 500, 1000];
       const currentCount = this.reader.book_count;
@@ -155,6 +169,7 @@ export default defineComponent({
   
   },
   methods: {
+    
     toggleEditField(fieldKey: string) {
       const field = this.editableFields.find(f => f.key === fieldKey);
       if (field) {

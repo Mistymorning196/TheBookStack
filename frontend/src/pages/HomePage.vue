@@ -13,147 +13,98 @@
     </section>
     <h2>Users:</h2>
     <section class="display">
-
         <div v-for="(reader, index) in filtered_readers" :key="index">
           <router-link :to="`/user/${reader.id}`" class="user-link">
             <p>Username: {{ reader.username }}</p>
           </router-link>
         </div>
-
     </section>
-  
 </template>
 
 <script lang="ts">
-    import { defineComponent } from "vue";
-    import { useReaderStore } from "../stores/reader";
-    import { useReadersStore } from "../stores/readers";
-    import { useBooksStore } from "../stores/books"
-    import { Book, Reader } from "../types/index";
+import { defineComponent } from "vue";
+import { useReaderStore } from "../stores/reader";
+import { useReadersStore } from "../stores/readers";
+import { useBooksStore } from "../stores/books"
+import { Book, Reader } from "../types/index";
+
+export default defineComponent({
+  data() {
+    return {
+      reader_id: null as number | null, // Initially null, will be populated after mounted
+    };
+  },
+  async mounted() {
+    // Get session cookie and extract sessionid
+    const sessionCookie = (document.cookie).split(';');
+    let currentSessionid: string = '';
     
-
-    //This home page will display user lists of books
-    //It will also display the recommended books and recommended users 
-    export default defineComponent({
-        data() {
-            return {
-
-                reader_id : Number(window.sessionStorage.getItem("reader_id")),
-
-            
-            };
-        },
-        async mounted() {
-            // Fetching csrf token using session cookie information on mount
-            const sessionCookie = (document.cookie).split(';');
-            let currentSessionid: string = ''
-            console.log(sessionCookie)
-            // Checking in UserStore with CSRF token
-            for (let cookie of sessionCookie) {
-                cookie = cookie.trim();
-                console.log(cookie)
-                if (cookie.startsWith("sessionid" + "=")) {
-                    currentSessionid = cookie.substring("sessionid".length + 1);
-                }
-            }
-            
-            const previousSessionid : string | null = window.sessionStorage.getItem("session_id")
-            // Loading values from user store if sessionId matches
-            if(currentSessionid == previousSessionid){
-                const readerId = Number(window.sessionStorage.getItem("reader_id"));
-                try {
-                    const readerCookie = await this.readerStore.fetchreaderReturn(Number(window.sessionStorage.getItem("reader_id")));
-                    console.log("Fetched User:", readerCookie);
-                } catch (error) {
-                    console.error("Error fetching user:", error);
-                }
-            
-                console.log('checked sesh')
-            }
-            else{
-                // Extracting user id from url query
-                const params = new URLSearchParams(window.location.search);
-                const readerId: number = parseInt(params.get("u") || "0");
-                console.log(readerId)
-                // Fetch user data using url query information on mount
-                let reader = await this.readerStore.fetchReaderReturn(readerId);
-                console.log(reader)
-                this.readerStore.reader = reader;
-                // Set session variable
-                sessionStorage.setItem("reader_id", readerId.toString());
-                
-                // Fetching csrf token using session cookie information on mount
-                const session_cookie = (document.cookie).split(';');
-                console.log(session_cookie)
-
-                //Update user state in UserStore with CSRF token
-                for (let cookie of session_cookie) {
-                    cookie = cookie.trim();
-                    console.log(cookie)
-                    if (cookie.startsWith("csrftoken" + "=")) {
-                        this.readerStore.setCsrfToken(cookie.substring("csrftoken".length + 1));
-
-                        console.log(this.readerStore.csrf)
-                    }
-                    //Update sessionStorage state in UserStore with CSRF token
-                    console.log(cookie)
-                    if (cookie.startsWith("sessionid" + "=")) {
-                        // Set session variable
-                        let sessionId = cookie.substring("csrftoken".length + 1);
-                        sessionStorage.setItem("session_id", sessionId);
-                    }
-                }
-            }
-
-            //gets all of the books
-            let responseBook = await fetch("http://localhost:8000/books/");
-            let dataBook = await responseBook.json();
-            let books = dataBook.books as Book[];
-            const storeBook = useBooksStore()
-            storeBook.saveBooks(books)
-
-            //gets all of the users
-            let responseReader = await fetch("http://localhost:8000/readers/");
-            let dataReader = await responseReader.json();
-            let readers = dataReader.readers as Reader[];
-            console.log(readers)
-            const readersStore = useReadersStore()
-            readersStore.saveReaders(readers)
-
-        
-        },
-        methods: {
-            
-            
-        }, 
-        computed: {
-            readers() {
-                const readersStore = useReadersStore();
-                return readersStore.readers || []; // Return an empty array if users is undefined
-            },
-            filtered_readers() {
-                  // Ensure users are available before calling filter()
-                  if (this.readers.length > 0) {
-                      return this.readers.filter(reader => reader.id !== this.reader_id);
-                  }
-                  return [];  // Return an empty array if users are not loaded
-            },
-            books() {
-                const storeBook = useBooksStore();
-                return storeBook.books; 
-            },
-        },
-
-        setup() {
-            const readerStore = useReaderStore();
-            const readersStore = useReadersStore();
-            const storeBook = useBooksStore();
+    for (let cookie of sessionCookie) {
+      cookie = cookie.trim();
+      if (cookie.startsWith("sessionid=")) {
+        currentSessionid = cookie.substring("sessionid=".length);
+      }
+    }
     
-            return { readerStore , readersStore, storeBook };
-        },
-    });
-  </script>
+    const previousSessionid: string | null = window.sessionStorage.getItem("session_id");
+    
+    if (currentSessionid === previousSessionid) {
+      // Use stored reader_id from sessionStorage
+      this.reader_id = Number(window.sessionStorage.getItem("reader_id"));
+    } else {
+      // Fallback: Extract reader_id from URL query or default to 0
+      const params = new URLSearchParams(window.location.search);
+      this.reader_id = parseInt(params.get("u") || "0");
+      sessionStorage.setItem("reader_id", this.reader_id.toString());
+      sessionStorage.setItem("session_id", currentSessionid);  // Store session id for next page load
+    }
+    
+    // Fetch the books and readers after checking session
+    await this.fetchBooksAndReaders();
+  },
+  methods: {
+    async fetchBooksAndReaders() {
+      // Fetch books
+      const responseBook = await fetch("http://localhost:8000/books/");
+      const dataBook = await responseBook.json();
+      const books = dataBook.books as Book[];
+      const storeBook = useBooksStore();
+      storeBook.saveBooks(books);
 
+      // Fetch readers
+      const responseReader = await fetch("http://localhost:8000/readers/");
+      const dataReader = await responseReader.json();
+      const readers = dataReader.readers as Reader[];
+      const readersStore = useReadersStore();
+      readersStore.saveReaders(readers);
+    }
+  },
+  computed: {
+    readers() {
+      const readersStore = useReadersStore();
+      return readersStore.readers || [];
+    },
+    filtered_readers() {
+      // Ensure readers are loaded and then filter out the current reader
+      if (this.readers.length > 0 && this.reader_id !== null) {
+        return this.readers.filter(reader => reader.id !== this.reader_id);
+      }
+      return [];
+    },
+    books() {
+      const storeBook = useBooksStore();
+      return storeBook.books;
+    },
+  },
+  setup() {
+    const readerStore = useReaderStore();
+    const readersStore = useReadersStore();
+    const storeBook = useBooksStore();
+    
+    return { readerStore, readersStore, storeBook };
+  },
+});
+</script>
 
 <style scoped>
 /* Body Styling */
@@ -266,6 +217,4 @@ h2 {
         font-size: 0.7rem; /* Even smaller text for mobile */
     }
 }
-
-
 </style>

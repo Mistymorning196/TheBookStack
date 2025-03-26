@@ -6,6 +6,8 @@
             <div class="nav-parts">
                 <!--Go to home page -->
                 <router-link class="link" :to="{name: 'Home Page'}">Home</router-link>
+                <!--Go to search -->
+                <router-link class="link" :to="{name: 'Search Page'}">Search</router-link>
                 <!-- Go to User Books Page-->
                 <router-link class="link" :to="{name: 'List Page'}">My Books</router-link>
                 <!-- Go to Blog Page-->
