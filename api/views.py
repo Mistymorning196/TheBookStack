@@ -8,6 +8,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 
+from django.db.models import Q
+
+
 from .models import SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
 from .forms import LoginForm, SignUpForm
 
@@ -78,6 +81,7 @@ def logout_site_user(request: HttpRequest) -> HttpResponse:
 # APIs for book model below
 def books_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Book"""
+    
 
     # POST method which is the create method
     if request.method == 'POST':
@@ -90,14 +94,16 @@ def books_api(request: HttpRequest) -> JsonResponse:
             isbn = POST['isbn'],
         )
         return JsonResponse(book.as_dict())
+    
+    search_query = request.GET.get("search", "").strip()
+    if search_query:
+        books = Book.objects.filter(Q(title__icontains=search_query) | Q(author__icontains=search_query))
+    else:
+        books = Book.objects.all()
 
-    # GET method which allows the user to view all hobbies
-    return JsonResponse({
-        'books': [
-            book.as_dict()
-            for book in Book.objects.all()
-        ]
-    })
+    return JsonResponse({"books": [book.as_dict() for book in books]})
+
+ 
 
 def book_api(request: HttpRequest, book_id: int) -> JsonResponse:
     """API endpoint for a single book"""
@@ -219,14 +225,14 @@ def readers_api(request: HttpRequest) -> JsonResponse:
         
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+        
+    search_query = request.GET.get("search", "").strip()
+    if search_query:
+        readers = Reader.objects.filter(Q(username__icontains=search_query))
+    else:
+        readers = Reader.objects.all()
 
-    # GET method (List all readers)
-    return JsonResponse({
-        'readers': [
-            reader.as_dict()
-            for reader in Reader.objects.all()
-        ]
-    })
+    return JsonResponse({"readers": [reader.as_dict() for reader in readers]})
 
 
 def reader_api(request: HttpRequest, reader_id: int) -> JsonResponse:

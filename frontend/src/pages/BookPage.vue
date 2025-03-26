@@ -345,7 +345,7 @@
   });
   </script>
   
-  <style scoped>
+<style scoped>
 /* Book Info Section */
 #profile-box {
   flex: 1;
