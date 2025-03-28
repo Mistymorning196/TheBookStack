@@ -18,6 +18,13 @@ export interface Book{
     isbn: string;
 }
 
+export interface Blog{
+    id: number;
+    api: string;
+    title: string;
+    post : string;
+}
+
 export interface Friendship{
     id: number;
     api: string;
@@ -45,6 +52,14 @@ export interface Review{
     username: string;
     rating: number;
     message: string;
+}
+
+export interface Comment{
+    id: number;
+    api: string;
+    blog: number;
+    user: number;
+    comment: string;
 }
 
 export interface Message{

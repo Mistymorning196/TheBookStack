@@ -99,6 +99,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Defined URLs
+READER_REDIRECT_URL = 'http://localhost:5173/'
+AUTHOR_REDIRECT_URL = 'http://localhost:5173/author'
 LOGIN_REDIRECT_URL = 'http://localhost:5173/'
 LOGIN_URL = '/login/'
 

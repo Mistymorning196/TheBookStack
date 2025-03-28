@@ -4,72 +4,119 @@ from django.contrib.sessions.models import Session
 from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib import auth
+from django.contrib.auth import authenticate, login as auth_login
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.db.models import Q
+from django.contrib.auth import get_user_model
 
+from .models import Blog, BookGenre, Comment, ReaderGenre, SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
+from .forms import LoginForm, SignUpForm, UpdatePassForm, UpdateUserForm
 
-from .models import SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
-from .forms import LoginForm, SignUpForm
-
-# Authenticate login before Vue SPA redirect
 def login_site_user(request: HttpRequest) -> HttpResponse:
-    """ Function to validate a potenital registered site_user. """
+    """ Function to validate a potential registered site_user. """
     if request.method == "POST":
         form = LoginForm(request.POST)
-        # Clean values if valid and authenticate
+        
         if form.is_valid():
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
-            reader = auth.authenticate(username=username, password=password)
-            # Rendering Vue SPA if site_user is found
-            if reader is not None:
-                auth.login(request, reader)
-                # Saving user id in variable to add to redirect as query
-                reader_id=reader.id
-                return redirect(settings.LOGIN_REDIRECT_URL+'?u=%s' %reader_id)
+            
+            # Authenticate user
+            user = authenticate(username=username, password=password)
+            print(f"Authenticated user: {user}")
+
+            if user is not None:
+                # Log the user in
+                auth_login(request, user)
+                print(f"User authenticated and logged in: {user}")
+
+                # Check if the user is a SiteUser subclass (Reader or Author)
+                if isinstance(user, SiteUser):
+                    # Try to get the actual subclass (Reader or Author) from the database
+                    try:
+                        # Check if it's a Reader
+                        reader = Reader.objects.filter(id=user.id).first()
+                        if reader:
+                            print(f"Redirecting Reader with ID {user.id}")
+                            return redirect(settings.READER_REDIRECT_URL + f'?u={user.id}')
+
+                        # Check if it's an Author
+                        author = Author.objects.filter(id=user.id).first()
+                        if author:
+                            print(f"Redirecting Author with ID {user.id}")
+                            return redirect(settings.AUTHOR_REDIRECT_URL + f'?u={user.id}')
+
+                    except SiteUser.DoesNotExist:
+                        # If no matching subclass is found, fallback to default redirect
+                        print(f"Error: User not found in the database for ID {user.id}")
+                        return redirect(settings.LOGIN_REDIRECT_URL + f'?u={user.id}')
+
+                    # If neither Reader nor Author is found, fall back to the default redirect
+                    print(f"Unknown user type with ID {user.id}")
+                    return redirect(settings.LOGIN_REDIRECT_URL + f'?u={user.id}')
+
             else:
-                # Show failed authentication
+                # Invalid authentication, show error message
+                print("Authentication failed!")
                 return render(request, "api/auth/login.html", {"form": form, "message": 'Username or password invalid, please try again.'})
     else:
         form = LoginForm()
-    return render(request, "api/auth/login.html", {"form": form})
 
+    return render(request, "api/auth/login.html", {"form": form})
 
 # Authenticate signup and login before Vue SPA redirect
 def signup_site_user(request: HttpRequest) -> HttpResponse:
-    """ Function to register a new site_user. """
+    """ Function to register a new site_user as a Reader or Author. """
     if request.method == "POST":
         form = SignUpForm(request.POST)
-        # Clean values if valid and authenticate
         if form.is_valid():
-            first_name=form.cleaned_data["first_name"]
-            last_name=form.cleaned_data["last_name"]
+            first_name = form.cleaned_data["first_name"]
+            last_name = form.cleaned_data["last_name"]
             username = form.cleaned_data["username"]
-            email=form.cleaned_data["email"]
-            date_of_birth=form.cleaned_data["date_of_birth"]
-            password=form.cleaned_data["password"]
-            reader = auth.authenticate(username=username, password=password)
-            # Rendering Vue SPA if an existing site_user is not found
-            if reader is None:
-                # Create a new site_user with input form details
-                reader = Reader.objects.create_user(username=username, email=email, password=password)
-                reader.first_name=first_name
-                reader.last_name=last_name
-                reader.date_of_birth=date_of_birth
-                reader.save()
+            email = form.cleaned_data["email"]
+            date_of_birth = form.cleaned_data["date_of_birth"]
+            password = form.cleaned_data["password"]
+            user_type = form.cleaned_data["user_type"]  # Get selected user type
 
-                auth.login(request, reader)
-                reader_id=reader.id
-                return redirect(settings.LOGIN_REDIRECT_URL+'?u=%s' %reader_id)
-            else:
-                # Show failed user creation
-                return render(request, "api/auth/signup.html", {"form": form, "message": 'Reader already exists with that username. Please try again.'})
+            existing_user = SiteUser.objects.filter(username=username).first()
+            if existing_user:
+                return render(request, "api/auth/signup.html", {"form": form, "message": "User already exists with that username."})
+
+            # Debug: Log user type before user creation
+            print(f"Creating a user with type: {user_type}")
+
+            # Create either a Reader or an Author
+            if user_type == "reader":
+                user = Reader.objects.create_user(username=username, email=email, password=password)
+                print(f"Created Reader user: {user}")
+            else:  # user_type == "author"
+                user = Author.objects.create_user(username=username, email=email, password=password)
+                print(f"Created Author user: {user}")
+
+            user.first_name = first_name
+            user.last_name = last_name
+            user.date_of_birth = date_of_birth
+            user.save()
+
+            # Debug: Log the type of the created user
+            print(f"User created: {user} (Type: {type(user)})")
+
+            auth_login(request, user)
+             # Create either a Reader or an Author
+            if user_type == "reader":
+                return redirect(settings.READER_REDIRECT_URL + f'?u={user.id}')
+            else:  # user_type == "author"
+                return redirect(settings.AUTHOR_REDIRECT_URL + f'?u={user.id}')
+
     else:
         form = SignUpForm()
     return render(request, "api/auth/signup.html", {"form": form})
+
+
+
         
 @login_required
 # Logout user below
@@ -78,6 +125,68 @@ def logout_site_user(request: HttpRequest) -> HttpResponse:
     auth.logout(request)
     return redirect(settings.LOGIN_URL)
 
+
+User = get_user_model()
+@login_required
+#updates the password 
+def update_password(request: HttpRequest) -> HttpResponse:
+    """ Function to validate a potenital registered user. """
+    if request.method == "POST":
+        form = UpdatePassForm(request.POST)  # Use a form specifically for password updates
+        if form.is_valid():
+            password = form.cleaned_data["password"]
+
+            try:
+                if not password:
+                    return JsonResponse({"error": "Password is required."}, status=400)
+
+                # Use the currently logged-in user to update the password
+                user = request.user
+                user.set_password(password)  # Hash and set the new password
+                user.save() 
+                return redirect(settings.LOGIN_URL)
+            except Exception as e:
+                return JsonResponse({"error": str(e)}, status=500)
+
+        # Return form errors if invalid
+        return render(request, "api/auth/updatePass.html", {"form": form, "errors": form.errors})
+
+    # For GET requests, display the form
+    else:
+        form = UpdatePassForm()
+    return render(request, "api/auth/updatePass.html", {"form": form})
+
+
+@login_required
+def update_username(request: HttpRequest) -> HttpResponse:
+    """Function to update the username of the logged-in user."""
+    if request.method == "POST":
+        form = UpdateUserForm(request.POST)
+        if form.is_valid():
+            new_username = form.cleaned_data["new_username"]
+
+            try:
+                # Ensure the new username is not already taken
+                if User.objects.filter(username=new_username).exists():
+                    return render(request, "api/auth/updateUsername.html", {"form": form, "message": "username exists already"})
+
+                # Update the username
+                user = request.user
+                user.username = new_username
+                user.save()
+
+                return redirect(settings.LOGIN_URL)
+            except Exception as e:
+                return JsonResponse({"error": str(e)}, status=500)
+
+        # Render form with errors if invalid
+        return render(request, "api/auth/updateUsername.html", {"form": form, "errors": form.errors})
+
+    # For GET requests, display the form
+    else:
+        form = UpdateUserForm()
+        return render(request, "api/auth/updateUsername.html", {"form": form})
+    
 # APIs for book model below
 def books_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Book"""
@@ -132,6 +241,57 @@ def book_api(request: HttpRequest, book_id: int) -> JsonResponse:
 
     # GET book data
     return JsonResponse(book.as_dict())
+
+# APIs for book model below
+def blogs_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the Blog"""
+    
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new book
+        POST = json.loads(request.body)
+        blog = Book.objects.create(
+            title = POST['title'],
+            post = POST['post'],
+        )
+        return JsonResponse(blog.as_dict())
+    
+    search_query = request.GET.get("search", "").strip()
+    if search_query:
+        blogs = Blog.objects.filter(Q(title__icontains=search_query))
+    else:
+        blogs = Blog.objects.all()
+
+    return JsonResponse({"blogs": [blog.as_dict() for blog in blogs]})
+
+ 
+
+def blog_api(request: HttpRequest, blog_id: int) -> JsonResponse:
+    """API endpoint for a single book"""
+    try:
+        blog = Blog.objects.get(id=blog_id)
+    except Blog.DoesNotExist:
+        return JsonResponse({"error": "Blog not found."}, status=404)
+
+    # PUT method to update blog
+    if request.method == 'PUT':
+        try:
+            PUT = json.loads(request.body)
+            blog.title = PUT.get("title", blog.title)
+            blog.post = PUT.get("post", blog.post)
+            blog.save()
+            return JsonResponse(blog.as_dict())
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    # DELETE method to delete book
+    if request.method == 'DELETE':
+        blog.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    # GET book data
+    return JsonResponse(blog.as_dict())
 
 # APIs for user model below
 def site_users_api(request: HttpRequest) -> JsonResponse:
@@ -273,7 +433,7 @@ def authors_api(request: HttpRequest) -> JsonResponse:
     if request.method == 'POST':
         try:
             POST = json.loads(request.body)
-            required_fields = ['first_name', 'last_name', 'email', 'date_of_birth', 'password', 'book_count']
+            required_fields = ['first_name', 'last_name', 'email', 'date_of_birth', 'password', 'biography']
             missing_fields = [field for field in required_fields if field not in POST]
             if missing_fields:
                 return JsonResponse({"error": f"Missing fields: {', '.join(missing_fields)}"}, status=400)
@@ -284,6 +444,7 @@ def authors_api(request: HttpRequest) -> JsonResponse:
                 email=POST['email'],
                 date_of_birth=POST['date_of_birth'],
                 password=POST['password'],
+                biography=POST['biography'],
             )
 
             return JsonResponse(author.as_dict(), status=201)
@@ -304,7 +465,7 @@ def author_api(request: HttpRequest, author_id: int) -> JsonResponse:
     """API endpoint for a single Author"""
     try:
         author = Author.objects.get(id=author_id)
-    except AZuthor.DoesNotExist:
+    except Author.DoesNotExist:
         return JsonResponse({"error": "Author not found."}, status=404)
 
     # PUT method (Update author details)
@@ -316,6 +477,7 @@ def author_api(request: HttpRequest, author_id: int) -> JsonResponse:
             author.email = PUT.get("email", author.email)
             author.date_of_birth = PUT.get("date_of_birth", author.date_of_birth)
             author.password = PUT.get("password", author.password)
+            author.biography = PUT.get("biography", author.biography)  
 
             author.save()
             return JsonResponse({"success": "Author updated successfully."})
@@ -549,6 +711,90 @@ def user_book_api(request: HttpRequest, user_book_id: int) -> JsonResponse:
 
     return JsonResponse(user_book.as_dict())
 
+# APIs for ReaderGenre model below
+def reader_genres_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the ReaderGenre"""
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new friendship
+        POST = json.loads(request.body)
+        user = Reader.objects.get(id=POST.get("user_id"))
+        genre = Genre.objects.get(id=POST.get("genre_id"))
+
+        reader_genre = ReaderGenre.objects.create(
+            user = user,
+            genre = genre,
+        )
+        return JsonResponse(reader_genre.as_dict())
+
+    # GET method which allows the user to view all hobbies
+    return JsonResponse({
+        'reader_genre': [
+            reader_genre.as_dict()
+            for reader_genre in ReaderGenre.objects.all()
+        ]
+    })
+
+def reader_genre_api(request: HttpRequest, reader_genre_id: int) -> JsonResponse:
+    """API endpoint for a single reader_genre"""
+    try:
+        reader_genre = ReaderGenre.objects.get(id=reader_genre_id)
+    except ReaderGenre.DoesNotExist:
+        return JsonResponse({"error": "Reader genre not found."}, status=404)
+
+    if request.method == 'DELETE':
+        # Ensure the user has permission to delete the user book
+        if request.user.id != reader_genre.user.id:
+            return JsonResponse({"error": "Unauthorized to delete this user_book."}, status=403)
+
+        reader_genre.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(reader_genre.as_dict())
+
+# APIs for bookGenre model below
+def book_genres_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the bookGenre"""
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new friendship
+        POST = json.loads(request.body)
+        book= Reader.objects.get(id=POST.get("book_id"))
+        genre = Genre.objects.get(id=POST.get("genre_id"))
+
+        book_genre = BookGenre.objects.create(
+            book = book,
+            genre = genre,
+        )
+        return JsonResponse(book_genre.as_dict())
+
+    # GET method which allows the user to view all book_genre
+    return JsonResponse({
+        'book_genre': [
+            book_genre.as_dict()
+            for book_genre in BookGenre.objects.all()
+        ]
+    })
+
+def book_genre_api(request: HttpRequest, book_genre_id: int) -> JsonResponse:
+    """API endpoint for a single book_genre"""
+    try:
+        book_genre = BookGenre.objects.get(id=book_genre_id)
+    except BookGenre.DoesNotExist:
+        return JsonResponse({"error": "Reader genre not found."}, status=404)
+
+    if request.method == 'DELETE':
+        # Ensure the user has permission to delete the user book
+        if request.user.id != book_genre.user.id:
+            return JsonResponse({"error": "Unauthorized to delete this user_book."}, status=403)
+
+        book_genre.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(book_genre.as_dict())
+
 # APIs for review model below
 def reviews_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the review"""
@@ -606,3 +852,57 @@ def review_api(request: HttpRequest, review_id: int) -> JsonResponse:
         return JsonResponse({}, status=204)  # 204 No Content
 
     return JsonResponse(review.as_dict())
+
+# APIs for comments model below
+def comments_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the comment"""
+
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new comment
+        POST = json.loads(request.body)
+        user = Reader.objects.get(id=POST.get("user_id"))
+        blog = Blog.objects.get(id=POST.get("blog_id"))
+
+        comment = Comment.objects.create(
+            user = user,
+            blog = blog,
+            comment = POST['comment'],
+        )
+        return JsonResponse(comment.as_dict())
+
+    # GET method which allows the user to view all comments
+    return JsonResponse({
+        'comments': [
+            comment.as_dict()
+            for  comment in Comment.objects.all()
+        ]
+    })
+
+def comment_api(request: HttpRequest, comment_id: int) -> JsonResponse:
+    """API endpoint for a single comment"""
+    try:
+        comment = Comment.objects.get(id=comment_id)
+    except Comment.DoesNotExist:
+        return JsonResponse({"error": "Comment not found."}, status=404)
+
+    if request.method == 'PUT':
+        # Ensure the user has permission to edit the comment
+        if request.user.id != comment.user.id:
+            return JsonResponse({"error": "Unauthorized to accept this comment."}, status=403)
+
+        PUT = json.loads(request.body)
+        comment.comment = PUT.get("comment", comment.commnet)
+        comment.save()
+        return JsonResponse({"Comment": comment.as_dict()})
+
+    elif request.method == 'DELETE':
+        # Ensure the user has permission to delete this comment
+        if request.user.id != comment.user.id:
+            return JsonResponse({"error": "Unauthorized to delete this Comment."}, status=403)
+
+        comment.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(comment.as_dict())

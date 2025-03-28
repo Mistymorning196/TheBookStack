@@ -51,6 +51,7 @@ class Reader(SiteUser):
     messages = models.ManyToManyField("self", through="Message", symmetrical=False, related_name="messages_with+")
     user_books = models.ManyToManyField("Book", through="UserBook")
     friends = models.ManyToManyField("self", through="Friendship", symmetrical=False, related_name="friends_with+")
+    genres = models.ManyToManyField(Genre, through="ReaderGenre")
 
     class Meta:
         verbose_name = "Reader"
@@ -70,7 +71,7 @@ class Author(SiteUser):
     """
     Author model extending SiteUser with additional attributes.
     """
-    pass
+    biography = models.TextField(blank=True, null=True)  # Example attribute
 
     class Meta:
         verbose_name = "Author"
@@ -81,7 +82,9 @@ class Author(SiteUser):
 
     def as_dict(self):
         data = super().as_dict()  # Get the parent class dictionary
- 
+        data.update({
+            'biography': self.biography,
+        })
         return data   
 
 
@@ -95,7 +98,7 @@ class Book(models.Model):
     blurb = models.TextField(max_length=2000)
     isbn = models.CharField(max_length=100)
     #placeholder for image file for cover picture
-    #also need to add genres possibly a relationship? needs to be choices and able to do multiple
+    genres = models.ManyToManyField(Genre, through="BookGenre")
     reviews = models.ManyToManyField(Reader, through="Review")  # Proper Many-to-Many with Review
 
     def as_dict(self):
@@ -107,7 +110,75 @@ class Book(models.Model):
             'blurb': self.blurb,
             'isbn': self.isbn,
         }
+    
+# Book Model
+class Blog(models.Model):
+    """
+    Class for the model Book
+    """ 
+    title = models.CharField(max_length=100)
+    post = models.TextField(max_length=2000)
+    comments = models.ManyToManyField(Reader, through="Comment")  # Proper Many-to-Many with Review
 
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('blog api', args=[self.id]),
+            'title': self.title,
+            'post': self.post,
+        }
+    
+class Comment(models.Model):
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
+    user = models.ForeignKey(Reader, on_delete=models.CASCADE)
+    comment = models.TextField(max_length=2000)
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('reader genre api', args=[self.id]),
+            'blog': self.blog.id,
+            'user': self.user.id,
+            'comment': self.comment,
+        }
+    
+#ReaderGenre Model
+class ReaderGenre(models.Model):  
+    """
+    This class is the ReaderGenres Model which is a through model 
+    which creates a many-to-many relationship between users and books.
+    """
+    user = models.ForeignKey(Reader, on_delete=models.CASCADE)
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, default=None)
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('reader genre api', args=[self.id]),
+            'user': self.user.id,
+            'genre': self.genre.id,
+            'name': self.genre.type,
+        }
+
+# ReaderGenre Model
+class BookGenre(models.Model):  
+    """
+    This class is the ReaderGenres Model which is a through model 
+    which creates a many-to-many relationship between users and books.
+    """
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100, default=None)
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('book genre api', args=[self.id]),
+            'book': self.book.id,
+            'genre': self.genre.id,
+            'name': self.genre.type,
+        }
 
 # Friendship Model
 class Friendship(models.Model):
@@ -155,7 +226,7 @@ class Message(models.Model):
         }
 
 # UserBook Model
-class UserBook(models.Model):  # Corrected from models.model to models.Model
+class UserBook(models.Model): 
     """
     This class is the UserBooks Model which is a through model 
     which creates a many-to-many relationship between users and books.

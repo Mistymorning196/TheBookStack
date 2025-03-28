@@ -105,9 +105,7 @@
         editTitle: false,
         editMessage: false,
         editRating: false,
-  
-        // activeTab to manage tabs (e.g. "accepted")
-        activeTab: "accepted", // Default to Accepted Friends
+
   
         editedReview: {
           title: "",

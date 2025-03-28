@@ -4,7 +4,7 @@
       <!-- Profile Box -->
       <div id="profile-box">
         <h2>Welcome {{ reader.first_name }}</h2>
-        <p>Username: {{ reader.username }}</p>
+        <p>Username: {{ reader.username }} <button> <a href="http://localhost:8000/updateUser/"> Change Username </a> </button></p>
 
         <p v-for="field in editableFields" :key="field.key">
           <span v-if="!field.isEditing">{{ field.label }}: {{ reader[field.key] }}</span>
@@ -15,6 +15,8 @@
           <button v-if="!field.isEditing" @click="toggleEditField(field.key)">Edit</button>
           <button v-else @click="saveField(field.key)">Save</button>
         </p>
+
+        <button> <a href="http://localhost:8000/updatePass/"> Change Password </a> </button>
       </div>
 
       <!-- Connections Box -->
@@ -414,6 +416,7 @@ button {
   border-radius: 6px;
   font-size: 1em;
   transition: all 0.3s ease-in-out;
+  
 }
 
 button:hover {
@@ -435,6 +438,11 @@ button:disabled {
 
 button + button {
   margin-left: 6px;  /* Reduced margin */
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
 }
 
 @media (max-width: 768px) {

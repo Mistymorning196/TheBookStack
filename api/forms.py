@@ -37,20 +37,25 @@ class UpdateUserForm(forms.Form):
 
 # Form for letting user sign up
 class SignUpForm(forms.Form):
-    first_name = forms.CharField(label="First Name ", max_length=100, required="true")
-    last_name = forms.CharField(label="Last Name ", max_length=100, required="true")
-    username = forms.CharField(label="Username ", max_length=100, required="true")
-    email = forms.EmailField(label="Email ", required="true")
+    USER_TYPE_CHOICES = [
+        ('reader', 'Reader'),
+        ('author', 'Author'),
+    ]
+
+    first_name = forms.CharField(label="First Name ", max_length=100, required=True)
+    last_name = forms.CharField(label="Last Name ", max_length=100, required=True)
+    username = forms.CharField(label="Username ", max_length=100, required=True)
+    email = forms.EmailField(label="Email ", required=True)
     date_of_birth = forms.DateField(
         label="Date Of Birth ",
-        required="true",
-        # Adding a calendar widget for easier date entry
+        required=True,
         widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
         input_formats=["%Y-%m-%d"]
     )
     password = forms.CharField(
-        label="Password ", required="true", max_length=100,
-        # Adding a password widget for password 
+        label="Password ", required=True, max_length=100,
         widget=forms.PasswordInput()
     )
+    user_type = forms.ChoiceField(label="Sign up as", choices=USER_TYPE_CHOICES, required=True)
+
 

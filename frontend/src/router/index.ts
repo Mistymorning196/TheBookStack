@@ -13,6 +13,8 @@ import MessagePage from '../pages/MessagePage.vue';
 import ListPage from '../pages/ListPage.vue';
 import UserPage from '../pages/UserPage.vue';
 import AuthorPage from '../pages/AuthorPage.vue';
+import AuthorBioPage from '../pages/AuthorBioPage.vue';
+import PostPage from '../pages/PostPage.vue';
 
 let base = (import.meta.env.MODE == 'development') ? import.meta.env.BASE_URL : ''
 
@@ -23,12 +25,14 @@ const router = createRouter({
     history: createWebHistory(base),
     routes: [
         { path: '/', name: 'Home Page', component: HomePage },
+        { path: '/author/', name: 'Author Page', component: AuthorPage },
         { path: '/profile/', name: 'Profile Page', component: ProfilePage },
         { path: '/book/:id', name: 'Book Page', component: BookPage },
         { path: '/user/:id', name: 'User Page', component: UserPage },
-        { path: '/author/:id', name: 'Author Page', component: AuthorPage },
+        { path: '/authorBio/:id', name: 'AuthorBio Page', component: AuthorBioPage },
         { path: '/search/', name: 'Search Page', component: SearchPage },
         { path: '/blog/', name: 'Blog Page', component: BlogPage},
+        { path: '/post/:id', name: 'Post Page', component: PostPage},
         { path: '/message/:id', name: 'Message Page', component: MessagePage},
         { path: '/myBooks/', name: 'List Page', component: ListPage},
     ]
