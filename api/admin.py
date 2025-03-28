@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
+from .models import Blog, SiteUser, Reader, Author, Book, Genre, Friendship, Message
 
 # Friendship Inline
 class FriendshipInline(admin.TabularInline):
@@ -19,20 +19,42 @@ class UserBookInline(admin.TabularInline):
     model = Reader.user_books.through
     fk_name = 'user'
 
-'''Register the friendship through model to the admin panel'''
+'''Register the ReaderGenre through model to the admin panel'''
+
+class ReaderGenreInline(admin.TabularInline):
+    model = Reader.genres.through
+    fk_name = 'user'
+
+'''Register the BookGenre through model to the admin panel'''
+
+class BookGenreInline(admin.TabularInline):
+    model = Book.genres.through
+    fk_name = 'book'
+
+'''Register the review through model to the admin panel'''
 
 class ReviewInline(admin.TabularInline):
     model = Book.reviews.through
     fk_name = 'book'
 
+
+'''Register the comment through model to the admin panel'''
+
+class CommentInline(admin.TabularInline):
+    model = Blog.comments.through
+    fk_name = 'blog'
+
+@admin.register(Blog)
+class BookAdmin(admin.ModelAdmin):
+    inlines = (CommentInline,)
+
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    inlines = (ReviewInline,)
+    inlines = (ReviewInline, BookGenreInline,)
 
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
     pass
-
 
 '''Register the user model to the admin panel'''
 @admin.register(SiteUser)
@@ -47,7 +69,7 @@ class ReaderAdmin(SiteUserAdmin):
     """
     Admin panel for Reader model, inheriting from SiteUserAdmin.
     """
-    inlines = (FriendshipInline, MessageInline, UserBookInline,)
+    inlines = (FriendshipInline, MessageInline, UserBookInline, ReaderGenreInline,)
     list_display = SiteUserAdmin.list_display + ('book_count',)
     search_fields = SiteUserAdmin.search_fields
     list_filter = SiteUserAdmin.list_filter

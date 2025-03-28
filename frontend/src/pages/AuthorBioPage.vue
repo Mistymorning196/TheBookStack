@@ -10,7 +10,7 @@
       export default defineComponent({
           data() {
               return {
-                  title: "Author Logged in",
+                  title: "Author Bio",
               }
           }
       })
