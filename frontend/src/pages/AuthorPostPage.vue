@@ -1,48 +1,37 @@
 <template>
-  <ReaderNavBarComponent />
+  <AuthorNavBarComponent />
     <div class="body">
       <!-- Post Section -->
       <div id="profile-box">
         <h2>Post</h2>
-        <p>Title: {{ blog.title }}</p>
-        <p>Author: {{ blog.author }}</p>
-        <p>Post: {{ blog.post }}</p>
+        <p v-for="field in editableFields" :key="field.key">
+          <span v-if="!field.isEditing">{{ field.label }}: {{ blog[field.key] }}</span>
+          <span v-else>
+            {{ field.label }}:
+            <input v-model="editedBlog[field.key]" :type="field.type" />
+          </span>
+          <button v-if="!field.isEditing" @click="toggleEditField(field.key)">Edit</button>
+          <button v-else @click="saveField(field.key)">Save</button>
+        </p>
       </div>
   
       <!-- Comment Section -->
       <section id="comment-box">
         <h2>Comments:</h2>
-        <button @click="toggleModal">Add Comment</button>
   
         <!-- Scrollable Container for Comments -->
         <div class="comments-container">
           <div v-for="(comment, index) in comments.filter(comment => comment.blog === blog.id)" :key="index" class="comment">
-            <p v-if="comment.user === reader_id">
-              <span>{{comment.username}}: {{ comment.comment }}</span>
-              <button class="delete" @click="deleteComment(comment.id)">Delete</button>
-            </p>
-            <p v-else>{{comment.username}}: {{ comment.comment }}</p>
+            <p> {{comment.username}}: {{ comment.comment }}</p>
           </div>
         </div>
       </section>
   
-      <!-- Add Comment Modal -->
-      <div v-if="showModal" class="modal">
-        <div class="modal-content">
-          <h3>Add a Comment</h3>
-          <textarea v-model="newComment.comment" placeholder="Your comment..."></textarea>
-          <button @click="submitComment">Submit</button>
-          <button @click="toggleModal">Cancel</button>
-        </div>
-      </div>
-  
-      <!-- Modal Overlay (background) -->
-      <div class="modal-overlay" v-if="showModal" @click="toggleModal"></div>
     </div>
   </template>
   
   <script lang="ts">
-  import ReaderNavBarComponent from "../components/ReaderNav.vue";
+  import AuthorNavBarComponent from "../components/AuthorNav.vue";
   import { defineComponent } from "vue";
   import { useBlogStore } from "../stores/blog";
   import { useCommentsStore } from "../stores/comments";
@@ -52,16 +41,13 @@
   export default defineComponent({
     data() {
       return {
-        reader_id: Number(window.sessionStorage.getItem("reader_id")),
-  
-        // Modal and new comment
-        showModal: false,
-        newComment: {
-          comment: "",
-          blog: null,
-          user: this.reader_id,
-        },
-  
+        reader_id: Number(window.sessionStorage.getItem("reader_id")), 
+        editableFields: [
+          { key: "title", label: "Title", type: "text", isEditing: false },
+          { key: "author", label: "Author", type: "text", isEditing: false },
+          { key: "post", label: "Post", type: "text", isEditing: false },
+        ],
+        editedBlog: {} as Record<string, string>,
       };
     },
     async mounted() {
@@ -74,91 +60,44 @@
       const storeComment = useCommentsStore();
       storeComment.saveComments(dataComment.comments);
   
-      this.newComment.blog = blogId; // Set blog ID for new comment
     },
     components: {
-      ReaderNavBarComponent,
+      AuthorNavBarComponent,
     },
     methods: {
-      // Toggle modal visibility
-      toggleModal() {
-        this.showModal = !this.showModal;
-        const modalOverlay = document.querySelector('.modal-overlay');
-        if (this.showModal) {
-          modalOverlay.classList.add('active');
-        } else {
-          modalOverlay.classList.remove('active');
+      toggleEditField(fieldKey: string) {
+      const field = this.editableFields.find(f => f.key === fieldKey);
+      if (field) {
+        field.isEditing = !field.isEditing;
+        if (field.isEditing) {
+          this.editedBlog[fieldKey] = this.blog[fieldKey];
         }
-      },
-  
-      // Submit new comment
-      async submitComment() {
-        if (!this.newComment.comment) {
-          alert("Please fill out all fields!");
-          return;
-        }
-  
-        const commentData = {
-          user_id: this.reader_id,
-          blog_id: this.newComment.blog,
-          comment: this.newComment.comment,
-        };
-  
-        let response = await fetch("http://localhost:8000/comments/", {
-          method: "POST",
+      }
+    },
+    async saveField(fieldKey: string) {
+      try {
+        const payload = { [fieldKey]: this.editedBlog[fieldKey] };
+        const response = await fetch(`http://localhost:8000/blog/${this.blog.id}/`, {
+          method: "PUT",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
             "Content-Type": "application/json",
             "X-CSRFToken": VueCookies.get("csrftoken"),
           },
           credentials: "include",
-          body: JSON.stringify(commentData),
+          body: JSON.stringify(payload),
         });
+
+        if (!response.ok) throw new Error("Failed to update field");
+
+        this.blogStore.saveBlogs(await response.json());
+        window.location.reload();
+      } catch (error) {
+        console.error(error);
+        alert(`Failed to update ${fieldKey}.`);
+      }
+    },
   
-        if (response.ok) {
-          const storeComment = useCommentsStore();
-          storeComment.saveComments([...storeComment.comments, commentData]);
-          this.toggleModal();
-          this.newComment = {
-            comment: "",
-            blog: this.newComment.blog,
-            user: this.reader_id,
-          };
-          window.location.reload();
-          alert("Comment added successfully");
-        } else {
-          alert("Failed to add comment");
-        }
-      },
-  
-      // Delete user's comment
-      async deleteComment(commentId: number) {
-        try {
-          const response = await fetch(`http://localhost:8000/comment/${commentId}/`, {
-            method: "DELETE",
-            headers: {
-              "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-              "Content-Type": "application/json",
-              "X-CSRFToken": VueCookies.get("csrftoken"),
-            },
-            credentials: "include",
-          });
-  
-          if (!response.ok) {
-            throw new Error("Failed to delete comment");
-          }
-  
-          // Remove the deleted comment from the store
-          const commentsStore = useCommentsStore();
-          commentsStore.removeComment(commentId);
-  
-          window.location.reload();
-          alert("Comment deleted successfully!");
-        } catch (error) {
-          console.error("Error deleting comment:", error);
-          alert("Failed to delete comment. Please try again.");
-        }
-      },
     },
     computed: {
       blog() {
@@ -318,15 +257,15 @@
     visibility: visible;
   }
 
-  /* Media query for smaller screens */
+   /* Media query for smaller screens */
 @media (max-width: 768px) {
 
 
-  .body{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+.body{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
 
 }

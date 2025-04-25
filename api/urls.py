@@ -3,7 +3,7 @@ from django.contrib import admin, auth
 from django.urls import include, path
 from django.http import HttpResponse
 
-from .views import author_api, authors_api, blog_api, blogs_api, book_genre_api, book_genres_api, comment_api, comments_api, friendship_api, friendships_api, genre_api, genres_api, login_site_user, logout_site_user, message_api, messages_api, reader_api, reader_genre_api, reader_genres_api, readers_api, review_api, reviews_api, signup_site_user, books_api, book_api, site_users_api, site_user_api, update_password, update_username, user_book_api, user_books_api
+from .views import author_api, author_blog_api, author_blogs_api, author_book_api, author_books_api, authors_api, blog_api, blogs_api, book_genre_api, book_genres_api, comment_api, comments_api, friendship_api, friendships_api, genre_api, genres_api, login_site_user, logout_site_user, message_api, messages_api, reader_api, reader_genre_api, reader_genres_api, readers_api, review_api, reviews_api, signup_site_user, books_api, book_api, site_users_api, site_user_api, update_password, update_username, user_book_api, user_books_api
 
 # Listing route URLs to views.
 urlpatterns = [
@@ -31,6 +31,10 @@ urlpatterns = [
     path('message/<int:message_id>/', message_api, name='message api'),
     path('user_books/', user_books_api, name='user books api'),
     path('user_book/<int:user_book_id>/', user_book_api, name='user book api'),
+    path('author_books/', author_books_api, name='author books api'),
+    path('author_book/<int:author_book_id>/', author_book_api, name='author book api'),
+    path('author_blogs/', author_blogs_api, name='author blogs api'),
+    path('author_blog/<int:author_blog_id>/', author_blog_api, name='author blog api'),
     path('reader_genres/', reader_genres_api, name='reader genres api'),
     path('reader_genre/<int:reader_genre_id>/', reader_genre_api, name='reader genre api'),
     path('book_genres/', book_genres_api, name='book genres api'),

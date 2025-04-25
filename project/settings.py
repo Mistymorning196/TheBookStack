@@ -100,7 +100,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Defined URLs
 READER_REDIRECT_URL = 'http://localhost:5173/'
-AUTHOR_REDIRECT_URL = 'http://localhost:5173/author'
+AUTHOR_REDIRECT_URL = 'http://localhost:5173/authorHome'
 LOGIN_REDIRECT_URL = 'http://localhost:5173/'
 LOGIN_URL = '/login/'
 
@@ -161,3 +161,7 @@ AUTH_USER_MODEL = "api.SiteUser"
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 INTERNAL_IPS = ['127.0.0.1']
+
+# Media files (uploads like book cover images)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

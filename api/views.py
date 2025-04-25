@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 
-from .models import Blog, BookGenre, Comment, ReaderGenre, SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
+from .models import AuthorBlog, AuthorBook, Blog, BookGenre, Comment, ReaderGenre, SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
 from .forms import LoginForm, SignUpForm, UpdatePassForm, UpdateUserForm
 
 def login_site_user(request: HttpRequest) -> HttpResponse:
@@ -187,32 +187,36 @@ def update_username(request: HttpRequest) -> HttpResponse:
         form = UpdateUserForm()
         return render(request, "api/auth/updateUsername.html", {"form": form})
     
-# APIs for book model below
+
 def books_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Book"""
-    
 
-    # POST method which is the create method
     if request.method == 'POST':
-        # Create a new book
-        POST = json.loads(request.body)
+        # Handle multipart/form-data for file upload
+        title = request.POST.get('title')
+        author = request.POST.get('author')
+        blurb = request.POST.get('blurb')
+        isbn = request.POST.get('isbn')
+        cover_image = request.FILES.get('cover_image')
+
         book = Book.objects.create(
-            title = POST['title'],
-            author = POST['author'],
-            blurb = POST['blurb'],
-            isbn = POST['isbn'],
+            title=title,
+            author=author,
+            blurb=blurb,
+            isbn=isbn,
+            cover_image=cover_image
         )
-        return JsonResponse(book.as_dict())
-    
+        return JsonResponse(book.as_dict(), status=201)
+
     search_query = request.GET.get("search", "").strip()
     if search_query:
         books = Book.objects.filter(Q(title__icontains=search_query) | Q(author__icontains=search_query))
     else:
         books = Book.objects.all()
 
-    return JsonResponse({"books": [book.as_dict() for book in books]})
+    return JsonResponse({"books": [book.as_dict() for book in books]}, safe=False)
 
- 
+
 
 def book_api(request: HttpRequest, book_id: int) -> JsonResponse:
     """API endpoint for a single book"""
@@ -221,25 +225,37 @@ def book_api(request: HttpRequest, book_id: int) -> JsonResponse:
     except Book.DoesNotExist:
         return JsonResponse({"error": "Book not found."}, status=404)
 
-    # PUT method to update book
     if request.method == 'PUT':
-        try:
-            PUT = json.loads(request.body)
-            book.title = PUT.get("title", book.title)
-            book.author = PUT.get("author", book.author)
-            book.blurb = PUT.get("blurb", book.blurb)
-            book.isbn = PUT.get("isbn", book.isbn)
-            book.save()
-            return JsonResponse(book.as_dict())
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+        if request.content_type.startswith('multipart/form-data'):
+            # Update via multipart (e.g., image updates)
+            title = request.POST.get('title', book.title)
+            author = request.POST.get('author', book.author)
+            blurb = request.POST.get('blurb', book.blurb)
+            isbn = request.POST.get('isbn', book.isbn)
+            cover_image = request.FILES.get('cover_image')
 
-    # DELETE method to delete book
+            book.title = title
+            book.author = author
+            book.blurb = blurb
+            book.isbn = isbn
+            if cover_image:
+                book.cover_image = cover_image
+            book.save()
+        else:
+            # Assume JSON
+            data = json.loads(request.body)
+            book.title = data.get("title", book.title)
+            book.author = data.get("author", book.author)
+            book.blurb = data.get("blurb", book.blurb)
+            book.isbn = data.get("isbn", book.isbn)
+            book.save()
+
+        return JsonResponse(book.as_dict())
+
     if request.method == 'DELETE':
         book.delete()
-        return JsonResponse({}, status=204)  # 204 No Content
+        return JsonResponse({}, status=204)
 
-    # GET book data
     return JsonResponse(book.as_dict())
 
 # APIs for book model below
@@ -251,15 +267,16 @@ def blogs_api(request: HttpRequest) -> JsonResponse:
     if request.method == 'POST':
         # Create a new book
         POST = json.loads(request.body)
-        blog = Book.objects.create(
+        blog = Blog.objects.create(
             title = POST['title'],
             post = POST['post'],
+            author = POST['author'],
         )
         return JsonResponse(blog.as_dict())
     
     search_query = request.GET.get("search", "").strip()
     if search_query:
-        blogs = Blog.objects.filter(Q(title__icontains=search_query))
+        blogs = Blog.objects.filter(Q(title__icontains=search_query) | Q(author__icontains=search_query))
     else:
         blogs = Blog.objects.all()
 
@@ -280,6 +297,7 @@ def blog_api(request: HttpRequest, blog_id: int) -> JsonResponse:
             PUT = json.loads(request.body)
             blog.title = PUT.get("title", blog.title)
             blog.post = PUT.get("post", blog.post)
+            blog.author = PUT.get("author", blog.author)
             blog.save()
             return JsonResponse(blog.as_dict())
         except Exception as e:
@@ -412,6 +430,11 @@ def reader_api(request: HttpRequest, reader_id: int) -> JsonResponse:
             reader.date_of_birth = PUT.get("date_of_birth", reader.date_of_birth)
             reader.password = PUT.get("password", reader.password)
             reader.book_count = PUT.get("book_count", reader.book_count)
+            reader.goal_one = PUT.get("goal_one", reader.goal_one)
+            reader.goal_two = PUT.get("goal_two", reader.goal_two)
+            reader.goal_three = PUT.get("goal_three", reader.goal_three)
+            reader.goal_four = PUT.get("goal_four", reader.goal_four)
+            reader.goal_five = PUT.get("goal_five", reader.goal_five)
 
             reader.save()
             return JsonResponse({"success": "Reader updated successfully."})
@@ -451,14 +474,14 @@ def authors_api(request: HttpRequest) -> JsonResponse:
         
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
+        
+    search_query = request.GET.get("search", "").strip()
+    if search_query:
+        authors = Author.objects.filter(Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query))
+    else:
+        authors = Author.objects.all()
 
-    # GET method (List all authors)
-    return JsonResponse({
-        'authors': [
-            author.as_dict()
-            for author in Author.objects.all()
-        ]
-    })
+    return JsonResponse({"authors": [author.as_dict() for author in authors]})
 
 
 def author_api(request: HttpRequest, author_id: int) -> JsonResponse:
@@ -711,6 +734,91 @@ def user_book_api(request: HttpRequest, user_book_id: int) -> JsonResponse:
 
     return JsonResponse(user_book.as_dict())
 
+# APIs for AuthorBook model below
+def author_books_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the AuthorBook"""
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new 
+        POST = json.loads(request.body)
+        user = Author.objects.get(id=POST.get("user_id"))
+        book = Book.objects.get(id=POST.get("book_id"))
+
+        author_book = AuthorBook.objects.create(
+            user = user,
+            book = book,
+        )
+        return JsonResponse(author_book.as_dict())
+
+    # GET method which allows the user to view all 
+    return JsonResponse({
+        'author_books': [
+            author_book.as_dict()
+            for author_book in AuthorBook.objects.all()
+        ]
+    })
+
+def author_book_api(request: HttpRequest, author_book_id: int) -> JsonResponse:
+    """API endpoint for a single author_book"""
+    try:
+        author_book = AuthorBook.objects.get(id=author_book_id)
+    except AuthorBook.DoesNotExist:
+        return JsonResponse({"error": "Author Book not found."}, status=404)
+
+    if request.method == 'DELETE':
+        # Ensure the user has permission to delete the user book
+        if request.user.id != author_book.user.id:
+            return JsonResponse({"error": "Unauthorized to delete this author_book."}, status=403)
+
+        author_book.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(author_book.as_dict())
+
+# APIs for AuthorBlog model below
+def author_blogs_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the AuthorBlog"""
+
+    # POST method which is the create method
+    if request.method == 'POST':
+        # Create a new 
+        POST = json.loads(request.body)
+        user = Author.objects.get(id=POST.get("user_id"))
+        blog = Blog.objects.get(id=POST.get("blog_id"))
+
+        author_blog = AuthorBlog.objects.create(
+            user = user,
+            blog = blog,
+        )
+        return JsonResponse(author_blog.as_dict())
+
+    # GET method which allows the user to view all 
+    return JsonResponse({
+        'author_blogs': [
+            author_blog.as_dict()
+            for author_blog in AuthorBlog.objects.all()
+        ]
+    })
+
+def author_blog_api(request: HttpRequest, author_blog_id: int) -> JsonResponse:
+    """API endpoint for a single author_blog"""
+    try:
+        author_blog = AuthorBlog.objects.get(id=author_blog_id)
+    except AuthorBlog.DoesNotExist:
+        return JsonResponse({"error": "Author Blog not found."}, status=404)
+
+    if request.method == 'DELETE':
+        # Ensure the user has permission to delete the user book
+        if request.user.id != author_blog.user.id:
+            return JsonResponse({"error": "Unauthorized to delete this author_blog."}, status=403)
+
+        author_blog.delete()
+        return JsonResponse({}, status=204)  # 204 No Content
+
+    return JsonResponse(author_blog.as_dict())
+
+
 # APIs for ReaderGenre model below
 def reader_genres_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the ReaderGenre"""
@@ -742,8 +850,17 @@ def reader_genre_api(request: HttpRequest, reader_genre_id: int) -> JsonResponse
         reader_genre = ReaderGenre.objects.get(id=reader_genre_id)
     except ReaderGenre.DoesNotExist:
         return JsonResponse({"error": "Reader genre not found."}, status=404)
+    
+    if request.method == 'PUT':
+        # Ensure the user has permission to edit user_book
+        if request.user.id != reader_genre.user.id:
+            return JsonResponse({"error": "Unauthorized to accept this user_book."}, status=403)
+        PUT = json.loads(request.body)
+        reader_genre.count = PUT.get("count", reader_genre.count)
+        reader_genre.save()
+        return JsonResponse({"User book": reader_genre.as_dict()})    
 
-    if request.method == 'DELETE':
+    elif request.method == 'DELETE':
         # Ensure the user has permission to delete the user book
         if request.user.id != reader_genre.user.id:
             return JsonResponse({"error": "Unauthorized to delete this user_book."}, status=403)
@@ -761,7 +878,7 @@ def book_genres_api(request: HttpRequest) -> JsonResponse:
     if request.method == 'POST':
         # Create a new friendship
         POST = json.loads(request.body)
-        book= Reader.objects.get(id=POST.get("book_id"))
+        book= Book.objects.get(id=POST.get("book_id"))
         genre = Genre.objects.get(id=POST.get("genre_id"))
 
         book_genre = BookGenre.objects.create(

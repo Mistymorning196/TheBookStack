@@ -1,4 +1,5 @@
 <template>
+  <ReaderNavBarComponent />
   <!-- Title Section -->
   <div class="title-container">
     <h1>Messages</h1>
@@ -27,6 +28,7 @@
 </template>
 
 <script lang="ts">
+import ReaderNavBarComponent from "../components/ReaderNav.vue";
 import { defineComponent, nextTick } from "vue";
 import { useMessagesStore } from "../stores/messages";
 import { useReaderStore } from "../stores/reader";
@@ -53,6 +55,9 @@ export default defineComponent({
 
     // Scroll to the bottom after messages are loaded
     this.scrollToBottom();
+  },
+  components: {
+    ReaderNavBarComponent,
   },
   methods: {
     async sendMessage() {

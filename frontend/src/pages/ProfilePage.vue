@@ -1,4 +1,5 @@
 <template>
+  <ReaderNavBarComponent />
   <div class="body">
     <div class="top-section">
       <!-- Profile Box -->
@@ -75,11 +76,11 @@
             </ul>
           </div>
         </div>
-        
       </div>
     </div>
 
-    <!-- Book Count Section -->
+    <div class="bottom-section">
+       <!-- Book Count Section -->
     <div class="book-count-display">
       <div class="book-count-badge">
         <span>{{ reader.book_count }}</span> Books Read
@@ -89,12 +90,31 @@
       </div>
       <p v-if="reader.book_count > 0" class="milestone-message">{{ bookMilestone }}</p>
     </div>
+
+    <!-- Goals Section -->
+    <div class="goals-section">
+      <h3>Your Reading Goals</h3>
+      <ul>
+        <li v-for="(goal, index) in goals" :key="index">
+          <span v-if="!goal.isEditing">Goal {{ index + 1 }}: {{ goal.value }}</span>
+          <span v-else>
+            Goal {{ index + 1 }}:
+            <input type="number" v-model.number="goal.value" />
+          </span>
+          <button @click="toggleGoalEdit(index)">
+            {{ goal.isEditing ? 'Save' : 'Edit' }}
+          </button>
+        </li>
+      </ul>
+    </div>
   </div>
+
+    </div>
+   
 </template>
 
-
-
 <script lang="ts">
+import ReaderNavBarComponent from "../components/ReaderNav.vue";
 import { defineComponent } from "vue";
 import { useReaderStore } from "../stores/reader";
 import { useFriendshipsStore } from "../stores/friendships";
@@ -113,6 +133,13 @@ export default defineComponent({
       activeTab: "following",
       activeTabFollowers: "followers",
       reader_id: Number(window.sessionStorage.getItem("reader_id")),
+      goals: [
+        { key: "goal_one", value: 0, isEditing: false },
+        { key: "goal_two", value: 0, isEditing: false },
+        { key: "goal_three", value: 0, isEditing: false },
+        { key: "goal_four", value: 0, isEditing: false },
+        { key: "goal_five", value: 0, isEditing: false },
+      ],
     };
   },
   async mounted() {
@@ -120,6 +147,11 @@ export default defineComponent({
       const readerId = this.reader_id;
       const reader = await this.readerStore.fetchReaderReturn(readerId);
       this.readerStore.reader = reader;
+
+      // Populate initial goal values
+      this.goals.forEach(goal => {
+        goal.value = this.reader[goal.key];
+      });
     } catch (error) {
       console.error("Error fetching user:", error);
     }
@@ -127,6 +159,9 @@ export default defineComponent({
     const response = await fetch("http://localhost:8000/friendships/");
     const data = await response.json();
     this.friendshipsStore.saveFriendships(data.friendships);
+  },
+  components: {
+    ReaderNavBarComponent,
   },
   computed: {
     reader() {
@@ -145,33 +180,28 @@ export default defineComponent({
       return this.friendships.filter(f => f.friend === this.reader.id && f.accepted === true);
     },
     filteredPending() {
-      console.log(this.friendships);
       return this.friendships.filter(f => f.friend === this.reader.id && f.accepted === false);
     },
     bookMilestone() {
-      const milestones = [10, 20, 50, 100, 200, 500, 1000];
+      const milestones = [this.reader.goal_one, this.reader.goal_two, this.reader.goal_three, this.reader.goal_four, this.reader.goal_five];
       const currentCount = this.reader.book_count;
       const nextMilestone = milestones.find(m => m > currentCount);
-      
       if (nextMilestone) {
         return `You're ${nextMilestone - currentCount} books away from your next milestone of ${nextMilestone} books! Keep going! 🎉`;
       }
       return "You've reached an incredible milestone! Keep reading! 📚";
     },
     bookProgressWidth() {
-      const milestones = [10, 20, 50, 100, 200, 500, 1000];
+      const milestones = [this.reader.goal_one, this.reader.goal_two, this.reader.goal_three, this.reader.goal_four, this.reader.goal_five];
       const currentCount = this.reader.book_count;
       const nextMilestone = milestones.find(m => m > currentCount);
-      
       if (nextMilestone) {
-        return Math.min((currentCount / nextMilestone) * 100, 100); // Progress bar percentage
+        return Math.min((currentCount / nextMilestone) * 100, 100);
       }
-      return 100; // If no next milestone, show full progress
+      return 100;
     },
-  
   },
   methods: {
-    
     toggleEditField(fieldKey: string) {
       const field = this.editableFields.find(f => f.key === fieldKey);
       if (field) {
@@ -203,6 +233,36 @@ export default defineComponent({
         console.error(error);
         alert(`Failed to update ${fieldKey}.`);
       }
+    },
+    async saveGoal(goalKey: string, value: number) {
+      try {
+        const payload = { [goalKey]: value };
+        const response = await fetch(`http://localhost:8000/reader/${this.reader.id}/`, {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": VueCookies.get("csrftoken"),
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) throw new Error("Failed to update goal");
+
+        this.readerStore.saveReaders(await response.json());
+        window.location.reload();
+      } catch (error) {
+        console.error(error);
+        alert(`Failed to update ${goalKey}.`);
+      }
+    },
+    toggleGoalEdit(index: number) {
+      const goal = this.goals[index];
+      if (goal.isEditing) {
+        this.saveGoal(goal.key, goal.value);
+      }
+      goal.isEditing = !goal.isEditing;
     },
     async acceptFriendship(friendshipId: number) {
       try {
@@ -256,6 +316,7 @@ export default defineComponent({
 });
 </script>
 
+
 <style scoped>
 /* General Styles */
 .body {
@@ -272,8 +333,16 @@ export default defineComponent({
 .top-section {
   display: flex;
   justify-content: space-between;
-  gap: 0.5em;  /* Reduced gap between profile and connections */
+  gap: 0.5em; 
   width: 100%;
+}
+
+.bottom-section {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5em; 
+  width: 70%;
+
 }
 
 #profile-box,
@@ -298,7 +367,7 @@ export default defineComponent({
   text-align: center;
 }
 
-.book-count-display {
+.book-count-display , .goals-section {
   background-color: #2f4a54; /* Same as profile and connections */
   padding: 0.8em;  /* Reduced padding */
   border-radius: 12px;
@@ -306,6 +375,11 @@ export default defineComponent({
   max-width: 450px;  /* Reduced max width */
   text-align: center;
   margin-top: 0.3em;  /* Reduced margin */
+  height: 150px;
+}
+
+.goals-section{
+  overflow-y: auto;
 }
 
 .book-count-badge {
@@ -389,6 +463,8 @@ h3 {
   overflow-y: auto;
 }
 
+
+
 ul {
   list-style: none;
   padding: 0;
@@ -446,7 +522,7 @@ a {
 }
 
 @media (max-width: 768px) {
-  .top-section {
+  .top-section, .bottom-section {
     flex-direction: column;
     align-items: center;
   }

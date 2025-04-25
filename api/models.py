@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import AbstractUser
@@ -48,6 +49,11 @@ class Reader(SiteUser):
     Reader model extending SiteUser with additional attributes.
     """
     book_count = models.IntegerField(default=0)
+    goal_one = models.IntegerField(default=10)
+    goal_two = models.IntegerField(default=20)
+    goal_three = models.IntegerField(default=30)
+    goal_four = models.IntegerField(default=40)
+    goal_five = models.IntegerField(default=50)
     messages = models.ManyToManyField("self", through="Message", symmetrical=False, related_name="messages_with+")
     user_books = models.ManyToManyField("Book", through="UserBook")
     friends = models.ManyToManyField("self", through="Friendship", symmetrical=False, related_name="friends_with+")
@@ -64,6 +70,12 @@ class Reader(SiteUser):
         data = super().as_dict()  # Get the parent class dictionary
         data.update({
             'book_count': self.book_count,
+            'goal_one': self.goal_one,
+            'goal_two': self.goal_two,
+            'goal_three': self.goal_three,
+            'goal_four': self.goal_four,
+            'goal_five': self.goal_five,
+
         })
         return data
 
@@ -71,7 +83,9 @@ class Author(SiteUser):
     """
     Author model extending SiteUser with additional attributes.
     """
-    biography = models.TextField(blank=True, null=True)  # Example attribute
+    biography = models.TextField(blank=True) 
+    books = models.ManyToManyField("Book", through="AuthorBook", related_name="authors")
+    blogs = models.ManyToManyField("Blog", through="AuthorBlog", related_name="authors")
 
     class Meta:
         verbose_name = "Author"
@@ -88,7 +102,6 @@ class Author(SiteUser):
         return data   
 
 
-# Book Model
 class Book(models.Model):
     """
     Class for the model Book
@@ -97,9 +110,9 @@ class Book(models.Model):
     author = models.CharField(max_length=100)
     blurb = models.TextField(max_length=2000)
     isbn = models.CharField(max_length=100)
-    #placeholder for image file for cover picture
-    genres = models.ManyToManyField(Genre, through="BookGenre")
-    reviews = models.ManyToManyField(Reader, through="Review")  # Proper Many-to-Many with Review
+    cover_image = models.ImageField(upload_to='book_covers/', null=True, blank=True)  # New field for book cover image
+    genres = models.ManyToManyField('Genre', through="BookGenre")
+    reviews = models.ManyToManyField('Reader', through="Review")  # Proper Many-to-Many with Review
 
     def as_dict(self):
         return {
@@ -109,15 +122,17 @@ class Book(models.Model):
             'author': self.author,
             'blurb': self.blurb,
             'isbn': self.isbn,
+            'cover_image': self.cover_image.url if self.cover_image else  f'{settings.MEDIA_URL}placeholder/placeholder.jpg',
         }
     
-# Book Model
+# Blog Model
 class Blog(models.Model):
     """
-    Class for the model Book
+    Class for the model Blog
     """ 
     title = models.CharField(max_length=100)
     post = models.TextField(max_length=2000)
+    author = models.TextField(max_length=100, default="author")
     comments = models.ManyToManyField(Reader, through="Comment")  # Proper Many-to-Many with Review
 
     def as_dict(self):
@@ -126,11 +141,15 @@ class Blog(models.Model):
             'api': reverse('blog api', args=[self.id]),
             'title': self.title,
             'post': self.post,
+            'author': self.author,
         }
+    
+
     
 class Comment(models.Model):
     blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
     user = models.ForeignKey(Reader, on_delete=models.CASCADE)
+    username = models.CharField(max_length=100, default="username")
     comment = models.TextField(max_length=2000)
 
     def as_dict(self):
@@ -139,7 +158,54 @@ class Comment(models.Model):
             'api': reverse('reader genre api', args=[self.id]),
             'blog': self.blog.id,
             'user': self.user.id,
+            'username': self.user.username,
             'comment': self.comment,
+        }
+    
+#AuthorBook Model
+class AuthorBook(models.Model):  
+    """
+    This class is the AuthorBook Model which is a through model 
+    which creates a many-to-many relationship between authors and books.
+    """
+    user = models.ForeignKey(Author, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    author = models.CharField(max_length=100, default="author",  blank=True)
+    title = models.CharField(max_length=100, default="title", blank=True)
+    cover_image = models.ImageField(upload_to='book_covers/', null=True, blank=True) 
+
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('author book api', args=[self.id]),
+            'user': self.user.id,
+            'book': self.book.id,
+            'author': self.user.username,
+            'title': self.book.title,
+            'cover_image':  self.book.cover_image.url if self.book.cover_image else '/media/placeholder/placeholder.jpg'
+        }
+    
+#AuthorBlog Model
+class AuthorBlog(models.Model):  
+    """
+    This class is the AuthorBlog Model which is a through model 
+    which creates a many-to-many relationship between authors and blogs.
+    """
+    user = models.ForeignKey(Author, on_delete=models.CASCADE)
+    blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
+    author = models.CharField(max_length=100, default="author",  blank=True)
+    title = models.CharField(max_length=100, default="title", blank=True)
+
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('author blog api', args=[self.id]),
+            'user': self.user.id,
+            'blog': self.blog.id,
+            'author': self.user.username,
+            'title': self.blog.title
         }
     
 #ReaderGenre Model
@@ -150,7 +216,8 @@ class ReaderGenre(models.Model):
     """
     user = models.ForeignKey(Reader, on_delete=models.CASCADE)
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100, default=None)
+    name = models.CharField(max_length=100, default="name")
+    count = models.IntegerField(default=1)
 
     def as_dict(self):
         return {
@@ -159,17 +226,18 @@ class ReaderGenre(models.Model):
             'user': self.user.id,
             'genre': self.genre.id,
             'name': self.genre.type,
+            'count': self.count,
         }
 
-# ReaderGenre Model
+# BookGenre Model
 class BookGenre(models.Model):  
     """
-    This class is the ReaderGenres Model which is a through model 
+    This class is the BookGenres Model which is a through model 
     which creates a many-to-many relationship between users and books.
     """
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100, default=None)
+    name = models.CharField(max_length=100, default="name")
 
     def as_dict(self):
         return {
@@ -240,6 +308,9 @@ class UserBook(models.Model):
     user = models.ForeignKey(Reader, on_delete=models.CASCADE)
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="START")
+    author = models.CharField(max_length=100, default="author",  blank=True)
+    title = models.CharField(max_length=100, default="title", blank=True)
+    cover_image = models.ImageField(upload_to='book_covers/', null=True, blank=True) 
 
     def as_dict(self):
         return {
@@ -248,6 +319,9 @@ class UserBook(models.Model):
             'user': self.user.id,
             'book': self.book.id,
             'status': self.status,
+            'author': self.book.author,
+            'title': self.book.title,
+            'cover_image':  self.book.cover_image.url if self.book.cover_image else '/media/placeholder/placeholder.jpg'
         }
 
 # Review Model
