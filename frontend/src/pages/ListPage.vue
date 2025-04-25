@@ -1,204 +1,269 @@
 <template>
-    <section>
-        <h2>Your Books:</h2>
-    </section>
-    <h3>Currently Reading</h3>
-    <section class="display">
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === reader_id)" :key="index">
-            <router-link :to="`/book/${userBook.book}`" class="book-link">
-                <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
-                <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
-            </router-link>
-            <button @click="updateUserBookStatus(userBook, 'COMPLETED')">Completed</button>
-            <button @click="deleteUserBook(userBook.id)">Delete</button>
+  <ReaderNavBarComponent />
+  <section>
+    <h2>Your Books:</h2>
+  </section>
+  <h3>Currently Reading</h3>
+  <section class="display">
+    <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === reader_id)" :key="index">
+      <router-link :to="`/book/${userBook.book}`" class="book-link">
+        <div v-if="userBook.cover_image">
+          <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
         </div>
-    </section>
-    <h3>WishList</h3>
-    <section class="display">
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === reader_id)" :key="index">
-            <router-link :to="`/book/${userBook.book}`" class="book-link">
-                <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
-                <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
-            </router-link>
-            <button @click="updateUserBookStatus(userBook, 'READING')">Reading</button>
-            <button @click="deleteUserBook(userBook.id)">Delete</button>
+        <p v-else>No cover image available</p>
+        <p class="book-title">Title: {{ userBook.title }}</p>
+        <p class="book-author">Author: {{ userBook.author }}</p>
+      </router-link>
+      <button @click="updateUserBookStatus(userBook, 'COMPLETED')">Completed</button>
+      <button @click="deleteUserBook(userBook.id)">Delete</button>
+    </div>
+  </section>
+  <h3>WishList</h3>
+  <section class="display">
+    <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === reader_id)" :key="index">
+      <router-link :to="`/book/${userBook.book}`" class="book-link">
+        <div v-if="userBook.cover_image">
+          <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
         </div>
-    </section>
-    <h3>Completed</h3>
-    <section class="display">
-        <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === reader_id)" :key="index">
-            <router-link :to="`/book/${userBook.book}`" class="book-link">
-                <p class="book-title">Title: {{ books[userBook.book - 1]?.title }}</p>
-                <p class="book-author">Author: {{ books[userBook.book - 1]?.author }}</p>
-            </router-link>
-            <button @click="deleteUserBook(userBook.id)">Delete</button>
+        <p class="book-title">Title: {{ userBook.title }}</p>
+        <p class="book-author">Author: {{ userBook.author }}</p>
+      </router-link>
+      <button @click="updateUserBookStatus(userBook, 'READING')">Reading</button>
+      <button @click="deleteUserBook(userBook.id)">Delete</button>
+    </div>
+  </section>
+  <h3>Completed</h3>
+  <section class="display">
+    <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === reader_id)" :key="index">
+      <router-link :to="`/book/${userBook.book}`" class="book-link">
+        <div v-if="userBook.cover_image">
+          <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
         </div>
-    </section>
+        <p class="book-title">Title: {{ userBook.title }}</p>
+        <p class="book-author">Author: {{ userBook.author }}</p>
+      </router-link>
+      <button @click="deleteUserBook(userBook.id)">Delete</button>
+    </div>
+  </section>
 </template>
-  
+
 <script lang="ts">
-  import { defineComponent } from "vue";
-  import { Reader , Book , UserBook} from "../types/index.ts";
-  import {useReadersStore} from "../stores/readers.ts"
-   import {useReaderStore} from "../stores/reader.ts"
-  import {useBooksStore} from "../stores/books.ts"
-  import {useUserBooksStore} from "../stores/userBooks.ts"
-  import VueCookies from 'vue-cookies';
+import ReaderNavBarComponent from "../components/ReaderNav.vue";
+import { defineComponent } from "vue";
+import { Reader, Book, UserBook } from "../types/index.ts";
+import { useReadersStore } from "../stores/readers.ts";
+import { useBooksStore } from "../stores/books.ts";
+import { useUserBooksStore } from "../stores/userBooks.ts";
+import VueCookies from 'vue-cookies';
 
-  export default defineComponent({
-    data() {
-        return{
-            reader_id : Number(window.sessionStorage.getItem("reader_id")),
-        }
-    },
+export default defineComponent({
+  data() {
+    return {
+      reader_id: Number(window.sessionStorage.getItem("reader_id")),
+    };
+  },
+  async mounted() {
+    const readerRes = await fetch("http://localhost:8000/readers/");
+    const readerData = await readerRes.json();
+    useReadersStore().saveReaders(readerData.users as Reader[]);
 
-    async mounted() {
-      let response = await fetch("http://localhost:8000/readers/");
-      let data = await response.json();
-      let readers = data.users as Reader[];
-      const store = useReadersStore()
-      store.saveReaders(readers)
+    const bookRes = await fetch("http://localhost:8000/books/");
+    const bookData = await bookRes.json();
+    useBooksStore().saveBooks(bookData.books as Book[]);
 
-      let responseBook = await fetch("http://localhost:8000/books/");
-      let dataBook = await responseBook.json();
-      let books = dataBook.books as Book[];
-      const storeBook = useBooksStore()
-      storeBook.saveBooks(books)
+    const userBookRes = await fetch("http://localhost:8000/user_books/");
+    const userBookData = await userBookRes.json();
 
-      let responseUserBook = await fetch("http://localhost:8000/user_books/");
-      let dataUserBook = await responseUserBook.json();
-      let userBooks = dataUserBook.user_books as UserBook[];
-      const storeUserBook = useUserBooksStore()
-      storeUserBook.saveUserBooks(userBooks)  
-    },
-    methods: {
-        async updateUserBookStatus(userBook: UserBook, newStatus: string) {
-            try {
-                const response = await fetch(`http://localhost:8000/user_book/${userBook.id}/`, {
-                    method: "PUT",
-                    headers: {
-                        "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": VueCookies.get("csrftoken"),
-                    },
-                    credentials: "include",
-                    body: JSON.stringify({
-                        status: newStatus,
-                    }),
-                });
+    useUserBooksStore().saveUserBooks(userBookData.user_books as UserBook[]);
+  },
+  components: {
+    ReaderNavBarComponent,
+  },
+  methods: {
+    async updateUserBookStatus(userBook: UserBook, newStatus: string) {
+      console.log('updateUserBookStatus triggered', userBook, newStatus);  // Debugging log
 
-                if (response.ok) {
-                    if (newStatus === "COMPLETED") {
-                        // Fetch user data first
-                        const userResponse = await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
-                            headers: {
-                                "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-                                "Content-Type": "application/json",
-                            },
-                        });
+      try {
+        const response = await fetch(`http://localhost:8000/user_book/${userBook.id}/`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": VueCookies.get("csrftoken"),
+          },
+          credentials: "include",
+          body: JSON.stringify({ status: newStatus }),
+        });
 
-                        if (userResponse.ok) {
-                            const userData = await userResponse.json();
-                            const updatedBookCount = userData.book_count + 1;
+        if (response.ok && newStatus === "COMPLETED") {
+          // Update book count
+          const userRes = await fetch(`http://localhost:8000/reader/${this.reader_id}/`);
+          const userData = await userRes.json();
+          await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${VueCookies.get("access_token")}`,
+              "Content-Type": "application/json",
+              "X-CSRFToken": VueCookies.get("csrftoken"),
+            },
+            credentials: "include",
+            body: JSON.stringify({ book_count: userData.book_count + 1 }),
+          });
 
-                            // Update user's book count
-                            await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
-                                method: "PUT",
-                                headers: {
-                                    "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-                                    "Content-Type": "application/json",
-                                    "X-CSRFToken": VueCookies.get("csrftoken"),
-                                },
-                                credentials: "include",
-                                body: JSON.stringify({
-                                    book_count: updatedBookCount,
-                                }),
-                            });
-                        }
-                    }
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error("Failed to update book status:", error);
-            }
-        },
+          // Update genre relationships
+          const bookGenreRes = await fetch(`http://localhost:8000/book_genres/`);
+          const bookGenreData = await bookGenreRes.json();
+          const bookGenres = bookGenreData.book_genre || [];
 
 
-        async deleteUserBook(userBookId: number) {
-            try {
-                 // Find the book to check its status
-                const userBook = this.userBooks.find(book => book.id === userBookId);
+        // Ensure that both `bg.book` and `userBook.book` are of the same type
+        const bookGenresForBook = bookGenres.filter(bg => {
+          console.log(`Comparing bg.book: ${bg.book} with userBook.book: ${userBook.book}`);  // Debug log for each comparison
+          return bg.book === userBook.book;  // Ensure same type comparison
+        });
 
-                const response = await fetch(`http://localhost:8000/user_book/${userBookId}/`, {
-                method: "DELETE",
+        console.log('Filtered Book Genres:', bookGenresForBook);  // Debugging log
+
+
+          const readerGenreRes = await fetch(`http://localhost:8000/reader_genres/`);
+          const readerGenreData = await readerGenreRes.json();
+          const readerGenres = readerGenreData.reader_genre || [];
+          console.log('Reader Genres:', readerGenreData);  // Debugging log
+
+          for (const bg of bookGenresForBook) {
+            const existing = readerGenres.find(rg => rg.user === this.reader_id && rg.genre === bg.genre);
+            console.log('Existing genre:', existing);  // Debugging log
+
+            if (existing) {
+              await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
+                method: "PUT",
                 headers: {
-                    "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": VueCookies.get("csrftoken"),
+                  Authorization: `Bearer ${VueCookies.get("access_token")}`,
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": VueCookies.get("csrftoken"),
                 },
                 credentials: "include",
-                });
-
-                if (!response.ok) throw new Error("Failed to delete user book relationship");
-
-                if (response.ok) {
-                    if (userBook && userBook.status === "COMPLETED") {
-                        // Fetch user data first
-                        const userResponse = await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
-                            headers: {
-                                "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-                                "Content-Type": "application/json",
-                            },
-                        });
-
-                        if (userResponse.ok) {
-                                const userData = await userResponse.json();
-                                const updatedBookCount = Math.max(userData.book_count - 1, 0); // Ensure count doesn't go below 0
-
-                                // Update user's book count
-                                await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
-                                    method: "PUT",
-                                    headers: {
-                                        "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-                                        "Content-Type": "application/json",
-                                        "X-CSRFToken": VueCookies.get("csrftoken"),
-                                    },
-                                    credentials: "include",
-                                    body: JSON.stringify({
-                                        book_count: updatedBookCount,
-                                    }),
-                                });
-                            }
-                        }
-                    }
-              
-                window.location.reload();
-            } catch (error) {
-                console.error("Error deleting user book relationship:", error);
-                alert("Failed to delete user book relationship.");
+                body: JSON.stringify({ count: existing.count + 1 }),
+              });
+              console.log(await response.json());  // Debugging log
+            } else {
+              await fetch(`http://localhost:8000/reader_genres/`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${VueCookies.get("access_token")}`,
+                  "Content-Type": "application/json",
+                  "X-CSRFToken": VueCookies.get("csrftoken"),
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                  user_id: this.reader_id,
+                  genre_id: bg.genre,
+                }),
+              });
             }
-        },
+          }
+        }
+
+       window.location.reload();
+      } catch (error) {
+        console.error("Failed to update book status:", error);
+      }
     },
 
-    computed: {
-        books() {
-            const storeBook = useBooksStore();
-            return this.storeBook.books;
-        },
-        userBooks() {
-            const storeUserBook = useUserBooksStore();
-            return this.storeUserBook.userBooks;
-        },
+    async deleteUserBook(userBookId: number) {
+      try {
+        const userBook = this.userBooks.find(book => book.id === userBookId);
+
+        const response = await fetch(`http://localhost:8000/user_book/${userBookId}/`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": VueCookies.get("csrftoken"),
+          },
+          credentials: "include",
+        });
+
+        if (response.ok && userBook?.status === "COMPLETED") {
+          const userRes = await fetch(`http://localhost:8000/reader/${this.reader_id}/`);
+          const userData = await userRes.json();
+          await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${VueCookies.get("access_token")}`,
+              "Content-Type": "application/json",
+              "X-CSRFToken": VueCookies.get("csrftoken"),
+            },
+            credentials: "include",
+            body: JSON.stringify({ book_count: Math.max(userData.book_count - 1, 0) }),
+          });
+
+          // Update genre relationships
+          const bookGenreRes = await fetch(`http://localhost:8000/book_genres/`);
+          const bookGenreData = await bookGenreRes.json();
+          const bookGenres = bookGenreData.book_genre || [];
+
+          const readerGenreRes = await fetch(`http://localhost:8000/reader_genres/`);
+          const readerGenreData = await readerGenreRes.json();
+          const readerGenres = readerGenreData.reader_genre || [];
+
+          const bookGenresForBook = bookGenres.filter(bg => bg.book === userBook.book);
+
+          for (const bg of bookGenresForBook) {
+            const existing = readerGenres.find(rg => rg.user === this.reader_id && rg.genre === bg.genre);
+            if (existing) {
+              const newCount = existing.count - 1;
+              if (newCount <= 0) {
+                await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
+                  method: "DELETE",
+                  headers: {
+                    Authorization: `Bearer ${VueCookies.get("access_token")}`,
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": VueCookies.get("csrftoken"),
+                  },
+                  credentials: "include",
+                });
+              } else {
+                await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
+                  method: "PUT",
+                  headers: {
+                    Authorization: `Bearer ${VueCookies.get("access_token")}`,
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": VueCookies.get("csrftoken"),
+                  },
+                  credentials: "include",
+                  body: JSON.stringify({ count: newCount }),
+                });
+              }
+            }
+          }
+        }
+
+        window.location.reload();
+      } catch (error) {
+        console.error("Error deleting user book relationship:", error);
+        alert("Failed to delete user book relationship.");
+      }
     },
-    
-    setup() {
-        const storeBook = useBooksStore();
-        const storeUserBook = useUserBooksStore();
-        return {storeBook, storeUserBook};
+  },
+  computed: {
+    books() {
+      return useBooksStore().books;
     },
-  });
+    userBooks() {
+      return useUserBooksStore().userBooks;
+    },
+  },
+  setup() {
+    return {
+      storeBook: useBooksStore(),
+      storeUserBook: useUserBooksStore(),
+    };
+  },
+});
 </script>
 
+  
 <style scoped>
 /* Body Styling */
 .body {
@@ -219,11 +284,6 @@ h3 {
     margin-right: auto; /* Center horizontally */
 }
 
-/* Optional Hover Effect for h3 */
-h3:hover {
-    background: linear-gradient(135deg, #955D5C, #542F2F); /* Inverted gradient on hover */
-    transform: scale(1.05); /* Slight zoom effect */
-}
 
 
 /* Section Titles Styling */
@@ -244,11 +304,7 @@ h2, h3 {
     width: auto; /* Reduce width of headings */
 }
 
-/* Optional Hover Effect for Headings */
-h2:hover, h3:hover {
-    background: linear-gradient(135deg, #955D5C, #542F2F);
-    transform: scale(1.05); /* Slight zoom effect */
-}
+
 
 /* Smaller h2 */
 h2 {
@@ -300,7 +356,7 @@ h3 {
 
 /* Book Link Hover Effect */
 .book-link:hover {
-    color: #f0b400;
+
     transform: scale(1.05);
 }
 
@@ -323,6 +379,22 @@ h3 {
     font-size: 1rem; /* Adjusted font size */
     color: #c1d3d9; /* Soft color for author */
 }
+
+.book-cover {
+  width: 60px;           /* Smaller width */
+  height: 60px;          /* Smaller height */
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+  margin-bottom: 0.3rem;
+}
+
+
+.book-cover:hover {
+  transform: scale(1.03);
+}
+
 
 /* Responsive Layout for Smaller Screens */
 @media (max-width: 768px) {

@@ -1,107 +1,207 @@
 <template>
+  <ReaderNavBarComponent />
   <div class="body">
-     <h1>Homepage</h1>
+    <h1>Homepage</h1>
   </div>
-  <h2>Books:</h2>
-  <section  class="display">
-        <div v-for="(book, index) in books" :key="index">
-            <router-link :to="`/book/${book.id}`" class="book-link">
-                <p>Title: {{ book.title }}</p>
-                <p>Author: {{ book.author }}</p>
-            </router-link>
+
+  <h2>Recommended Books:</h2>
+  <section class="display">
+    <div v-for="(book, index) in recommendedBooks" :key="index">
+      <router-link :to="`/book/${book.id}`" class="book-link">
+        <div v-if="book.cover_image">
+          <img :src="`http://localhost:8000/${book.cover_image}`" alt="Book Cover" class="book-cover"/>
         </div>
-    </section>
-    <h2>Users:</h2>
-    <section class="display">
-        <div v-for="(reader, index) in filtered_readers" :key="index">
-          <router-link :to="`/user/${reader.id}`" class="user-link">
-            <p>Username: {{ reader.username }}</p>
-          </router-link>
-        </div>
-    </section>
+        <p v-else>No cover image available</p>
+        <p>Title: {{ book.title }}</p>
+        <p>Author: {{ book.author }}</p>
+      </router-link>
+    </div>
+  </section>
+
+  <button @click="goToAllBooks" class="go-to-all-books-button">See All Books</button>
+
+  <h2>Recommended Readers:</h2>
+  <section class="display">
+    <div v-for="(reader, index) in recommendedReaders" :key="index">
+      <router-link :to="`/user/${reader.id}`" class="user-link">
+        <p>Username: {{ reader.username }}</p>
+      </router-link>
+    </div>
+  </section>
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import ReaderNavBarComponent from "../components/ReaderNav.vue";
 import { useReaderStore } from "../stores/reader";
 import { useReadersStore } from "../stores/readers";
-import { useBooksStore } from "../stores/books"
+import { useBooksStore } from "../stores/books";
 import { Book, Reader } from "../types/index";
 
 export default defineComponent({
   data() {
     return {
-      reader_id: null as number | null, // Initially null, will be populated after mounted
+      reader_id: null as number | null,
+      recommendedBooks: [] as Book[],
+      recommendedReaders: [] as Reader[],
     };
   },
   async mounted() {
-    // Get session cookie and extract sessionid
-    const sessionCookie = (document.cookie).split(';');
-    let currentSessionid: string = '';
-    
+    const sessionCookie = document.cookie.split(';');
+    let currentSessionid = '';
     for (let cookie of sessionCookie) {
       cookie = cookie.trim();
       if (cookie.startsWith("sessionid=")) {
         currentSessionid = cookie.substring("sessionid=".length);
       }
     }
-    
-    const previousSessionid: string | null = window.sessionStorage.getItem("session_id");
-    
+
+    const previousSessionid = window.sessionStorage.getItem("session_id");
     if (currentSessionid === previousSessionid) {
-      // Use stored reader_id from sessionStorage
       this.reader_id = Number(window.sessionStorage.getItem("reader_id"));
     } else {
-      // Fallback: Extract reader_id from URL query or default to 0
       const params = new URLSearchParams(window.location.search);
       this.reader_id = parseInt(params.get("u") || "0");
       sessionStorage.setItem("reader_id", this.reader_id.toString());
-      sessionStorage.setItem("session_id", currentSessionid);  // Store session id for next page load
+      sessionStorage.setItem("session_id", currentSessionid);
     }
-    
-    // Fetch the books and readers after checking session
-    await this.fetchBooksAndReaders();
+
+    await this.fetchDataAndRecommend();
+  },
+  components: {
+    ReaderNavBarComponent,
   },
   methods: {
-    async fetchBooksAndReaders() {
-      // Fetch books
-      const responseBook = await fetch("http://localhost:8000/books/");
-      const dataBook = await responseBook.json();
-      const books = dataBook.books as Book[];
-      const storeBook = useBooksStore();
-      storeBook.saveBooks(books);
+    async fetchDataAndRecommend() {
+      const [
+        bookRes,
+        readerRes,
+        bookGenreRes,
+        readerGenreRes,
+        userBooksRes,
+        friendshipRes
+      ] = await Promise.all([
+        fetch("http://localhost:8000/books/"),
+        fetch("http://localhost:8000/readers/"),
+        fetch("http://localhost:8000/book_genres/"),
+        fetch("http://localhost:8000/reader_genres/"),
+        fetch("http://localhost:8000/user_books/"),
+        fetch("http://localhost:8000/friendships/") // Fetch friendships
+      ]);
 
-      // Fetch readers
-      const responseReader = await fetch("http://localhost:8000/readers/");
-      const dataReader = await responseReader.json();
-      const readers = dataReader.readers as Reader[];
-      const readersStore = useReadersStore();
-      readersStore.saveReaders(readers);
-    }
-  },
-  computed: {
-    readers() {
-      const readersStore = useReadersStore();
-      return readersStore.readers || [];
-    },
-    filtered_readers() {
-      // Ensure readers are loaded and then filter out the current reader
-      if (this.readers.length > 0 && this.reader_id !== null) {
-        return this.readers.filter(reader => reader.id !== this.reader_id);
+      const books = (await bookRes.json()).books as Book[];
+      const readers = (await readerRes.json()).readers as Reader[];
+      const bookGenres = (await bookGenreRes.json()).book_genre || [];
+      const readerGenres = (await readerGenreRes.json()).reader_genre || [];
+      const userBooks = (await userBooksRes.json()).user_books || [];
+      const friendships = (await friendshipRes.json()).friendships || []; // Friendships data
+
+      useBooksStore().saveBooks(books);
+      useReadersStore().saveReaders(readers);
+
+      const currentReaderVector: Record<number, number> = {};
+      for (const rg of readerGenres) {
+        if (rg.user === this.reader_id) {
+          currentReaderVector[rg.genre] = rg.count;
+        }
       }
-      return [];
+
+      // --- BOOK RECOMMENDATION (filtered by books user does NOT have) ---
+      const userBookIds = new Set(
+        userBooks.filter(ub => ub.user === this.reader_id).map(ub => ub.book)
+      );
+
+      const bookScores: { book: Book; score: number }[] = [];
+      for (const book of books) {
+        if (userBookIds.has(book.id)) continue; // Skip already owned books
+
+        const genreVector: Record<number, number> = {};
+        for (const bg of bookGenres) {
+          if (bg.book === book.id) {
+            genreVector[bg.genre] = (genreVector[bg.genre] || 0) + 1;
+          }
+        }
+
+        // Dot product similarity
+        let score = 0;
+        for (const genre in genreVector) {
+          score += (currentReaderVector[+genre] || 0) * genreVector[+genre];
+        }
+
+        bookScores.push({ book, score });
+      }
+
+      // --- READER RECOMMENDATION (excluding friendships where user == reader_id) ---
+      // Extract users who have a friendship where user === reader_id
+      const excludedReaderIds = new Set(
+        friendships.filter(f => f.user === this.reader_id).map(f => f.friend)
+      );
+
+      const readerScores: { reader: Reader; score: number }[] = [];
+      for (const reader of readers) {
+        if (reader.id === this.reader_id || excludedReaderIds.has(reader.id)) continue;
+
+        const readerVector: Record<number, number> = {};
+        for (const rg of readerGenres) {
+          if (rg.user === reader.id) {
+            readerVector[rg.genre] = rg.count;
+          }
+        }
+
+        let score = 0;
+        for (const genre in readerVector) {
+          score += (currentReaderVector[+genre] || 0) * readerVector[+genre];
+        }
+
+        readerScores.push({ reader, score });
+      }
+
+      // --- Apply Recommendation ---
+      const currentReaderHasPrefs = Object.keys(currentReaderVector).length > 0;
+
+      if (currentReaderHasPrefs) {
+        this.recommendedBooks = bookScores
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5)
+          .map(item => item.book);
+
+        this.recommendedReaders = readerScores
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5)
+          .map(item => item.reader);
+      } else {
+        // Fallback: recommend most popular books
+        const bookCounts: Record<number, number> = {};
+        for (const bg of bookGenres) {
+          bookCounts[bg.book] = (bookCounts[bg.book] || 0) + 1;
+        }
+
+        this.recommendedBooks = books
+          .map(book => ({ book, count: bookCounts[book.id] || 0 }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5)
+          .map(item => item.book);
+
+        // Fallback: readers with the most diverse genre interests
+        const readerDiversity = readers
+          .filter(r => r.id !== this.reader_id && !excludedReaderIds.has(r.id))
+          .map(reader => {
+            const genres = readerGenres.filter(rg => rg.user === reader.id);
+            const uniqueGenres = new Set(genres.map(g => g.genre));
+            return { reader, diversity: uniqueGenres.size };
+          })
+          .sort((a, b) => b.diversity - a.diversity)
+          .slice(0, 5)
+          .map(item => item.reader);
+
+        this.recommendedReaders = readerDiversity;
+      }
     },
-    books() {
-      const storeBook = useBooksStore();
-      return storeBook.books;
-    },
-  },
-  setup() {
-    const readerStore = useReaderStore();
-    const readersStore = useReadersStore();
-    const storeBook = useBooksStore();
-    
-    return { readerStore, readersStore, storeBook };
+
+    // Method to handle the "See All Books" button click
+    goToAllBooks() {
+      this.$router.push('/allBooks'); // Navigates to /allBooks page
+    }
   },
 });
 </script>
@@ -112,7 +212,7 @@ export default defineComponent({
     font-family: Arial, Helvetica, sans-serif;
     background-color: #EFE0CB; /* Light background */
     margin: 0;
-    padding: 1rem; /* Padding around the body */
+    padding: 0.8rem; /* Padding around the body */
     max-height: 75vh; /* Reduce max height to 75% of the viewport height */
     overflow-y: auto; /* Enable scrolling if content overflows */
 }
@@ -193,6 +293,42 @@ h2 {
     font-size: 0.8rem; /* Smaller text size for paragraph */
 }
 
+.all-books-button {
+    background-color: #2f4a54; /* Matching dark background */
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem; /* Slightly larger padding */
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    margin: 1rem auto 0;
+    display: block;
+}
+
+.all-books-button:hover {
+    background-color: #f0b400; /* Golden hover effect */
+    color: #2f4a54; /* Contrast text color on hover */
+    transform: scale(1.03);
+}
+
+.book-cover {
+  width: 60px;           /* Smaller width */
+  height: 60px;          /* Smaller height */
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+  margin-bottom: 0.3rem;
+}
+
+.book-cover:hover {
+  transform: scale(1.03);
+}
+
+
+
 /* Additional Responsive Styling */
 @media (max-width: 768px) {
     .display {
@@ -218,3 +354,4 @@ h2 {
     }
 }
 </style>
+

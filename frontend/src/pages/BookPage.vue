@@ -1,209 +1,294 @@
 <template>
-    <div class="body">
-      <!-- Book Info Section -->
-      <div id="profile-box">
-        <h2>Book Info</h2>
-        <p>Title: {{ book.title }}</p>
-        <p>Author: {{ book.author }}</p>
-        <p>Blurb: {{ book.blurb }}</p>
-        <p>ISBN: {{ book.isbn }}</p>
-        <p>Rating: {{ averageRating }} </p>
-        <button v-if="statusBook === undefined" @click="addWishlist()">Add to WishList</button>
-        <p v-else>Status: {{ statusBook }} </p>
+  <ReaderNavBarComponent />
+  <div class="body">
+    <!-- Book Info Section -->
+    <div id="profile-box">
+      <h2>Book Info</h2>
+
+        <!-- Display cover image if available -->
+      <div v-if="book.cover_image">
+        <img :src="`http://localhost:8000/${book.cover_image}`" alt="Book Cover" />
       </div>
-  
-      <!-- Review Section -->
-      <section id="review-box">
-        <h2>Reviews</h2>
-        <button @click="showModal = true">Add Review</button>
-  
-        <!-- Scrollable Container for Reviews -->
-        <div class="reviews-container">
-          <div v-for="(review, index) in reviews.filter(review => review.book === book.id)" :key="index">
-            <p v-if="review.user === reader_id">
-              <span v-if="!editTitle">Title: {{ review.title }}</span>
-              <span v-else>
-                Title:
-                <input v-model="editedReview.title" type="text" />
-              </span>
-              <button v-if="!editTitle" @click="toggleEditField('Title')">Edit</button>
-              <button v-else @click="saveField('title', review.id)">Save</button>
-            </p>
-            <p v-else>Title: {{ review.title }}</p>
-  
-            <p>Username: {{ review.username }}</p>
-            <p v-if="review.user === reader_id">
-              <span v-if="!editRating">Rating: {{ review.rating }} Stars</span>
-              <span v-else>
-                Rating:
-                <select v-model="editedReview.rating">
-                  <option v-for="n in 5" :key="n" :value="n">{{ n }} Stars</option>
-                </select>
-              </span>
-              <button v-if="!editRating" @click="toggleEditField('Rating')">Edit</button>
-              <button v-else @click="saveField('rating', review.id)">Save</button>
-            </p>
-            <p v-else>Rating: {{ review.rating }} Stars</p>
-            <p v-if="review.user === reader_id">
-              <span v-if="!editMessage">Message: {{ review.message }} </span>
-              <span v-else>
-                Message:
-                <input v-model="editedReview.message" type="text" />
-              </span>
-              <button v-if="!editMessage" @click="toggleEditField('Message')">Edit</button>
-              <button v-else @click="saveField('message', review.id)">Save</button>
-            </p>
-            <p v-else>Message: {{ review.message }} </p>
-  
-            <button v-if="review.user === reader_id" @click="deleteReview(review.id)">Delete</button>
-          </div>
+      <p v-else>No cover image available</p>
+
+      <p>Title: {{ book.title }}</p>
+      <p>Author: {{ book.author }}</p>
+      <p>Blurb: {{ book.blurb }}</p>
+      <p>ISBN: {{ book.isbn }}</p>
+      <p>Rating: {{ averageRating }} </p>
+
+      <!-- Genres -->
+      <div>
+        <h3>Genres:</h3>
+        <ul>
+          <li v-for="genre in bookGenresForThisBook" :key="genre.id">
+            {{ genre.name }}
+          </li>
+        </ul>
+      </div>
+
+      <button v-if="statusBook === undefined" @click="addWishlist()">Add to WishList</button>
+      <p v-else>Status: {{ statusBook }} </p>
+    </div>
+
+    <!-- Review Section -->
+    <section id="review-box">
+      <h2>Reviews</h2>
+      <button @click="showModal = true">Add Review</button>
+
+      <div class="reviews-container">
+        <div v-for="(review, index) in reviews.filter(review => review.book === book.id)" :key="index">
+          <p v-if="review.user === reader_id">
+            <span v-if="!editTitle">Title: {{ review.title }}</span>
+            <span v-else>
+              Title:
+              <input v-model="editedReview.title" type="text" />
+            </span>
+            <button v-if="!editTitle" @click="toggleEditField('Title')">Edit</button>
+            <button v-else @click="saveField('title', review.id)">Save</button>
+          </p>
+          <p v-else>Title: {{ review.title }}</p>
+
+          <p>Username: {{ review.username }}</p>
+
+          <p v-if="review.user === reader_id">
+            <span v-if="!editRating">Rating: {{ review.rating }} Stars</span>
+            <span v-else>
+              Rating:
+              <select v-model="editedReview.rating">
+                <option v-for="n in 5" :key="n" :value="n">{{ n }} Stars</option>
+              </select>
+            </span>
+            <button v-if="!editRating" @click="toggleEditField('Rating')">Edit</button>
+            <button v-else @click="saveField('rating', review.id)">Save</button>
+          </p>
+          <p v-else>Rating: {{ review.rating }} Stars</p>
+
+          <p v-if="review.user === reader_id">
+            <span v-if="!editMessage">Message: {{ review.message }}</span>
+            <span v-else>
+              Message:
+              <input v-model="editedReview.message" type="text" />
+            </span>
+            <button v-if="!editMessage" @click="toggleEditField('Message')">Edit</button>
+            <button v-else @click="saveField('message', review.id)">Save</button>
+          </p>
+          <p v-else>Message: {{ review.message }}</p>
+
+          <button v-if="review.user === reader_id" @click="deleteReview(review.id)">Delete</button>
         </div>
-      </section>
-  
-      <!-- Add Review Modal -->
-      <div v-if="showModal" class="modal">
-        <div class="modal-content">
-          <h3>Add a Review</h3>
-          <input type="text" v-model="newReview.title" placeholder="Review Title" />
-          <textarea v-model="newReview.message" placeholder="Your review..."></textarea>
-          <label>Rating:</label>
-          <select v-model="newReview.rating">
-            <option v-for="n in 5" :key="n" :value="n">{{ n }} Stars</option>
-          </select>
-          <button @click="submitReview">Submit</button>
-          <button @click="showModal = false">Cancel</button>
-        </div>
+      </div>
+    </section>
+
+    <!-- Add Review Modal -->
+    <div v-if="showModal" class="modal">
+      <div class="modal-content">
+        <h3>Add a Review</h3>
+        <input type="text" v-model="newReview.title" placeholder="Review Title" />
+        <textarea v-model="newReview.message" placeholder="Your review..."></textarea>
+        <label>Rating:</label>
+        <select v-model="newReview.rating">
+          <option v-for="n in 5" :key="n" :value="n">{{ n }} Stars</option>
+        </select>
+        <button @click="submitReview">Submit</button>
+        <button @click="showModal = false">Cancel</button>
       </div>
     </div>
-  </template>
-  
-  <script lang="ts">
-  import { defineComponent } from "vue";
-  import { useBookStore } from "../stores/book";
-  import { useReviewsStore } from "../stores/reviews";
-  import { useRoute } from "vue-router";
-  import VueCookies from "vue-cookies";
-  import { UserBook } from "../types";
-  import { useUserBooksStore } from "../stores/userBooks";
-  
-  export default defineComponent({
-    data() {
-      return {
-        reader_id: Number(window.sessionStorage.getItem("reader_id")),
-  
-        // for making a new review
-        showModal: false,
-        newReview: {
+  </div>
+</template>
+
+<script lang="ts">
+import ReaderNavBarComponent from "../components/ReaderNav.vue";
+import { defineComponent } from "vue";
+import { useBookStore } from "../stores/book";
+import { useReviewsStore } from "../stores/reviews";
+import { useRoute } from "vue-router";
+import VueCookies from "vue-cookies";
+import { UserBook } from "../types";
+import { useUserBooksStore } from "../stores/userBooks";
+
+export default defineComponent({
+  data() {
+    return {
+      reader_id: Number(window.sessionStorage.getItem("reader_id")),
+      bookGenres: [] as { id: number; book: number; genre: number; name: string }[],
+
+      showModal: false,
+      newReview: {
+        title: "",
+        message: "",
+        rating: 5,
+        book: null,
+        user: this.reader_id,
+      },
+
+      editTitle: false,
+      editMessage: false,
+      editRating: false,
+
+      editedReview: {
+        title: "",
+        message: "",
+        rating: "",
+      },
+    };
+  },
+  async mounted() {
+    const route = useRoute();
+    const bookId = parseInt(route.params.id);
+    let book = await this.bookStore.fetchBookReturn(bookId);
+    console.log(this.book.cover_image);
+
+
+    let responseReview = await fetch("http://localhost:8000/reviews/");
+    let dataReview = await responseReview.json();
+    const storeReview = useReviewsStore();
+    storeReview.saveReviews(dataReview.reviews);
+
+    this.newReview.book = bookId;
+
+    let responseUserBook = await fetch("http://localhost:8000/user_books/");
+    let dataUserBook = await responseUserBook.json();
+    let userBooks = dataUserBook.user_books as UserBook[];
+    const storeUserBook = useUserBooksStore();
+    storeUserBook.saveUserBooks(userBooks);
+
+    try {
+      const responseGenres = await fetch("http://localhost:8000/book_genres/");
+      const dataGenres = await responseGenres.json();
+      this.bookGenres = dataGenres.book_genre;
+    } catch (error) {
+      console.error("Failed to fetch book genres", error);
+    }
+  },
+  components: {
+    ReaderNavBarComponent,
+  },
+  methods: {
+    toggleEditField(field: string) {
+      this[`edit${field}`] = !this[`edit${field}`];
+    },
+
+    async saveField(field: string, reviewID: number) {
+      try {
+        const payload = {
+          [field.toLowerCase()]: this.editedReview[field.toLowerCase()],
+        };
+
+        const response = await fetch(`http://localhost:8000/review/${reviewID}/`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": VueCookies.get("csrftoken"),
+          },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) throw new Error("Failed to update field");
+
+        window.location.reload(true);
+        alert(`${field} updated successfully!`);
+      } catch (error) {
+        console.error(error);
+        alert(`Failed to update ${field}.`);
+      }
+    },
+
+    async submitReview() {
+      if (!this.newReview.title || !this.newReview.message) {
+        alert("Please fill out all fields!");
+        return;
+      }
+
+      const existingReview = this.reviews.find(
+        (review) => review.book === this.newReview.book && review.user === this.reader_id
+      );
+      if (existingReview) {
+        alert("You have already reviewed this book!");
+        return;
+      }
+
+      const reviewData = {
+        user_id: this.reader_id,
+        book_id: this.newReview.book,
+        title: this.newReview.title,
+        message: this.newReview.message,
+        rating: this.newReview.rating,
+      };
+
+      let response = await fetch("http://localhost:8000/reviews/", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${VueCookies.get("access_token")}`,
+          "Content-Type": "application/json",
+          "X-CSRFToken": VueCookies.get("csrftoken"),
+        },
+        credentials: "include",
+        body: JSON.stringify(reviewData),
+      });
+
+      if (response.ok) {
+        const storeReview = useReviewsStore();
+        storeReview.saveReviews([...storeReview.reviews, reviewData]);
+        this.showModal = false;
+        this.newReview = {
           title: "",
           message: "",
           rating: 5,
-          book: null,
+          book: this.newReview.book,
           user: this.reader_id,
-        },
-  
-        // for editing a review
-        editTitle: false,
-        editMessage: false,
-        editRating: false,
-
-  
-        editedReview: {
-          title: "",
-          message: "",
-          rating: "",
-        },
-      };
-    },
-    async mounted() {
-      // gets the book information
-      const route = useRoute();
-      const bookId = parseInt(route.params.id);
-      let book = await this.bookStore.fetchBookReturn(bookId);
-  
-      let responseReview = await fetch("http://localhost:8000/reviews/");
-      let dataReview = await responseReview.json();
-      const storeReview = useReviewsStore();
-      storeReview.saveReviews(dataReview.reviews);
-  
-      this.newReview.book = bookId; // Set book ID for new review
-  
-      // get all the user book relationships
-      let responseUserBook = await fetch("http://localhost:8000/user_books/");
-      let dataUserBook = await responseUserBook.json();
-      let userBooks = dataUserBook.user_books as UserBook[];
-      const storeUserBook = useUserBooksStore();
-      storeUserBook.saveUserBooks(userBooks);
-    },
-    methods: {
-      // change the review to edit mode
-      toggleEditField(field: string) {
-        console.log(typeof field);
-        this[`edit${field}`] = !this[`edit${field}`];
-        if (this[`edit${field}`]) {
-          this.editedReview[field.toLowerCase()] = this.review[field.toLowerCase()];
-        }
-      },
-  
-      async saveField(field: string, reviewID: number) {
-        try {
-          const payload = {
-            [field.toLowerCase()]: this.editedReview[field.toLowerCase()],
-          };
-  
-          const response = await fetch(`http://localhost:8000/review/${reviewID}/`, {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${VueCookies.get("access_token")}`,
-              "Content-Type": "application/json",
-              "X-CSRFToken": VueCookies.get("csrftoken"),
-            },
-            credentials: "include",
-            body: JSON.stringify(payload),
-          });
-  
-          if (!response.ok) {
-            throw new Error("Failed to update field");
-          }
-  
-          const updatedReview = await response.json();
-          console.log(updatedReview);
-          //this.reviewStore = this.reviewStore.saveReviews(updatedReview); // Update the user state in the store
-          console.log("Reloading...");
-          window.location.reload(true);
-  
-          alert(`${field} updated successfully!`);
-        } catch (error) {
-          console.error(error);
-          alert(`Failed to update ${field}.`);
-        }
-      },
-  
-      // creates new review for the book
-      async submitReview() {
-        if (!this.newReview.title || !this.newReview.message) {
-          alert("Please fill out all fields!");
-          return;
-        }
-  
-        // Check if user already left a review for this book
-        const existingReview = this.reviews.find(
-          (review) => review.book === this.newReview.book && review.user === this.reader_id
-        );
-  
-        if (existingReview) {
-          alert("You have already reviewed this book!");
-          return;
-        }
-  
-        const reviewData = {
-          user_id: this.reader_id,
-          book_id: this.newReview.book,
-          title: this.newReview.title,
-          message: this.newReview.message,
-          rating: this.newReview.rating,
         };
-  
-        let response = await fetch("http://localhost:8000/reviews/", {
+        window.location.reload();
+        alert("Review added successfully");
+      } else {
+        alert("Failed to add review");
+      }
+    },
+
+    async deleteReview(reviewId: number) {
+      try {
+        const response = await fetch(`http://localhost:8000/review/${reviewId}/`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": VueCookies.get("csrftoken"),
+          },
+          credentials: "include",
+        });
+
+        if (!response.ok) throw new Error("Failed to delete review");
+
+        const reviewsStore = useReviewsStore();
+        reviewsStore.removeReview(reviewId);
+
+        window.location.reload();
+        alert("Review deleted successfully!");
+      } catch (error) {
+        console.error("Error deleting review:", error);
+        alert("Failed to delete review. Please try again.");
+      }
+    },
+
+    async addWishlist() {
+      try {
+        const existingEntry = this.userBooks.find(
+          (entry) => entry.user === this.reader_id && entry.book === this.book.id
+        );
+        if (existingEntry) {
+          alert("This book is already in your list!");
+          return;
+        }
+
+        const userBookData = {
+          user_id: this.reader_id,
+          book_id: this.book.id,
+          status: "WISHLIST",
+        };
+
+        let response = await fetch("http://localhost:8000/user_books/", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${VueCookies.get("access_token")}`,
@@ -211,137 +296,60 @@
             "X-CSRFToken": VueCookies.get("csrftoken"),
           },
           credentials: "include",
-          body: JSON.stringify(reviewData),
+          body: JSON.stringify(userBookData),
         });
-  
-        if (response.ok) {
-          const storeReview = useReviewsStore();
-          storeReview.saveReviews([...storeReview.reviews, reviewData]);
-          this.showModal = false;
-          this.newReview = {
-            title: "",
-            message: "",
-            rating: 5,
-            book: this.newReview.book,
-            user: this.reader_id,
-          };
-          window.location.reload();
-          alert("Review added successfully");
-        } else {
-          alert("Failed to add review");
-        }
-      },
-  
-      // deletes the user's reviews
-      async deleteReview(reviewId: number) {
-        try {
-          const response = await fetch(`http://localhost:8000/review/${reviewId}/`, {
-            method: "DELETE",
-            headers: {
-              "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-              "Content-Type": "application/json",
-              "X-CSRFToken": VueCookies.get("csrftoken"),
-            },
-            credentials: "include",
-          });
-  
-          if (!response.ok) {
-            throw new Error("Failed to delete review");
-          }
-  
-          // Remove the deleted friendship from the store
-          const reviewsStore = useReviewsStore();
-          reviewsStore.removeReview(reviewId);
-  
-          window.location.reload();
-          alert("Review deleted successfully!");
-        } catch (error) {
-          console.error("Error deleting review:", error);
-          alert("Failed to delete review. Please try again.");
-        }
-      },
-  
-      async addWishlist() {
-        try {
-          // Check if the book is already in userBooks
-          const existingEntry = this.userBooks.find(
-            (entry) => entry.user === this.reader_id && entry.book === this.book.id
-          );
-  
-          if (existingEntry) {
-            alert("This book is already in your list!");
-            return;
-          }
-  
-          // New userBook data
-          const userBookData = {
-            user_id: this.reader_id,
-            book_id: this.book.id,
-            status: "WISHLIST",
-          };
-  
-          // Send POST request to backend
-          let response = await fetch("http://localhost:8000/user_books/", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${VueCookies.get("access_token")}`,
-              "Content-Type": "application/json",
-              "X-CSRFToken": VueCookies.get("csrftoken"),
-            },
-            credentials: "include",
-            body: JSON.stringify(userBookData),
-          });
-  
-          if (!response.ok) {
-            throw new Error("Failed to add book to wishlist.");
-          }
-  
-          // Update store with the new userBook entry
-          const newUserBook = await response.json();
-          const storeUserBook = useUserBooksStore();
-          storeUserBook.saveUserBooks([...storeUserBook.userBooks, newUserBook]);
-  
-          alert("Book added to wishlist!");
-        } catch (error) {
-          console.error(error);
-          alert("Error adding book to wishlist.");
-        }
-      }
-    },
-    computed: {
-      book() {
-        return this.bookStore.book;
-      },
-      reviews() {
-        const storeReview = useReviewsStore();
-        return storeReview.reviews;
-      },
-      userBooks() {
+
+        if (!response.ok) throw new Error("Failed to add book to wishlist.");
+
+        const newUserBook = await response.json();
         const storeUserBook = useUserBooksStore();
-        return this.storeUserBook.userBooks;
-      },
-      statusBook() {
-        const userBookEntry = this.userBooks.find(
-          (entry) => entry.user === this.reader_id && entry.book === this.book.id
-        );
-        return userBookEntry ? userBookEntry.status : undefined;
-      },
-      averageRating() {
-        const bookReviews = this.reviews.filter((review) => review.book === this.book.id);
-        if (bookReviews.length === 0) return "No ratings yet";
-  
-        const total = bookReviews.reduce((sum, review) => sum + review.rating, 0);
-        return (total / bookReviews.length).toFixed(1) + " Stars";
+        storeUserBook.saveUserBooks([...storeUserBook.userBooks, newUserBook]);
+
+        alert("Book added to wishlist!");
+      } catch (error) {
+        console.error(error);
+        alert("Error adding book to wishlist.");
       }
     },
-    setup() {
-      const bookStore = useBookStore();
+  },
+  computed: {
+    book() {
+      return this.bookStore.book;
+    },
+    reviews() {
       const storeReview = useReviewsStore();
+      return storeReview.reviews;
+    },
+    userBooks() {
       const storeUserBook = useUserBooksStore();
-      return { bookStore, storeReview, storeUserBook };
-    }
-  });
-  </script>
+      return this.storeUserBook.userBooks;
+    },
+    statusBook() {
+      const userBookEntry = this.userBooks.find(
+        (entry) => entry.user === this.reader_id && entry.book === this.book.id
+      );
+      return userBookEntry ? userBookEntry.status : undefined;
+    },
+    averageRating() {
+      const bookReviews = this.reviews.filter((review) => review.book === this.book.id);
+      if (bookReviews.length === 0) return "No ratings yet";
+
+      const total = bookReviews.reduce((sum, review) => sum + review.rating, 0);
+      return (total / bookReviews.length).toFixed(1) + " Stars";
+    },
+    bookGenresForThisBook() {
+      return this.bookGenres.filter((bg) => bg.book === this.book.id);
+    },
+  },
+  setup() {
+    const bookStore = useBookStore();
+    const storeReview = useReviewsStore();
+    const storeUserBook = useUserBooksStore();
+    return { bookStore, storeReview, storeUserBook };
+  },
+});
+</script>
+
   
 <style scoped>
 /* Book Info Section */
@@ -355,12 +363,11 @@
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s ease, transform 0.3s ease;
+  max-height: 70vh; /* Set the max-height to be a percentage of the viewport */
+  overflow-y: auto;   /* Enable vertical scrolling */
 }
 
-#profile-box:hover {
-  background-color: #3a5f6f; /* Hover background */
-  transform: scale(1.05);
-}
+
 
 #profile-box h2 {
   text-align: center;
@@ -396,14 +403,11 @@
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s ease, transform 0.3s ease;
-  max-height: 60vh; /* Set the max-height to be a percentage of the viewport */
+  max-height: 70vh; /* Set the max-height to be a percentage of the viewport */
   overflow: hidden; /* Hide overflow outside this container */
 }
 
-#review-box:hover {
-  background-color: #3a5f6f;
-  transform: scale(1.05);
-}
+
 
 #review-box h2 {
   text-align: center;
@@ -430,19 +434,11 @@
   transition: transform 0.2s ease-in-out;
 }
 
-#review-box > .reviews-container > div:nth-child(odd) {
-  background-color: #3a5f6f;
+#review-box > .reviews-container > div {
+  background-color: white;
 }
 
-#review-box > .reviews-container > div:nth-child(even) {
-  background-color: #527a8a;
-}
 
-/* Hover Effect for Reviews */
-#review-box > .reviews-container > div:hover {
-  transform: scale(1.02);
-  background-color: #638ea0;
-}
 
 /* Edit and Delete Buttons inside Reviews */
 #review-box button {
@@ -546,6 +542,70 @@ button {
 button:focus {
   outline: none;
 }
+
+/* Genre Section */
+#profile-box ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#profile-box li {
+  background-color: #6a8b91;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#profile-box li:hover {
+  background-color: #81a4aa;
+  transform: scale(1.05);
+  cursor: default;
+}
+
+/* Styling for book cover image */
+#profile-box img {
+  width: 100%; /* Make image fill the width of the container */
+  height: 300px;  /* Maintain aspect ratio */
+  max-width: 350px; /* Limit the maximum size of the image */
+  object-fit: cover; /* Ensure the image scales well and fills the container without distortion */
+  border-radius: 10px; /* Optional: to add a slight border radius */
+}
+
+/* Media query for smaller screens */
+@media (max-width: 768px) {
+  /* On mobile screens, make the image smaller and adapt */
+  #profile-box img {
+    max-width: 100%; /* Ensure the image fills the screen width */
+    height: 300px; /* Keep aspect ratio */
+  }
+
+  .body{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #profile-box {
+    height: 400vh; /* Set the max-height to be a percentage of the viewport */
+    overflow-y: auto;   /* Enable vertical scrolling */
+  }
+}
+
+/* Media query for very small screens */
+@media (max-width: 480px) {
+  /* Ensure image fits within smaller containers */
+  #profile-box img {
+    max-width: 90%; /* Further reduce the image width on very small screens */
+  }
+}
+
 
 
 </style>

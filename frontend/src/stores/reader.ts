@@ -20,7 +20,7 @@ export const useReaderStore = defineStore("reader", {
     // Fetch a single reader by ID from the backend
     async fetchReader(readerId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/reader/${reader}/`);
+        const response = await fetch(`http://localhost:8000/reader/${readerId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch reader data");
