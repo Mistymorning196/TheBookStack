@@ -29,6 +29,11 @@ class SiteUser(AbstractUser):
     date_of_birth = models.DateField(default='2000-01-01')
     password = models.CharField(max_length=100)
 
+    # Two-factor authentication fields
+    two_factor_token = models.CharField(max_length=6, blank=True, null=True)
+    token_generated_at = models.DateTimeField(blank=True, null=True) 
+
+
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
     

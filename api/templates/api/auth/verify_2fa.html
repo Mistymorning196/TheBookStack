@@ -1,0 +1,11 @@
+<form method="POST">
+    {% csrf_token %}
+    <label for="token">Enter the 2FA Token sent to your email:</label>
+    <input type="text" id="token" name="token" required>
+    <button type="submit">Verify Token</button>
+</form>
+
+{% if message %}
+    <p>{{ message }}</p>
+{% endif %}
+

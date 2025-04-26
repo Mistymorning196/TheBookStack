@@ -15,8 +15,65 @@ from django.contrib.auth import get_user_model
 from .models import AuthorBlog, AuthorBook, Blog, BookGenre, Comment, ReaderGenre, SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
 from .forms import LoginForm, SignUpForm, UpdatePassForm, UpdateUserForm
 
-def login_site_user(request: HttpRequest) -> HttpResponse:
-    """ Function to validate a potential registered site_user. """
+import random
+import string
+
+from django.core.mail import send_mail
+
+
+from django.utils import timezone
+from datetime import timedelta
+
+def generate_2fa_token():
+    """Generates a random 6-digit token."""
+    return ''.join(random.choices(string.digits, k=6))
+
+def verify_2fa(request):
+    """View to handle 2FA token verification and redirect user based on their type."""
+    if request.method == "POST":
+        token = request.POST.get('token')  # The token entered by the user
+        user = request.user  # Current logged-in user
+
+        if user.two_factor_token == token:
+            # Check if the token has expired (e.g., 10 minutes)
+            if timezone.now() - user.token_generated_at < timedelta(minutes=10):
+                # Token is valid, log the user in and redirect to their appropriate dashboard
+                user.two_factor_token = ''  # Clear the token after successful verification
+                user.save()
+
+                # Now redirect based on the user's type (Reader or Author)
+                try:
+                    # Check if the user is a Reader
+                    reader = Reader.objects.filter(id=user.id).first()
+                    if reader:
+                        print(f"Redirecting Reader with ID {user.id}")
+                        return redirect(settings.READER_REDIRECT_URL + f'?u={user.id}')
+
+                    # Check if the user is an Author
+                    author = Author.objects.filter(id=user.id).first()
+                    if author:
+                        print(f"Redirecting Author with ID {user.id}")
+                        return redirect(settings.AUTHOR_REDIRECT_URL + f'?u={user.id}')
+
+                except User.DoesNotExist:
+                    # If the user doesn't exist in either table, fallback to default redirect
+                    print(f"Error: User with ID {user.id} not found in Reader or Author.")
+                    return redirect(settings.LOGIN_REDIRECT_URL)
+
+                # If the user is neither a Reader nor an Author, fall back to a default redirect
+                print(f"Unknown user type with ID {user.id}")
+                return redirect(settings.LOGIN_REDIRECT_URL)
+
+            else:
+                return render(request, 'api/auth/verify_2fa.html', {'message': 'Token expired, please try again.'})
+
+        else:
+            return render(request, 'api/auth/verify_2fa.html', {'message': 'Invalid token, please try again.'})
+
+    return render(request, 'api/auth/verify_2fa.html')
+
+def login_site_user(request):
+    """ Function to validate a potential registered site_user with 2FA """
     if request.method == "POST":
         form = LoginForm(request.POST)
         
@@ -26,42 +83,30 @@ def login_site_user(request: HttpRequest) -> HttpResponse:
             
             # Authenticate user
             user = authenticate(username=username, password=password)
-            print(f"Authenticated user: {user}")
-
             if user is not None:
                 # Log the user in
                 auth_login(request, user)
-                print(f"User authenticated and logged in: {user}")
 
-                # Check if the user is a SiteUser subclass (Reader or Author)
-                if isinstance(user, SiteUser):
-                    # Try to get the actual subclass (Reader or Author) from the database
-                    try:
-                        # Check if it's a Reader
-                        reader = Reader.objects.filter(id=user.id).first()
-                        if reader:
-                            print(f"Redirecting Reader with ID {user.id}")
-                            return redirect(settings.READER_REDIRECT_URL + f'?u={user.id}')
+                # Generate and send the 2FA token if the user is authenticated
+                token = generate_2fa_token()
+                user.two_factor_token = token
+                user.token_generated_at = timezone.now()
+                user.save()
 
-                        # Check if it's an Author
-                        author = Author.objects.filter(id=user.id).first()
-                        if author:
-                            print(f"Redirecting Author with ID {user.id}")
-                            return redirect(settings.AUTHOR_REDIRECT_URL + f'?u={user.id}')
+                # Send token to user's email
+                send_mail(
+                    'Your 2FA Login Token',
+                    f'Your 2FA token is: {token}',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
 
-                    except SiteUser.DoesNotExist:
-                        # If no matching subclass is found, fallback to default redirect
-                        print(f"Error: User not found in the database for ID {user.id}")
-                        return redirect(settings.LOGIN_REDIRECT_URL + f'?u={user.id}')
-
-                    # If neither Reader nor Author is found, fall back to the default redirect
-                    print(f"Unknown user type with ID {user.id}")
-                    return redirect(settings.LOGIN_REDIRECT_URL + f'?u={user.id}')
+                return redirect('verify_2fa')  # Redirect to a page to verify 2FA token
 
             else:
-                # Invalid authentication, show error message
-                print("Authentication failed!")
-                return render(request, "api/auth/login.html", {"form": form, "message": 'Username or password invalid, please try again.'})
+                return render(request, "api/auth/login.html", {"form": form, "message": 'Invalid username or password'})
+
     else:
         form = LoginForm()
 
