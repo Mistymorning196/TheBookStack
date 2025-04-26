@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 
-from .models import AuthorBlog, AuthorBook, Blog, BookGenre, Comment, ReaderGenre, SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
+from .models import AuthorBlog, AuthorBook, Blog, BookGenre, Comment, Discussion, Group, ReaderGenre, SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
 from .forms import LoginForm, SignUpForm, UpdatePassForm, UpdateUserForm
 
 import random
@@ -348,13 +348,45 @@ def blog_api(request: HttpRequest, blog_id: int) -> JsonResponse:
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
-    # DELETE method to delete book
+    # DELETE method to delete blog
     if request.method == 'DELETE':
         blog.delete()
         return JsonResponse({}, status=204)  # 204 No Content
 
     # GET book data
     return JsonResponse(blog.as_dict())
+
+# APIs for group model below
+def groups_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the Group"""
+    
+    if request.method == 'POST':
+        # Create a new group
+        POST = json.loads(request.body)
+        group = Group.objects.create(
+            name=POST['name'],
+        )
+        return JsonResponse(group.as_dict())
+
+    search_query = request.GET.get("search", "").strip()
+    if search_query:
+        groups = Group.objects.filter(Q(name__icontains=search_query))
+    else:
+        groups = Group.objects.all()
+
+    return JsonResponse({"groups": [group.as_dict() for group in groups]})
+
+
+def group_api(request: HttpRequest, group_id: int) -> JsonResponse:
+    """API endpoint for a single Group"""
+    try:
+        group = Group.objects.get(id=group_id)
+    except Group.DoesNotExist:
+        return JsonResponse({"error": "Group not found."}, status=404)
+
+    # GET group data
+    return JsonResponse(group.as_dict())
+
 
 # APIs for user model below
 def site_users_api(request: HttpRequest) -> JsonResponse:
@@ -1068,3 +1100,44 @@ def comment_api(request: HttpRequest, comment_id: int) -> JsonResponse:
         return JsonResponse({}, status=204)  # 204 No Content
 
     return JsonResponse(comment.as_dict())
+
+# APIs for discussions model below
+def discussions_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the discussion"""
+
+    if request.method == 'POST':
+        # Create a new discussion
+        POST = json.loads(request.body)
+        user = Reader.objects.get(id=POST.get("user_id"))
+        group = Group.objects.get(id=POST.get("group_id"))  
+
+        discussion = Discussion.objects.create(
+            user=user,
+            group=group,
+            discussion=POST['discussion'],  # Renamed 'comment' to 'content'
+        )
+        return JsonResponse(discussion.as_dict())
+
+    # GET method to list all discussions
+    return JsonResponse({
+        'discussions': [
+            discussion.as_dict()
+            for discussion in Discussion.objects.all()
+        ]
+    })
+
+
+def discussion_api(request: HttpRequest, discussion_id: int) -> JsonResponse:
+    """API endpoint for a single discussion"""
+    try:
+        discussion = Discussion.objects.get(id=discussion_id)
+    except Discussion.DoesNotExist:
+        return JsonResponse({"error": "Discussion not found."}, status=404)
+
+   
+
+    if request.method == 'DELETE':
+        discussion.delete()
+        return JsonResponse({}, status=204)
+
+    return JsonResponse(discussion.as_dict())

@@ -3,7 +3,7 @@ from django.contrib import admin, auth
 from django.urls import include, path
 from django.http import HttpResponse
 
-from .views import author_api, author_blog_api, author_blogs_api, author_book_api, author_books_api, authors_api, blog_api, blogs_api, book_genre_api, book_genres_api, comment_api, comments_api, friendship_api, friendships_api, genre_api, genres_api, login_site_user, logout_site_user, message_api, messages_api, reader_api, reader_genre_api, reader_genres_api, readers_api, review_api, reviews_api, signup_site_user, books_api, book_api, site_users_api, site_user_api, update_password, update_username, user_book_api, user_books_api, verify_2fa
+from .views import author_api, author_blog_api, author_blogs_api, author_book_api, author_books_api, authors_api, blog_api, blogs_api, book_genre_api, book_genres_api, comment_api, comments_api, discussion_api, discussions_api, friendship_api, friendships_api, genre_api, genres_api, group_api, groups_api, login_site_user, logout_site_user, message_api, messages_api, reader_api, reader_genre_api, reader_genres_api, readers_api, review_api, reviews_api, signup_site_user, books_api, book_api, site_users_api, site_user_api, update_password, update_username, user_book_api, user_books_api, verify_2fa
 
 # Listing route URLs to views.
 urlpatterns = [
@@ -26,6 +26,8 @@ urlpatterns = [
     path('genre/<int:genre_id>/', genre_api, name='genre api'),
     path('blogs/', blogs_api, name='blogs api'),
     path('blog/<int:blog_id>/', blog_api, name='blog api'),
+    path('groups/', groups_api, name='groups api'),
+    path('group/<int:group_id>/', group_api, name='group api'),
     path('friendships/', friendships_api, name='friendships api'),
     path('friendship/<int:friendship_id>/', friendship_api, name='friendship api'),
     path('messages/', messages_api, name='messages api'),
@@ -44,4 +46,6 @@ urlpatterns = [
     path('review/<int:review_id>/', review_api, name='review api'),
     path('comments/', comments_api, name='comments api'),
     path('comment/<int:comment_id>/', comment_api, name='comment api'),
+    path('discussions/', discussions_api, name='discussions api'),
+    path('discussion/<int:discussion_id>/', discussion_api, name='discussion api'),
 ]

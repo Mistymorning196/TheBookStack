@@ -160,11 +160,43 @@ class Comment(models.Model):
     def as_dict(self):
         return {
             'id': self.id,
-            'api': reverse('reader genre api', args=[self.id]),
+            'api': reverse('comment api', args=[self.id]),
             'blog': self.blog.id,
             'user': self.user.id,
             'username': self.user.username,
             'comment': self.comment,
+        }
+    
+    
+# Group Model
+class Group(models.Model):
+    """
+    Class for the model Group
+    """ 
+    name = models.CharField(max_length=100)
+    discussions = models.ManyToManyField(Reader, through="Discussion")  # Proper Many-to-Many with Review
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('blog api', args=[self.id]),
+            'name': self.name,
+        }
+      
+class Discussion(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    user = models.ForeignKey(Reader, on_delete=models.CASCADE)
+    username = models.CharField(max_length=100, default="username")
+    discussion = models.TextField(max_length=2000)
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'api': reverse('discussion api', args=[self.id]),
+            'group': self.group.id,
+            'user': self.user.id,
+            'username': self.user.username,
+            'discussion': self.discussion,
         }
     
 #AuthorBook Model
