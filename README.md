@@ -67,3 +67,5 @@ This code is dedicated to the public domain to the maximum extent permitted by a
 npm install pinia
 
 pip install django-cors-headers
+
+pip install pillow
