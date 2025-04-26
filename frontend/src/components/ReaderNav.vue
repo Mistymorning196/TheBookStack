@@ -12,6 +12,7 @@
         <router-link class="link" :to="{ name: 'Search Page' }">Search</router-link>
         <router-link class="link" :to="{ name: 'List Page' }">My Books</router-link>
         <router-link class="link" :to="{ name: 'Blog Page' }">Blog</router-link>
+        <router-link class="link" :to="{ name: 'Group Page' }">Groups</router-link>
         <router-link class="link" :to="{ name: 'Profile Page' }">Profile</router-link>
         <a href="http://localhost:8000/logout/">Log Out</a>
       </div>

@@ -125,7 +125,7 @@
             user: this.reader_id,
           };
           window.location.reload();
-          alert("Comment added successfully");
+ 
         } else {
           alert("Failed to add comment");
         }

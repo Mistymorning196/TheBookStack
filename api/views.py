@@ -12,11 +12,68 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 
-from .models import AuthorBlog, AuthorBook, Blog, BookGenre, Comment, ReaderGenre, SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
+from .models import AuthorBlog, AuthorBook, Blog, BookGenre, Comment, Discussion, Group, ReaderGenre, SiteUser, Reader, Author, Book, Genre, Friendship, Message, UserBook, Review
 from .forms import LoginForm, SignUpForm, UpdatePassForm, UpdateUserForm
 
-def login_site_user(request: HttpRequest) -> HttpResponse:
-    """ Function to validate a potential registered site_user. """
+import random
+import string
+
+from django.core.mail import send_mail
+
+
+from django.utils import timezone
+from datetime import timedelta
+
+def generate_2fa_token():
+    """Generates a random 6-digit token."""
+    return ''.join(random.choices(string.digits, k=6))
+
+def verify_2fa(request):
+    """View to handle 2FA token verification and redirect user based on their type."""
+    if request.method == "POST":
+        token = request.POST.get('token')  # The token entered by the user
+        user = request.user  # Current logged-in user
+
+        if user.two_factor_token == token:
+            # Check if the token has expired (e.g., 10 minutes)
+            if timezone.now() - user.token_generated_at < timedelta(minutes=10):
+                # Token is valid, log the user in and redirect to their appropriate dashboard
+                user.two_factor_token = ''  # Clear the token after successful verification
+                user.save()
+
+                # Now redirect based on the user's type (Reader or Author)
+                try:
+                    # Check if the user is a Reader
+                    reader = Reader.objects.filter(id=user.id).first()
+                    if reader:
+                        print(f"Redirecting Reader with ID {user.id}")
+                        return redirect(settings.READER_REDIRECT_URL + f'?u={user.id}')
+
+                    # Check if the user is an Author
+                    author = Author.objects.filter(id=user.id).first()
+                    if author:
+                        print(f"Redirecting Author with ID {user.id}")
+                        return redirect(settings.AUTHOR_REDIRECT_URL + f'?u={user.id}')
+
+                except User.DoesNotExist:
+                    # If the user doesn't exist in either table, fallback to default redirect
+                    print(f"Error: User with ID {user.id} not found in Reader or Author.")
+                    return redirect(settings.LOGIN_REDIRECT_URL)
+
+                # If the user is neither a Reader nor an Author, fall back to a default redirect
+                print(f"Unknown user type with ID {user.id}")
+                return redirect(settings.LOGIN_REDIRECT_URL)
+
+            else:
+                return render(request, 'api/auth/verify_2fa.html', {'message': 'Token expired, please try again.'})
+
+        else:
+            return render(request, 'api/auth/verify_2fa.html', {'message': 'Invalid token, please try again.'})
+
+    return render(request, 'api/auth/verify_2fa.html')
+
+def login_site_user(request):
+    """ Function to validate a potential registered site_user with 2FA """
     if request.method == "POST":
         form = LoginForm(request.POST)
         
@@ -26,42 +83,30 @@ def login_site_user(request: HttpRequest) -> HttpResponse:
             
             # Authenticate user
             user = authenticate(username=username, password=password)
-            print(f"Authenticated user: {user}")
-
             if user is not None:
                 # Log the user in
                 auth_login(request, user)
-                print(f"User authenticated and logged in: {user}")
 
-                # Check if the user is a SiteUser subclass (Reader or Author)
-                if isinstance(user, SiteUser):
-                    # Try to get the actual subclass (Reader or Author) from the database
-                    try:
-                        # Check if it's a Reader
-                        reader = Reader.objects.filter(id=user.id).first()
-                        if reader:
-                            print(f"Redirecting Reader with ID {user.id}")
-                            return redirect(settings.READER_REDIRECT_URL + f'?u={user.id}')
+                # Generate and send the 2FA token if the user is authenticated
+                token = generate_2fa_token()
+                user.two_factor_token = token
+                user.token_generated_at = timezone.now()
+                user.save()
 
-                        # Check if it's an Author
-                        author = Author.objects.filter(id=user.id).first()
-                        if author:
-                            print(f"Redirecting Author with ID {user.id}")
-                            return redirect(settings.AUTHOR_REDIRECT_URL + f'?u={user.id}')
+                # Send token to user's email
+                send_mail(
+                    'Your 2FA Login Token',
+                    f'Your 2FA token is: {token}',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
 
-                    except SiteUser.DoesNotExist:
-                        # If no matching subclass is found, fallback to default redirect
-                        print(f"Error: User not found in the database for ID {user.id}")
-                        return redirect(settings.LOGIN_REDIRECT_URL + f'?u={user.id}')
-
-                    # If neither Reader nor Author is found, fall back to the default redirect
-                    print(f"Unknown user type with ID {user.id}")
-                    return redirect(settings.LOGIN_REDIRECT_URL + f'?u={user.id}')
+                return redirect('verify_2fa')  # Redirect to a page to verify 2FA token
 
             else:
-                # Invalid authentication, show error message
-                print("Authentication failed!")
-                return render(request, "api/auth/login.html", {"form": form, "message": 'Username or password invalid, please try again.'})
+                return render(request, "api/auth/login.html", {"form": form, "message": 'Invalid username or password'})
+
     else:
         form = LoginForm()
 
@@ -303,13 +348,45 @@ def blog_api(request: HttpRequest, blog_id: int) -> JsonResponse:
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
-    # DELETE method to delete book
+    # DELETE method to delete blog
     if request.method == 'DELETE':
         blog.delete()
         return JsonResponse({}, status=204)  # 204 No Content
 
     # GET book data
     return JsonResponse(blog.as_dict())
+
+# APIs for group model below
+def groups_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the Group"""
+    
+    if request.method == 'POST':
+        # Create a new group
+        POST = json.loads(request.body)
+        group = Group.objects.create(
+            name=POST['name'],
+        )
+        return JsonResponse(group.as_dict())
+
+    search_query = request.GET.get("search", "").strip()
+    if search_query:
+        groups = Group.objects.filter(Q(name__icontains=search_query))
+    else:
+        groups = Group.objects.all()
+
+    return JsonResponse({"groups": [group.as_dict() for group in groups]})
+
+
+def group_api(request: HttpRequest, group_id: int) -> JsonResponse:
+    """API endpoint for a single Group"""
+    try:
+        group = Group.objects.get(id=group_id)
+    except Group.DoesNotExist:
+        return JsonResponse({"error": "Group not found."}, status=404)
+
+    # GET group data
+    return JsonResponse(group.as_dict())
+
 
 # APIs for user model below
 def site_users_api(request: HttpRequest) -> JsonResponse:
@@ -1023,3 +1100,44 @@ def comment_api(request: HttpRequest, comment_id: int) -> JsonResponse:
         return JsonResponse({}, status=204)  # 204 No Content
 
     return JsonResponse(comment.as_dict())
+
+# APIs for discussions model below
+def discussions_api(request: HttpRequest) -> JsonResponse:
+    """API endpoint for the discussion"""
+
+    if request.method == 'POST':
+        # Create a new discussion
+        POST = json.loads(request.body)
+        user = Reader.objects.get(id=POST.get("user_id"))
+        group = Group.objects.get(id=POST.get("group_id"))  
+
+        discussion = Discussion.objects.create(
+            user=user,
+            group=group,
+            discussion=POST['discussion'],  # Renamed 'comment' to 'content'
+        )
+        return JsonResponse(discussion.as_dict())
+
+    # GET method to list all discussions
+    return JsonResponse({
+        'discussions': [
+            discussion.as_dict()
+            for discussion in Discussion.objects.all()
+        ]
+    })
+
+
+def discussion_api(request: HttpRequest, discussion_id: int) -> JsonResponse:
+    """API endpoint for a single discussion"""
+    try:
+        discussion = Discussion.objects.get(id=discussion_id)
+    except Discussion.DoesNotExist:
+        return JsonResponse({"error": "Discussion not found."}, status=404)
+
+   
+
+    if request.method == 'DELETE':
+        discussion.delete()
+        return JsonResponse({}, status=204)
+
+    return JsonResponse(discussion.as_dict())

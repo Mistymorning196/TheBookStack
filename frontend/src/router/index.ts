@@ -21,6 +21,8 @@ import AuthorBookPage from '../pages/AuthorBookPage.vue';
 import PostPage from '../pages/PostPage.vue';
 import AuthorPostPage from '../pages/AuthorPostPage.vue';
 import AllBookPage from '../pages/AllBookPage.vue';
+import GroupPage from '../pages/GroupPage.vue';
+import DiscussionPage from '../pages/DiscussionPage.vue';
 
 let base = (import.meta.env.MODE == 'development') ? import.meta.env.BASE_URL : ''
 
@@ -43,7 +45,9 @@ const router = createRouter({
         { path: '/authorBio/:id', name: 'AuthorBio Page', component: AuthorBioPage },
         { path: '/search/', name: 'Search Page', component: SearchPage },
         { path: '/blog/', name: 'Blog Page', component: BlogPage},
+        { path: '/group/', name: 'Group Page', component: GroupPage},
         { path: '/post/:id', name: 'Post Page', component: PostPage},
+        { path: '/discussion/:id', name: 'Discussion Page', component: DiscussionPage},
         { path: '/authorPost/:id', name: 'Author Post Page', component: AuthorPostPage},
         { path: '/message/:id', name: 'Message Page', component: MessagePage},
         { path: '/myBooks/', name: 'List Page', component: ListPage},

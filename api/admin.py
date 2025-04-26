@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Blog, SiteUser, Reader, Author, Book, Genre, Friendship, Message
+from .models import Blog, Group, SiteUser, Reader, Author, Book, Genre, Friendship, Message
 
 # Friendship Inline
 class FriendshipInline(admin.TabularInline):
@@ -45,6 +45,12 @@ class CommentInline(admin.TabularInline):
     model = Blog.comments.through
     fk_name = 'blog'
 
+'''Register the comment through model to the admin panel'''
+
+class DiscussionInline(admin.TabularInline):
+    model = Group.discussions.through
+    fk_name = 'group'
+
 '''Register the author book through model to the admin panel'''
 
 class AuthorBookInline(admin.TabularInline):
@@ -60,6 +66,10 @@ class AuthorBlogInline(admin.TabularInline):
 @admin.register(Blog)
 class BookAdmin(admin.ModelAdmin):
     inlines = (CommentInline,)
+
+@admin.register(Group)
+class BookAdmin(admin.ModelAdmin):
+    inlines = (DiscussionInline,)
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):

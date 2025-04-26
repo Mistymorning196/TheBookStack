@@ -46,6 +46,12 @@ export interface Blog{
     author: string;
 }
 
+export interface Group{
+    id: number;
+    api: string;
+    name: string;
+}
+
 export interface Friendship{
     id: number;
     api: string;
@@ -129,6 +135,15 @@ export interface Comment{
     user: number;
     username: string;
     comment: string;
+}
+
+export interface Discussion{
+    id: number;
+    api: string;
+    group: number;
+    user: number;
+    username: string;
+    discussion: string;
 }
 
 export interface Message{
