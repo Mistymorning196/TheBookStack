@@ -5,7 +5,6 @@
     <div id="profile-box">
       <h2>Book Info</h2>
 
-        <!-- Display cover image if available -->
       <div v-if="book.cover_image">
         <img :src="`http://localhost:8000/${book.cover_image}`" alt="Book Cover" />
       </div>
@@ -15,7 +14,7 @@
       <p>Author: {{ book.author }}</p>
       <p>Blurb: {{ book.blurb }}</p>
       <p>ISBN: {{ book.isbn }}</p>
-      <p>Rating: {{ averageRating }} </p>
+      <p>Rating: {{ averageRating }}</p>
 
       <!-- Genres -->
       <div>
@@ -28,7 +27,7 @@
       </div>
 
       <button v-if="statusBook === undefined" @click="addWishlist()">Add to WishList</button>
-      <p v-else>Status: {{ statusBook }} </p>
+      <p v-else>Status: {{ statusBook }}</p>
     </div>
 
     <!-- Review Section -->
@@ -37,12 +36,11 @@
       <button @click="showModal = true">Add Review</button>
 
       <div class="reviews-container">
-        <div v-for="(review, index) in reviews.filter(review => review.book === book.id)" :key="index">
+        <div v-for="(review, index) in reviews.filter(r => r.book === book.id)" :key="index">
           <p v-if="review.user === reader_id">
             <span v-if="!editTitle">Title: {{ review.title }}</span>
             <span v-else>
-              Title:
-              <input v-model="editedReview.title" type="text" />
+              Title: <input v-model="editedReview.title" type="text" />
             </span>
             <button v-if="!editTitle" @click="toggleEditField('Title')">Edit</button>
             <button v-else @click="saveField('title', review.id)">Save</button>
@@ -67,8 +65,7 @@
           <p v-if="review.user === reader_id">
             <span v-if="!editMessage">Message: {{ review.message }}</span>
             <span v-else>
-              Message:
-              <input v-model="editedReview.message" type="text" />
+              Message: <input v-model="editedReview.message" type="text" />
             </span>
             <button v-if="!editMessage" @click="toggleEditField('Message')">Edit</button>
             <button v-else @click="saveField('message', review.id)">Save</button>
@@ -96,16 +93,23 @@
     </div>
   </div>
 </template>
-
 <script lang="ts">
 import ReaderNavBarComponent from "../components/ReaderNav.vue";
 import { defineComponent } from "vue";
 import { useBookStore } from "../stores/book";
 import { useReviewsStore } from "../stores/reviews";
 import { useRoute } from "vue-router";
-import VueCookies from "vue-cookies";
+import { useCookies } from "vue3-cookies";
 import { UserBook } from "../types";
 import { useUserBooksStore } from "../stores/userBooks";
+
+interface NewReview {
+  title: string;
+  message: string;
+  rating: number;
+  book: number | null;
+  user: number;
+}
 
 export default defineComponent({
   data() {
@@ -119,8 +123,8 @@ export default defineComponent({
         message: "",
         rating: 5,
         book: null,
-        user: this.reader_id,
-      },
+        user: Number(window.sessionStorage.getItem("reader_id")),
+      } as NewReview,
 
       editTitle: false,
       editMessage: false,
@@ -129,16 +133,15 @@ export default defineComponent({
       editedReview: {
         title: "",
         message: "",
-        rating: "",
+        rating: 5, // FIXED: rating is number
       },
     };
   },
   async mounted() {
     const route = useRoute();
-    const bookId = parseInt(route.params.id);
-    let book = await this.bookStore.fetchBookReturn(bookId);
-    console.log(this.book.cover_image);
+    const bookId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
 
+    await this.bookStore.fetchBookReturn(bookId);
 
     let responseReview = await fetch("http://localhost:8000/reviews/");
     let dataReview = await responseReview.json();
@@ -149,9 +152,8 @@ export default defineComponent({
 
     let responseUserBook = await fetch("http://localhost:8000/user_books/");
     let dataUserBook = await responseUserBook.json();
-    let userBooks = dataUserBook.user_books as UserBook[];
     const storeUserBook = useUserBooksStore();
-    storeUserBook.saveUserBooks(userBooks);
+    storeUserBook.saveUserBooks(dataUserBook.user_books as UserBook[]);
 
     try {
       const responseGenres = await fetch("http://localhost:8000/book_genres/");
@@ -165,22 +167,25 @@ export default defineComponent({
     ReaderNavBarComponent,
   },
   methods: {
-    toggleEditField(field: string) {
-      this[`edit${field}`] = !this[`edit${field}`];
+    toggleEditField(field: 'Title' | 'Message' | 'Rating') {
+      const key = `edit${field}` as 'editTitle' | 'editMessage' | 'editRating';
+      (this as any)[key] = !(this as any)[key];
     },
 
-    async saveField(field: string, reviewID: number) {
+
+    async saveField(field: 'title' | 'message' | 'rating', reviewID: number) {
       try {
+        const { cookies } = useCookies();
         const payload = {
-          [field.toLowerCase()]: this.editedReview[field.toLowerCase()],
+          [field]: this.editedReview[field],
         };
 
         const response = await fetch(`http://localhost:8000/review/${reviewID}/`, {
           method: "PUT",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify(payload),
@@ -188,7 +193,7 @@ export default defineComponent({
 
         if (!response.ok) throw new Error("Failed to update field");
 
-        window.location.reload(true);
+        window.location.reload();
         alert(`${field} updated successfully!`);
       } catch (error) {
         console.error(error);
@@ -197,8 +202,14 @@ export default defineComponent({
     },
 
     async submitReview() {
+      const { cookies } = useCookies();
       if (!this.newReview.title || !this.newReview.message) {
         alert("Please fill out all fields!");
+        return;
+      }
+
+      if (this.newReview.book === null) {
+        alert("Book ID not set. Cannot submit comment.");
         return;
       }
 
@@ -218,28 +229,20 @@ export default defineComponent({
         rating: this.newReview.rating,
       };
 
-      let response = await fetch("http://localhost:8000/reviews/", {
+      const response = await fetch("http://localhost:8000/reviews/", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${VueCookies.get("access_token")}`,
+          Authorization: `Bearer ${cookies.get("access_token")}`,
           "Content-Type": "application/json",
-          "X-CSRFToken": VueCookies.get("csrftoken"),
+          "X-CSRFToken": cookies.get("csrftoken"),
         },
         credentials: "include",
         body: JSON.stringify(reviewData),
       });
 
       if (response.ok) {
-        const storeReview = useReviewsStore();
-        storeReview.saveReviews([...storeReview.reviews, reviewData]);
-        this.showModal = false;
-        this.newReview = {
-          title: "",
-          message: "",
-          rating: 5,
-          book: this.newReview.book,
-          user: this.reader_id,
-        };
+  
+        // Re-fetch reviews or reload instead of directly saving wrong type
         window.location.reload();
         alert("Review added successfully");
       } else {
@@ -249,12 +252,13 @@ export default defineComponent({
 
     async deleteReview(reviewId: number) {
       try {
+        const { cookies } = useCookies();
         const response = await fetch(`http://localhost:8000/review/${reviewId}/`, {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
         });
@@ -274,6 +278,7 @@ export default defineComponent({
 
     async addWishlist() {
       try {
+        const { cookies } = useCookies();
         const existingEntry = this.userBooks.find(
           (entry) => entry.user === this.reader_id && entry.book === this.book.id
         );
@@ -288,12 +293,12 @@ export default defineComponent({
           status: "WISHLIST",
         };
 
-        let response = await fetch("http://localhost:8000/user_books/", {
+        const response = await fetch("http://localhost:8000/user_books/", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify(userBookData),
@@ -321,7 +326,6 @@ export default defineComponent({
       return storeReview.reviews;
     },
     userBooks() {
-      const storeUserBook = useUserBooksStore();
       return this.storeUserBook.userBooks;
     },
     statusBook() {
@@ -349,6 +353,7 @@ export default defineComponent({
   },
 });
 </script>
+
 
   
 <style scoped>

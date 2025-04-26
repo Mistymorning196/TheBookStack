@@ -33,10 +33,11 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import ReaderNavBarComponent from "../components/ReaderNav.vue";
-import { useReaderStore } from "../stores/reader";
+
 import { useReadersStore } from "../stores/readers";
 import { useBooksStore } from "../stores/books";
-import { Book, Reader } from "../types/index";
+import { Book, Reader, Friendship, ReaderGenre, UserBook, Genre } from "../types/index";
+
 
 export default defineComponent({
   data() {
@@ -108,7 +109,7 @@ export default defineComponent({
 
       // --- BOOK RECOMMENDATION (filtered by books user does NOT have) ---
       const userBookIds = new Set(
-        userBooks.filter(ub => ub.user === this.reader_id).map(ub => ub.book)
+        userBooks.filter((ub: UserBook) => ub.user === this.reader_id).map((ub: UserBook) => ub.book)
       );
 
       const bookScores: { book: Book; score: number }[] = [];
@@ -134,7 +135,7 @@ export default defineComponent({
       // --- READER RECOMMENDATION (excluding friendships where user == reader_id) ---
       // Extract users who have a friendship where user === reader_id
       const excludedReaderIds = new Set(
-        friendships.filter(f => f.user === this.reader_id).map(f => f.friend)
+        friendships.filter((f: Friendship) => f.user === this.reader_id).map((f: Friendship) => f.friend)
       );
 
       const readerScores: { reader: Reader; score: number }[] = [];
@@ -186,8 +187,8 @@ export default defineComponent({
         const readerDiversity = readers
           .filter(r => r.id !== this.reader_id && !excludedReaderIds.has(r.id))
           .map(reader => {
-            const genres = readerGenres.filter(rg => rg.user === reader.id);
-            const uniqueGenres = new Set(genres.map(g => g.genre));
+            const genres = readerGenres.filter((rg: ReaderGenre) => rg.user === reader.id);
+            const uniqueGenres = new Set(genres.map((g: Genre) => g.genre));
             return { reader, diversity: uniqueGenres.size };
           })
           .sort((a, b) => b.diversity - a.diversity)

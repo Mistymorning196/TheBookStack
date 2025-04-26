@@ -1,158 +1,162 @@
 <template>
-    <ReaderNavBarComponent />
-    <div class="body">
-      <div id="profile-box">
-        <h2>User Info</h2>
-        <p>Username: {{ reader.username }}</p>
-  
-        <button @click="addFriendship(reader.id)" v-if="hasFriendship === null">Request</button>
-        <div v-else>
-          <p v-if="hasFriendship === true">FOLLOWING</p>
-          <p v-else>REQUESTED</p>
-        </div>
-  
-        <router-link :to="`/message/${reader.id}`" class="message-link">Message</router-link>
+  <ReaderNavBarComponent />
+  <div class="body">
+    <div id="profile-box">
+      <h2>User Info</h2>
+      <p>Username: {{ reader.username }}</p>
+
+      <button @click="addFriendship(reader.id)" v-if="hasFriendship === null">Request</button>
+      <div v-else>
+        <p v-if="hasFriendship === true">FOLLOWING</p>
+        <p v-else>REQUESTED</p>
       </div>
-  
-      <div class="display-books">
-        <h2>Wishlist</h2>
-        <div class="book-scroll-container">
-          <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === reader.id)"
-            :key="index" class="book-container">
-            <router-link :to="`/book/${userBook.book}`" class="book-link">
-              <div v-if="userBook.cover_image">
-                <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
-              </div>
-              <p v-else>No cover image available</p>
-              <p class="book-title">Title: {{ userBook.title }}</p>
-              <p class="book-author">Author: {{ userBook.author }}</p>
-            </router-link>
-          </div>
+
+      <router-link :to="`/message/${reader.id}`" class="message-link">Message</router-link>
+    </div>
+
+    <div class="display-books">
+      <h2>Wishlist</h2>
+      <div class="book-scroll-container">
+        <div v-for="(userBook, index) in filteredBooks('WISHLIST')" :key="index" class="book-container">
+          <router-link :to="`/book/${userBook.book}`" class="book-link">
+            <p class="book-title">Title: {{ userBook.title }}</p>
+            <p class="book-author">Author: {{ userBook.author }}</p>
+          </router-link>
         </div>
-  
-        <h2>Reading</h2>
-        <div class="book-scroll-container">
-          <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === reader.id)"
-            :key="index" class="book-container">
-            <router-link :to="`/book/${userBook.book}`" class="book-link">
-              <div v-if="userBook.cover_image">
-                <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
-              </div>
-              <p v-else>No cover image available</p>
-              <p class="book-title">Title: {{ userBook.title }}</p>
-              <p class="book-author">Author: {{ userBook.author }}</p>
-            </router-link>
-          </div>
+      </div>
+
+      <h2>Reading</h2>
+      <div class="book-scroll-container">
+        <div v-for="(userBook, index) in filteredBooks('READING')" :key="index" class="book-container">
+          <router-link :to="`/book/${userBook.book}`" class="book-link">
+            <p class="book-title">Title: {{ userBook.title }}</p>
+            <p class="book-author">Author: {{ userBook.author }}</p>
+          </router-link>
         </div>
-  
-        <h2>Completed</h2>
-        <div class="book-scroll-container">
-          <div
-            v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === reader.id)"
-            :key="index" class="book-container">
-            <router-link :to="`/book/${userBook.book}`" class="book-link">
-              <div v-if="userBook.cover_image">
-                <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
-              </div>
-              <p v-else>No cover image available</p>
-              <p class="book-title">Title: {{ userBook.title }}</p>
-              <p class="book-author">Author: {{ userBook.author }}</p>
-            </router-link>
-          </div>
+      </div>
+
+      <h2>Completed</h2>
+      <div class="book-scroll-container">
+        <div v-for="(userBook, index) in filteredBooks('COMPLETED')" :key="index" class="book-container">
+          <router-link :to="`/book/${userBook.book}`" class="book-link">
+            <p class="book-title">Title: {{ userBook.title }}</p>
+            <p class="book-author">Author: {{ userBook.author }}</p>
+          </router-link>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script lang="ts">
-  import ReaderNavBarComponent from "../components/ReaderNav.vue";
-  import { defineComponent } from "vue";
-  import { useReaderStore } from "../stores/reader.ts";
-  import { useRoute } from "vue-router";
-  import VueCookies from "vue-cookies";
-  import { Friendship, UserBook } from "../types";
-  import { useFriendshipsStore } from "../stores/friendships";
-  import { useBooksStore } from "../stores/books.ts";
-  import { useUserBooksStore } from "../stores/userBooks.ts";
-  
-  export default defineComponent({
-    data() {
-      return {
-        reader_id: Number(window.sessionStorage.getItem("reader_id")),
+  </div>
+</template>
+
+<script lang="ts">
+import ReaderNavBarComponent from "../components/ReaderNav.vue";
+import { defineComponent } from "vue";
+import { useReaderStore } from "../stores/reader";
+import { useRoute } from "vue-router";
+import { useCookies } from "vue3-cookies"; 
+import { Friendship, UserBook } from "../types";
+import { useFriendshipsStore } from "../stores/friendships";
+import { useBooksStore } from "../stores/books";
+import { useUserBooksStore } from "../stores/userBooks";
+
+export default defineComponent({
+  data() {
+    return {
+      reader_id: Number(window.sessionStorage.getItem("reader_id")),
+    };
+  },
+  async mounted() {
+    const route = useRoute();
+    const readerId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+
+    await this.readerStore.fetchReaderReturn(readerId); // ✅ no unused variables
+
+    const responseFriendship = await fetch("http://localhost:8000/friendships/");
+    const dataFriendship = await responseFriendship.json();
+    const friendships = dataFriendship.friendships as Friendship[];
+    useFriendshipsStore().saveFriendships(friendships);
+
+    const responseUserBook = await fetch("http://localhost:8000/user_books/");
+    const dataUserBook = await responseUserBook.json();
+    const userBooks = dataUserBook.user_books as UserBook[];
+    useUserBooksStore().saveUserBooks(userBooks);
+  },
+  components: {
+    ReaderNavBarComponent,
+  },
+  methods: {
+    async addFriendship(friend_id: number) {
+      const { cookies } = useCookies(); 
+
+      const payload = {
+        user_id: this.reader_id,
+        friend_id: friend_id,
+        accepted: false,
       };
-    },
-    async mounted() {
-      const route = useRoute();
-      const readerId = parseInt(String(route.params.id));
-      let reader = await this.readerStore.fetchReaderReturn(readerId);
-  
-      const responseFriendship = await fetch("http://localhost:8000/friendships/");
-      const dataFriendship = await responseFriendship.json();
-      const friendships = dataFriendship.friendships as Friendship[];
-      useFriendshipsStore().saveFriendships(friendships);
-  
-      const responseUserBook = await fetch("http://localhost:8000/user_books/");
-      const dataUserBook = await responseUserBook.json();
-      const userBooks = dataUserBook.user_books as UserBook[];
-      useUserBooksStore().saveUserBooks(userBooks);
-    },
-    components: {
-      ReaderNavBarComponent,
-    },
-    methods: {
-      async addFriendship(friend_id: number) {
-        const payload = {
-          user_id: this.reader_id,
-          friend_id: friend_id,
-          accepted: false,
-        };
-  
-        const friendshipResponse = await fetch("http://localhost:8000/friendships/", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
-            "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
-          },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
-  
-        const data = await friendshipResponse.json();
-        const createdFriendship = data.friendship as Friendship;
-        useFriendshipsStore().addFriendship(createdFriendship);
-  
-        window.location.reload();
-        alert(`Friendship requested successfully!`);
-      },
-    },
-    computed: {
-      reader() {
-        return this.readerStore.reader;
-      },
-      friendships() {
-        return this.friendshipsStore.friendships;
-      },
-      hasFriendship() {
-        const friendship = this.friendships.find(
-          (friendship) => friendship.friend === this.reader.id && friendship.user === this.reader_id
-        );
-        return friendship ? friendship.accepted : null;
-      },
-      userBooks() {
-        return this.storeUserBook.userBooks;
-      },
-    },
-    setup() {
-      return {
-        readerStore: useReaderStore(),
-        friendshipsStore: useFriendshipsStore(),
-        storeBook: useBooksStore(),
-        storeUserBook: useUserBooksStore(),
+
+      const accessToken = cookies.get("access_token");
+      const csrfToken = cookies.get("csrftoken");
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
       };
+
+      if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+      }
+      if (csrfToken) {
+        headers["X-CSRFToken"] = csrfToken;
+      }
+
+      const friendshipResponse = await fetch("http://localhost:8000/friendships/", {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      const data = await friendshipResponse.json();
+      const createdFriendship = data.friendship as Friendship;
+      useFriendshipsStore().addFriendship(createdFriendship);
+
+      window.location.reload();
+      alert(`Friendship requested successfully!`);
     },
-  });
-  </script>
+    filteredBooks(status: string) {
+      return this.userBooks.filter(
+        (book) => book.status === status && book.user === this.reader.id
+      );
+    },
+  },
+  computed: {
+    reader() {
+      return this.readerStore.reader;
+    },
+    friendships() {
+      return this.friendshipsStore.friendships;
+    },
+    hasFriendship() {
+      const friendship = this.friendships.find(
+        (friendship) => friendship.friend === this.reader.id && friendship.user === this.reader_id
+      );
+      return friendship ? friendship.accepted : null;
+    },
+    userBooks() {
+      return this.storeUserBook.userBooks;
+    },
+  },
+  setup() {
+    return {
+      readerStore: useReaderStore(),
+      friendshipsStore: useFriendshipsStore(),
+      storeBook: useBooksStore(),
+      storeUserBook: useUserBooksStore(),
+    };
+  },
+});
+</script>
+
+
   
   <style scoped>
   .body {

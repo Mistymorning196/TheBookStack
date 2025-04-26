@@ -50,11 +50,12 @@
 <script lang="ts">
 import ReaderNavBarComponent from "../components/ReaderNav.vue";
 import { defineComponent } from "vue";
-import { Reader, Book, UserBook } from "../types/index.ts";
-import { useReadersStore } from "../stores/readers.ts";
+import { useCookies } from "vue3-cookies";
 import { useBooksStore } from "../stores/books.ts";
 import { useUserBooksStore } from "../stores/userBooks.ts";
-import VueCookies from 'vue-cookies';
+import { useReadersStore } from "../stores/readers.ts";
+import { BookGenre, ReaderGenre, UserBook } from "../types"; 
+
 
 export default defineComponent({
   data() {
@@ -65,94 +66,84 @@ export default defineComponent({
   async mounted() {
     const readerRes = await fetch("http://localhost:8000/readers/");
     const readerData = await readerRes.json();
-    useReadersStore().saveReaders(readerData.users as Reader[]);
+    useReadersStore().saveReaders(readerData.users);
 
     const bookRes = await fetch("http://localhost:8000/books/");
     const bookData = await bookRes.json();
-    useBooksStore().saveBooks(bookData.books as Book[]);
+    useBooksStore().saveBooks(bookData.books);
 
     const userBookRes = await fetch("http://localhost:8000/user_books/");
     const userBookData = await userBookRes.json();
-
-    useUserBooksStore().saveUserBooks(userBookData.user_books as UserBook[]);
+    useUserBooksStore().saveUserBooks(userBookData.user_books);
   },
   components: {
     ReaderNavBarComponent,
   },
   methods: {
     async updateUserBookStatus(userBook: UserBook, newStatus: string) {
-      console.log('updateUserBookStatus triggered', userBook, newStatus);  // Debugging log
+      console.log('updateUserBookStatus triggered', userBook, newStatus);
 
       try {
+        const { cookies } = useCookies();
         const response = await fetch(`http://localhost:8000/user_book/${userBook.id}/`, {
           method: "PUT",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify({ status: newStatus }),
         });
 
         if (response.ok && newStatus === "COMPLETED") {
-          // Update book count
           const userRes = await fetch(`http://localhost:8000/reader/${this.reader_id}/`);
           const userData = await userRes.json();
           await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
             method: "PUT",
             headers: {
-              Authorization: `Bearer ${VueCookies.get("access_token")}`,
+              Authorization: `Bearer ${cookies.get("access_token")}`,
               "Content-Type": "application/json",
-              "X-CSRFToken": VueCookies.get("csrftoken"),
+              "X-CSRFToken": cookies.get("csrftoken"),
             },
             credentials: "include",
             body: JSON.stringify({ book_count: userData.book_count + 1 }),
           });
 
-          // Update genre relationships
+          // Fetch and filter book genres
           const bookGenreRes = await fetch(`http://localhost:8000/book_genres/`);
           const bookGenreData = await bookGenreRes.json();
-          const bookGenres = bookGenreData.book_genre || [];
+          const bookGenres: BookGenre[] = bookGenreData.book_genre || []; // Ensure it's typed as BookGenre[]
 
+          const bookGenresForBook = bookGenres.filter((bg: BookGenre) => bg.book === userBook.book); // Explicitly type bg
 
-        // Ensure that both `bg.book` and `userBook.book` are of the same type
-        const bookGenresForBook = bookGenres.filter(bg => {
-          console.log(`Comparing bg.book: ${bg.book} with userBook.book: ${userBook.book}`);  // Debug log for each comparison
-          return bg.book === userBook.book;  // Ensure same type comparison
-        });
-
-        console.log('Filtered Book Genres:', bookGenresForBook);  // Debugging log
-
+          console.log('Filtered Book Genres:', bookGenresForBook);
 
           const readerGenreRes = await fetch(`http://localhost:8000/reader_genres/`);
           const readerGenreData = await readerGenreRes.json();
           const readerGenres = readerGenreData.reader_genre || [];
-          console.log('Reader Genres:', readerGenreData);  // Debugging log
 
           for (const bg of bookGenresForBook) {
-            const existing = readerGenres.find(rg => rg.user === this.reader_id && rg.genre === bg.genre);
-            console.log('Existing genre:', existing);  // Debugging log
+            const existing = readerGenres.find((rg: ReaderGenre) => rg.user === this.reader_id && rg.genre === bg.genre);
 
             if (existing) {
               await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
                 method: "PUT",
                 headers: {
-                  Authorization: `Bearer ${VueCookies.get("access_token")}`,
+                  Authorization: `Bearer ${cookies.get("access_token")}`,
                   "Content-Type": "application/json",
-                  "X-CSRFToken": VueCookies.get("csrftoken"),
+                  "X-CSRFToken": cookies.get("csrftoken"),
                 },
                 credentials: "include",
                 body: JSON.stringify({ count: existing.count + 1 }),
               });
-              console.log(await response.json());  // Debugging log
             } else {
               await fetch(`http://localhost:8000/reader_genres/`, {
                 method: "POST",
                 headers: {
-                  Authorization: `Bearer ${VueCookies.get("access_token")}`,
+                  Authorization: `Bearer ${cookies.get("access_token")}`,
                   "Content-Type": "application/json",
-                  "X-CSRFToken": VueCookies.get("csrftoken"),
+                  "X-CSRFToken": cookies.get("csrftoken"),
                 },
                 credentials: "include",
                 body: JSON.stringify({
@@ -164,7 +155,7 @@ export default defineComponent({
           }
         }
 
-       window.location.reload();
+        window.location.reload();
       } catch (error) {
         console.error("Failed to update book status:", error);
       }
@@ -172,14 +163,15 @@ export default defineComponent({
 
     async deleteUserBook(userBookId: number) {
       try {
+        const { cookies } = useCookies();
         const userBook = this.userBooks.find(book => book.id === userBookId);
 
         const response = await fetch(`http://localhost:8000/user_book/${userBookId}/`, {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
         });
@@ -190,36 +182,35 @@ export default defineComponent({
           await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
             method: "PUT",
             headers: {
-              Authorization: `Bearer ${VueCookies.get("access_token")}`,
+              Authorization: `Bearer ${cookies.get("access_token")}`,
               "Content-Type": "application/json",
-              "X-CSRFToken": VueCookies.get("csrftoken"),
+              "X-CSRFToken": cookies.get("csrftoken"),
             },
             credentials: "include",
             body: JSON.stringify({ book_count: Math.max(userData.book_count - 1, 0) }),
           });
 
-          // Update genre relationships
           const bookGenreRes = await fetch(`http://localhost:8000/book_genres/`);
           const bookGenreData = await bookGenreRes.json();
-          const bookGenres = bookGenreData.book_genre || [];
+          const bookGenres: BookGenre[] = bookGenreData.book_genre || [];
 
           const readerGenreRes = await fetch(`http://localhost:8000/reader_genres/`);
           const readerGenreData = await readerGenreRes.json();
           const readerGenres = readerGenreData.reader_genre || [];
 
-          const bookGenresForBook = bookGenres.filter(bg => bg.book === userBook.book);
+          const bookGenresForBook = bookGenres.filter((bg: BookGenre) => bg.book === userBook.book);
 
           for (const bg of bookGenresForBook) {
-            const existing = readerGenres.find(rg => rg.user === this.reader_id && rg.genre === bg.genre);
+            const existing = readerGenres.find((rg: ReaderGenre) => rg.user === this.reader_id && rg.genre === bg.genre);
             if (existing) {
               const newCount = existing.count - 1;
               if (newCount <= 0) {
                 await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
                   method: "DELETE",
                   headers: {
-                    Authorization: `Bearer ${VueCookies.get("access_token")}`,
+                    Authorization: `Bearer ${cookies.get("access_token")}`,
                     "Content-Type": "application/json",
-                    "X-CSRFToken": VueCookies.get("csrftoken"),
+                    "X-CSRFToken": cookies.get("csrftoken"),
                   },
                   credentials: "include",
                 });
@@ -227,9 +218,9 @@ export default defineComponent({
                 await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
                   method: "PUT",
                   headers: {
-                    Authorization: `Bearer ${VueCookies.get("access_token")}`,
+                    Authorization: `Bearer ${cookies.get("access_token")}`,
                     "Content-Type": "application/json",
-                    "X-CSRFToken": VueCookies.get("csrftoken"),
+                    "X-CSRFToken": cookies.get("csrftoken"),
                   },
                   credentials: "include",
                   body: JSON.stringify({ count: newCount }),
@@ -261,6 +252,7 @@ export default defineComponent({
     };
   },
 });
+
 </script>
 
   

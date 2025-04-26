@@ -2,15 +2,15 @@
   <ReaderNavBarComponent />
   <div class="page-container">
     <!-- Group Title -->
-    <h1 class="group-title">{{ group.name }}</h1>
+    <h1 class="group-title" v-if="group">{{ group.name }}</h1>
 
     <!-- Discussion Box -->
-    <section id="discussion-box">
+    <section id="discussion-box" v-if="group">
 
       <!-- Scrollable Container -->
       <div class="discussions-container" ref="discussionContainer">
         <div
-          v-for="(discussion, index) in discussions.filter(d => d.group === group.id)"
+          v-for="(discussion, index) in discussions.filter(d => d.group === group?.id)"
           :key="index"
           class="discussion"
         >
@@ -40,12 +40,18 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick, onMounted, ref } from "vue";
+import ReaderNavBarComponent from "../components/ReaderNav.vue";
+import { defineComponent } from "vue";
 import { useGroupStore } from "../stores/group";
 import { useDiscussionsStore } from "../stores/discussions";
 import { useRoute } from "vue-router";
-import VueCookies from "vue-cookies";
-import ReaderNavBarComponent from "../components/ReaderNav.vue";
+import { useCookies } from "vue3-cookies";
+
+interface NewDiscussion {
+  discussion: string;
+  group: number | null;
+  user: number;
+}
 
 export default defineComponent({
   data() {
@@ -55,16 +61,55 @@ export default defineComponent({
       newDiscussion: {
         discussion: "",
         group: null,
-        user: this.reader_id,
-      },
+        user: Number(window.sessionStorage.getItem("reader_id")),
+      } as NewDiscussion,
+      group: undefined as { [x: string]: any; id: number; api: string; name: string; } | undefined,
     };
+  },
+  async mounted() {
+    const route = useRoute();
+    const groupId = parseInt(String(route.params.id)); 
+    this.group = await this.groupStore.fetchGroupReturn(groupId);
+
+    if (this.group) {
+      let responseDiscussion = await fetch("http://localhost:8000/discussions/");
+      let dataDiscussion = await responseDiscussion.json();
+      const storeDiscussion = useDiscussionsStore();
+      storeDiscussion.saveDiscussions(dataDiscussion.discussions);
+
+      this.newDiscussion.group = this.group.id; // Safe access
+    }
+
+
+    // Scroll to bottom after discussions are loaded
+    this.scrollToBottom();
   },
   components: {
     ReaderNavBarComponent,
   },
   methods: {
+    scrollToBottom() {
+      // Wait for the DOM to update before scrolling
+      this.$nextTick(() => {
+        const container = this.$refs.discussionContainer as HTMLElement;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+    },
+
     toggleModal() {
       this.showModal = !this.showModal;
+      const modalOverlay = document.querySelector('.modal-overlay');
+      if (this.showModal) {
+        if (modalOverlay) {
+          modalOverlay.classList.add('active');
+        }
+      } else {
+        if (modalOverlay) {
+          modalOverlay.classList.remove('active');
+        }
+      }
     },
 
     async submitDiscussion() {
@@ -73,18 +118,28 @@ export default defineComponent({
         return;
       }
 
+      if (this.newDiscussion.group === null) {
+        alert("Blog ID not set. Cannot submit comment.");
+        return;
+      }
+
+      const { cookies } = useCookies();
+
       const discussionData = {
-        user_id: this.reader_id,
+        id: 0,
+        api: "",
         group_id: this.newDiscussion.group,
+        user_id: this.reader_id,
+        username: "Default Username",
         discussion: this.newDiscussion.discussion,
       };
 
-      const response = await fetch("http://localhost:8000/discussions/", {
+      let response = await fetch("http://localhost:8000/discussions/", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${VueCookies.get("access_token")}`,
+          Authorization: `Bearer ${cookies.get("access_token")}`,
           "Content-Type": "application/json",
-          "X-CSRFToken": VueCookies.get("csrftoken"),
+          "X-CSRFToken": cookies.get("csrftoken"),
         },
         credentials: "include",
         body: JSON.stringify(discussionData),
@@ -99,7 +154,9 @@ export default defineComponent({
           group: this.newDiscussion.group,
           user: this.reader_id,
         };
-        await this.scrollToBottom();
+        
+        window.location.reload();
+        
       } else {
         alert("Failed to add discussion");
       }
@@ -107,32 +164,32 @@ export default defineComponent({
 
     async deleteDiscussion(discussionId: number) {
       try {
+        const { cookies } = useCookies();
         const response = await fetch(`http://localhost:8000/discussion/${discussionId}/`, {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken") 
           },
           credentials: "include",
         });
 
-        if (!response.ok) throw new Error("Failed to delete");
+        if (!response.ok) {
+          throw new Error("Failed to delete discussion");
+        }
 
         const discussionsStore = useDiscussionsStore();
         discussionsStore.removeDiscussion(discussionId);
-
-        await this.scrollToBottom();
-        alert("Message deleted successfully!");
+        window.location.reload();
+        alert("Discussion deleted successfully!");
       } catch (error) {
-        alert("Failed to delete message.");
+        console.error("Error deleting Discussion:", error);
+        alert("Failed to delete Discussion. Please try again.");
       }
     },
   },
   computed: {
-    group() {
-      return this.groupStore.group;
-    },
     discussions() {
       return this.storeDiscussion.discussions;
     },
@@ -140,31 +197,11 @@ export default defineComponent({
   setup() {
     const groupStore = useGroupStore();
     const storeDiscussion = useDiscussionsStore();
-    const discussionContainer = ref<HTMLElement | null>(null);
-
-    const scrollToBottom = async () => {
-      await nextTick();
-      if (discussionContainer.value) {
-        discussionContainer.value.scrollTop = discussionContainer.value.scrollHeight;
-      }
-    };
-
-    onMounted(async () => {
-      const route = useRoute();
-      const groupId = parseInt(route.params.id);
-      await groupStore.fetchGroupReturn(groupId);
-
-      const response = await fetch("http://localhost:8000/discussions/");
-      const data = await response.json();
-      storeDiscussion.saveDiscussions(data.discussions);
-
-      scrollToBottom();
-    });
-
-    return { groupStore, storeDiscussion, discussionContainer, scrollToBottom };
+    return { groupStore, storeDiscussion };
   },
 });
 </script>
+
 <style scoped>
 /* Container for the entire page */
 .page-container {
@@ -271,47 +308,18 @@ export default defineComponent({
 .modal-content {
   background-color: white;
   padding: 2rem;
-  border-radius: 8px;
-  width: 350px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.modal-content textarea {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 1rem;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-
-.modal-content button {
-  margin: 0.5rem;
+  border-radius: 12px;
+  text-align: center;
+  width: 40%;
 }
 
 .modal-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
 }
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1rem;
-  }
-
-  .group-title {
-    font-size: 2rem;
-  }
-
-  #discussion-box {
-    padding: 1rem;
-  }
-}
-
 </style>

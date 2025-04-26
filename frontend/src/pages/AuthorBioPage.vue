@@ -48,7 +48,7 @@
 import ReaderNavBarComponent from "../components/ReaderNav.vue";
 import { defineComponent } from "vue";
 import { useRoute } from "vue-router";
-import { Author, AuthorBlog, AuthorBook } from "../types";
+
 import { useAuthorBooksStore } from "../stores/authorBooks.ts";
 import { useAuthorBlogsStore } from "../stores/authorBlogs.ts";
 import { useAuthorStore } from "../stores/author.ts";
@@ -61,8 +61,10 @@ export default defineComponent({
   },
   async mounted() {
     const route = useRoute();
-    const authorId = parseInt(route.params.id);
-    await this.authorStore.fetchAuthorReturn(authorId);
+    const authorId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+
+    await this.authorStore.fetchAuthorReturn(authorId); // ✅ no unused variables
+
 
     let responseAuthorBook = await fetch("http://localhost:8000/author_books/");
     let dataAuthorBook = await responseAuthorBook.json();

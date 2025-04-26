@@ -36,7 +36,7 @@
   import { useBlogStore } from "../stores/blog";
   import { useCommentsStore } from "../stores/comments";
   import { useRoute } from "vue-router";
-  import VueCookies from "vue-cookies";
+  import {useCookies} from "vue3-cookies";
   
   export default defineComponent({
     data() {
@@ -52,8 +52,11 @@
     },
     async mounted() {
       const route = useRoute();
-      const blogId = parseInt(route.params.id);
-      let blog = await this.blogStore.fetchBlogReturn(blogId);
+      const blogId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+
+      await this.blogStore.fetchBlogReturn(blogId); // ✅ no unused variables
+
+
   
       let responseComment = await fetch("http://localhost:8000/comments/");
       let dataComment = await responseComment.json();
@@ -76,13 +79,14 @@
     },
     async saveField(fieldKey: string) {
       try {
+        const { cookies } = useCookies(); 
         const payload = { [fieldKey]: this.editedBlog[fieldKey] };
         const response = await fetch(`http://localhost:8000/blog/${this.blog.id}/`, {
           method: "PUT",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify(payload),

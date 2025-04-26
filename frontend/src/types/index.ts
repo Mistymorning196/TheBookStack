@@ -13,6 +13,8 @@ export interface Reader {
     goal_three: number;
     goal_four: number;
     goal_five: number;
+
+    [key: string]: any;
 }
 
 export interface Author {
@@ -25,6 +27,8 @@ export interface Author {
     date_of_birth: number;
     password: string;
     biography: string;
+
+    [key: string]: any;
 }
 
 export interface Book {
@@ -35,6 +39,8 @@ export interface Book {
     blurb: string;
     isbn: string;
     cover_image: string;
+
+    [key: string]: any;
 }
 
 
@@ -44,12 +50,16 @@ export interface Blog{
     title: string;
     post : string;
     author: string;
+
+    [key: string]: any;
 }
 
 export interface Group{
     id: number;
     api: string;
     name: string;
+
+    [key: string]: any;
 }
 
 export interface Friendship{
@@ -60,6 +70,8 @@ export interface Friendship{
     userUsername: string;
     friendUsername: string;
     accepted: boolean;
+
+    [key: string]: any;
 }
 
 export interface UserBook{
@@ -71,6 +83,8 @@ export interface UserBook{
     author: string;
     title: string;
     cover_image: string;
+
+    [key: string]: any;
 }
 
 export interface AuthorBook{
@@ -81,6 +95,8 @@ export interface AuthorBook{
     author: string;
     title: string;
     cover_image: string;
+
+    [key: string]: any;
 }
 
 export interface AuthorBlog{
@@ -90,6 +106,8 @@ export interface AuthorBlog{
     blog: number;
     author: string;
     title: string;
+
+    [key: string]: any;
 }
 
 export interface ReaderGenre{
@@ -99,6 +117,8 @@ export interface ReaderGenre{
     genre: number;
     name: string;
     count: number;
+
+    [key: string]: any;
 }
 
 export interface BookGenre{
@@ -107,6 +127,8 @@ export interface BookGenre{
     book: number;
     genre: number;
     name: string;
+
+    [key: string]: any;
 }
 
 export interface Genre{
@@ -114,6 +136,8 @@ export interface Genre{
     api: string;
     type: string;
     description: string;
+
+    [key: string]: any;
 }
 
 
@@ -126,24 +150,30 @@ export interface Review{
     username: string;
     rating: number;
     message: string;
+
+    [key: string]: any;
 }
 
 export interface Comment{
     id: number;
     api: string;
-    blog: number;
-    user: number;
+    blog_id: number;
+    user_id: number;
     username: string;
     comment: string;
+
+    [key: string]: any;
 }
 
 export interface Discussion{
     id: number;
     api: string;
-    group: number;
-    user: number;
+    group_id: number;
+    user_id: number;
     username: string;
     discussion: string;
+
+    [key: string]: any;
 }
 
 export interface Message{
@@ -154,5 +184,7 @@ export interface Message{
     userUsername: string;
     friendUsername: string;
     message: string;
+
+    [key: string]: any;
 }
 

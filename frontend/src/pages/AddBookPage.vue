@@ -51,7 +51,7 @@
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import VueCookies from "vue-cookies";
+import {useCookies} from "vue3-cookies";
 import AuthorNavBarComponent from "../components/AuthorNav.vue";
 import { useGenresStore } from "../stores/genres";
 
@@ -100,11 +100,12 @@ export default defineComponent({
       }
 
       try {
+        const { cookies } = useCookies(); 
         const response = await fetch("http://localhost:8000/books/", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            Authorization: `Bearer ${cookies.get("access_token")}`,
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: formData,
@@ -116,9 +117,9 @@ export default defineComponent({
         await fetch("http://localhost:8000/author_books/", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify({
@@ -131,9 +132,9 @@ export default defineComponent({
           await fetch("http://localhost:8000/book_genres/", {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${VueCookies.get("access_token")}`,
+              Authorization: `Bearer ${cookies.get("access_token")}`,
               "Content-Type": "application/json",
-              "X-CSRFToken": VueCookies.get("csrftoken"),
+              "X-CSRFToken": cookies.get("csrftoken"),
             },
             credentials: "include",
             body: JSON.stringify({
@@ -166,9 +167,10 @@ export default defineComponent({
       }
 
       try {
+        const { cookies } = useCookies(); 
         const authorResponse = await fetch(`http://localhost:8000/author/${author_id}`, {
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
           },
           credentials: "include",
         });

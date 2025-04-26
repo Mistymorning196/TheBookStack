@@ -126,7 +126,8 @@ import ReaderNavBarComponent from "../components/ReaderNav.vue";
 import { defineComponent } from "vue";
 import { useReaderStore } from "../stores/reader";
 import { useFriendshipsStore } from "../stores/friendships";
-import VueCookies from "vue-cookies";
+import { useCookies } from "vue3-cookies"; 
+
 
 export default defineComponent({
   data() {
@@ -153,13 +154,16 @@ export default defineComponent({
   async mounted() {
     try {
       const readerId = this.reader_id;
-      const reader = await this.readerStore.fetchReaderReturn(readerId);
-      this.readerStore.reader = reader;
 
-      // Populate initial goal values
-      this.goals.forEach(goal => {
-        goal.value = this.reader[goal.key];
-      });
+      const reader = await this.readerStore.fetchReaderReturn(readerId);
+      if (reader) {
+        this.readerStore.reader = reader;
+
+        this.goals.forEach(goal => {
+          goal.value = this.reader[goal.key];
+        });
+      }
+
     } catch (error) {
       console.error("Error fetching user:", error);
     }
@@ -221,13 +225,14 @@ export default defineComponent({
     },
     async saveField(fieldKey: string) {
       try {
+        const { cookies } = useCookies(); 
         const payload = { [fieldKey]: this.editedReader[fieldKey] };
         const response = await fetch(`http://localhost:8000/reader/${this.reader.id}/`, {
           method: "PUT",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify(payload),
@@ -244,13 +249,14 @@ export default defineComponent({
     },
     async saveGoal(goalKey: string, value: number) {
       try {
+        const { cookies } = useCookies();
         const payload = { [goalKey]: value };
         const response = await fetch(`http://localhost:8000/reader/${this.reader.id}/`, {
           method: "PUT",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify(payload),
@@ -273,13 +279,15 @@ export default defineComponent({
       goal.isEditing = !goal.isEditing;
     },
     async acceptFriendship(friendshipId: number) {
+
       try {
+        const { cookies } = useCookies();
         const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
           method: "PUT",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
         });
@@ -295,12 +303,13 @@ export default defineComponent({
     },
     async deleteFriendship(friendshipId: number) {
       try {
+        const { cookies } = useCookies();
         const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
           method: "DELETE",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
         });

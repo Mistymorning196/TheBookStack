@@ -18,7 +18,7 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import VueCookies from "vue-cookies";
+import {useCookies} from "vue3-cookies";
 import AuthorNavBarComponent from "../components/AuthorNav.vue";
 
 export default defineComponent({
@@ -38,9 +38,10 @@ export default defineComponent({
   async mounted() {
     // Fetch author info
     try {
+      const { cookies } = useCookies(); 
       const response = await fetch(`http://localhost:8000/author/${this.author_id}`, {
         headers: {
-          Authorization: `Bearer ${VueCookies.get("access_token")}`,
+          Authorization: `Bearer ${cookies.get("access_token")}`,
         },
         credentials: "include",
       });
@@ -60,12 +61,13 @@ export default defineComponent({
       }
 
       try {
+        const { cookies } = useCookies(); 
         const blogResponse = await fetch("http://localhost:8000/blogs/", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify(this.blog),
@@ -78,9 +80,9 @@ export default defineComponent({
         const authorBlogResponse = await fetch("http://localhost:8000/author_blogs/", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${VueCookies.get("access_token")}`,
+            Authorization: `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify({
@@ -91,7 +93,7 @@ export default defineComponent({
 
         if (!authorBlogResponse.ok) throw new Error("Failed to link blog to author");
 
-        this.blog = { title: "", post: "" };
+        this.blog = { title: "", post: "", author: "" };
         this.$router.push("/authorHome");
       } catch (error) {
         console.error(error);

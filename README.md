@@ -69,3 +69,5 @@ npm install pinia
 pip install django-cors-headers
 
 pip install pillow
+
+npm install vue3-cookies

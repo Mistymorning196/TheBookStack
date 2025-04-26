@@ -56,7 +56,7 @@ import { defineComponent } from "vue";
 import { useBookStore } from "../stores/book";
 import { useReviewsStore } from "../stores/reviews";
 import { useRoute } from "vue-router";
-import VueCookies from "vue-cookies";
+import {useCookies} from "vue3-cookies";
 import { useUserBooksStore } from "../stores/userBooks";
 
 export default defineComponent({
@@ -76,8 +76,10 @@ export default defineComponent({
   },
   async mounted() {
     const route = useRoute();
-    const bookId = parseInt(route.params.id);
-    let book = await this.bookStore.fetchBookReturn(bookId);
+    const bookId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+
+    await this.bookStore.fetchBookReturn(bookId); // ✅ no unused variables
+
 
     // Fetch reviews
     const responseReview = await fetch("http://localhost:8000/reviews/");
@@ -133,15 +135,16 @@ export default defineComponent({
     },
     async saveField(fieldKey: string) {
       try {
+        const { cookies } = useCookies(); 
         const payload = { [fieldKey]: this.editedBook[fieldKey] };
         const response = await fetch(
           `http://localhost:8000/book/${this.book.id}/`,
           {
             method: "PUT",
             headers: {
-              Authorization: `Bearer ${VueCookies.get("access_token")}`,
+              Authorization: `Bearer ${cookies.get("access_token")}`,
               "Content-Type": "application/json",
-              "X-CSRFToken": VueCookies.get("csrftoken"),
+              "X-CSRFToken": cookies.get("csrftoken"),
             },
             credentials: "include",
             body: JSON.stringify(payload),

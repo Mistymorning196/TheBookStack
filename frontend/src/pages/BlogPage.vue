@@ -27,7 +27,7 @@
 
 <script lang="ts">
 import ReaderNavBarComponent from "../components/ReaderNav.vue";
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent} from "vue";
 import { useBlogsStore } from "../stores/blogs";
 import { Blog } from "../types/index";
 

@@ -37,10 +37,10 @@
 </template>
 
 <script lang="ts">
-import AuthorNavBarComponent from "../components/AuthorNav.vue";
 import { defineComponent } from "vue";
 import { useAuthorStore } from "../stores/author";
-import VueCookies from "vue-cookies";
+import { useCookies } from "vue3-cookies";
+import AuthorNavBarComponent from "../components/AuthorNav.vue";
 
 export default defineComponent({
   data() {
@@ -61,8 +61,13 @@ export default defineComponent({
     try {
       const authorId = this.author_id;
       const author = await this.authorStore.fetchAuthorReturn(authorId);
-      this.authorStore.author = author;
-      this.editedBiography = author.biography;
+
+      // Check if author is fetched properly
+      if (author) {
+        this.editedBiography = author.biography;
+      } else {
+        console.error("Author not found");
+      }
     } catch (error) {
       console.error("Error fetching user:", error);
     }
@@ -72,7 +77,17 @@ export default defineComponent({
   },
   computed: {
     author() {
-      return this.authorStore.author;
+      return this.authorStore.author ?? {
+        id: 0,
+        api: '',
+        username: '',
+        first_name: '',
+        last_name: '',
+        email: '',
+        date_of_birth: 0,
+        password: '',
+        biography: '',
+      };
     },
   },
   methods: {
@@ -87,13 +102,14 @@ export default defineComponent({
     },
     async saveField(fieldKey: string) {
       try {
+        const { cookies } = useCookies();
         const payload = { [fieldKey]: this.editedAuthor[fieldKey] };
         const response = await fetch(`http://localhost:8000/author/${this.author.id}/`, {
           method: "PUT",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify(payload),
@@ -113,13 +129,14 @@ export default defineComponent({
     },
     async saveBiography() {
       try {
+        const { cookies } = useCookies();
         const payload = { biography: this.editedBiography };
         const response = await fetch(`http://localhost:8000/author/${this.author.id}/`, {
           method: "PUT",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
           body: JSON.stringify(payload),
@@ -142,6 +159,8 @@ export default defineComponent({
     };
   },
 });
+
+
 </script>
 
 

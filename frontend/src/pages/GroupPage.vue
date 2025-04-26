@@ -16,7 +16,7 @@
       <div v-for="(group, index) in filteredGroups" :key="index" class="group-card">
         <router-link :to="`/discussion/${group.id}`" class="group-link">
           <div class="group-title">
-            <p>Name: {{ group.name }}</p>
+            <p> {{ group.name }}</p>
           </div>
         </router-link>
       </div>
@@ -26,7 +26,7 @@
 
 <script lang="ts">
 import ReaderNavBarComponent from "../components/ReaderNav.vue";
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent } from "vue";
 import { useGroupsStore } from "../stores/groups";
 import { Group } from "../types/index";
 

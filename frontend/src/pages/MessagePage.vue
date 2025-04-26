@@ -33,7 +33,7 @@ import { defineComponent, nextTick } from "vue";
 import { useMessagesStore } from "../stores/messages";
 import { useReaderStore } from "../stores/reader";
 import { useRoute } from "vue-router";
-import VueCookies from "vue-cookies";
+import { useCookies } from "vue3-cookies";
 
 export default defineComponent({
   data() {
@@ -44,8 +44,9 @@ export default defineComponent({
   },
   async mounted() {
     const route = useRoute();
-    const readerId = parseInt(route.params.id);
-    let reader = await this.readerStore.fetchReaderReturn(readerId);
+    const readerId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+
+    await this.readerStore.fetchReaderReturn(readerId); // ✅ no unused variables
 
     let responseMessage = await fetch("http://localhost:8000/messages/");
     let dataMessage = await responseMessage.json();
@@ -67,12 +68,14 @@ export default defineComponent({
         message: this.newMessageText,
       };
 
+      const { cookies } = useCookies(); 
+
       const response = await fetch("http://localhost:8000/messages/", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${VueCookies.get('access_token')}`,
+          'Authorization': `Bearer ${cookies.get('access_token')}`,
           'Content-Type': 'application/json',
-          'X-CSRFToken': VueCookies.get('csrftoken'),
+          'X-CSRFToken': cookies.get('csrftoken'),
         },
         credentials: 'include',
         body: JSON.stringify(newMessage),
@@ -85,7 +88,6 @@ export default defineComponent({
 
         this.newMessageText = ""; // Clear message input
         window.location.reload();
-        alert("Message sent!");
 
         // Scroll to the bottom after sending a message
         this.scrollToBottom();
@@ -95,12 +97,14 @@ export default defineComponent({
     },
 
     async deleteMessage(messageId: number) {
+
+      const { cookies } = useCookies(); 
       // Call API to delete the message
       const response = await fetch(`http://localhost:8000/message/${messageId}/`, {
         method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${VueCookies.get('access_token')}`,
-          'X-CSRFToken': VueCookies.get('csrftoken'),
+          'Authorization': `Bearer ${cookies.get('access_token')}`,
+          'X-CSRFToken': cookies.get('csrftoken'),
         },
         credentials: 'include',
       });

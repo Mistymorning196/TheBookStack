@@ -35,7 +35,7 @@
 </template>
 
 <script lang="ts">
-import VueCookies from "vue-cookies";
+import {useCookies} from "vue3-cookies";
 import { defineComponent } from "vue";
 import AuthorNavBarComponent from "../components/AuthorNav.vue";
 import { useAuthorBooksStore } from "../stores/authorBooks.ts";
@@ -96,12 +96,13 @@ export default defineComponent({
       if (!confirm("Are you sure you want to delete this book?")) return;
 
       try {
+        const { cookies } = useCookies(); 
         const response = await fetch(`http://localhost:8000/book/${bookId}/`, {
           method: "DELETE",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
         });
@@ -120,12 +121,13 @@ export default defineComponent({
       if (!confirm("Are you sure you want to delete this blog post?")) return;
 
       try {
+        const { cookies } = useCookies(); 
         const response = await fetch(`http://localhost:8000/blog/${blogId}/`, {
           method: "DELETE",
           headers: {
-            "Authorization": `Bearer ${VueCookies.get("access_token")}`,
+            "Authorization": `Bearer ${cookies.get("access_token")}`,
             "Content-Type": "application/json",
-            "X-CSRFToken": VueCookies.get("csrftoken"),
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
         });
