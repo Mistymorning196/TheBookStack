@@ -3,11 +3,10 @@ from django.contrib import admin, auth
 from django.urls import include, path
 from django.http import HttpResponse
 
-from .views import author_api, author_blog_api, author_blogs_api, author_book_api, author_books_api, authors_api, blog_api, blogs_api, book_genre_api, book_genres_api, comment_api, comments_api, create_superuser, discussion_api, discussions_api, friendship_api, friendships_api, genre_api, genres_api, group_api, groups_api, login_site_user, logout_site_user, message_api, messages_api, reader_api, reader_genre_api, reader_genres_api, readers_api, review_api, reviews_api, signup_site_user, books_api, book_api, site_users_api, site_user_api, update_password, update_username, user_book_api, user_books_api, verify_2fa
+from .views import author_api, author_blog_api, author_blogs_api, author_book_api, author_books_api, authors_api, blog_api, blogs_api, book_genre_api, book_genres_api, comment_api, comments_api, discussion_api, discussions_api, friendship_api, friendships_api, genre_api, genres_api, group_api, groups_api, login_site_user, logout_site_user, message_api, messages_api, reader_api, reader_genre_api, reader_genres_api, readers_api, review_api, reviews_api, signup_site_user, books_api, book_api, site_users_api, site_user_api, update_password, update_username, user_book_api, user_books_api, verify_2fa
 
 # Listing route URLs to views.
 urlpatterns = [
-    path('create-superuser/', create_superuser, name='create-superuser'),
     path('', login_site_user, name='site user login'),
     path('login/', login_site_user, name='site user login'),
     path('signup/', signup_site_user, name='site user signup'),

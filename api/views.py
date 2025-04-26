@@ -30,13 +30,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.http import JsonResponse
 
-def create_superuser(request):
-    try:
-        # This will run the 'createsuperuser' command without a prompt
-        call_command('createsuperuser', interactive=False, username="admin", email="admin@example.com", password="your_password_here")
-        return JsonResponse({"status": "Superuser created successfully"})
-    except Exception as e:
-        return JsonResponse({"status": "Error", "error": str(e)})
+
 
 
 def generate_2fa_token():
