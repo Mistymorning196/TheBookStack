@@ -335,7 +335,7 @@ h3 {
     flex-basis: 28%; /* Adjusted width of each item */
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Slightly lighter shadow */
     transition: all 0.3s ease-in-out;
-    max-height: 150px; /* Further reduced max height */
+    max-height: 180px; /* Further reduced max height */
     overflow: hidden; /* Hide overflow */
 }
 
