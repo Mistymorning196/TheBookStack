@@ -1,7 +1,12 @@
-asgiref==3.8.1
+asgiref @ file:///C:/b/abs_ae1n0p_8_w/croot/asgiref_1724072476516/work
 Django==5.1.1
+django-cors-headers==4.7.0
 gunicorn==23.0.0
 packaging==24.1
+pillow==11.2.1
 psycopg2-binary==2.9.9
+setuptools==75.8.0
 sqlparse==0.5.1
+tzdata==2025.2
+wheel==0.45.1
 whitenoise==6.7.0
