@@ -40,7 +40,9 @@
             <h3>Following</h3>
             <ul>
               <li v-for="(friendship, index) in filteredFollowing" :key="index">
-                <span>{{ friendship.friendUsername }}</span>
+                <router-link :to="`/user/${friendship.friend}`">
+                  <span>{{ friendship.friendUsername }}</span>
+                </router-link>
                 <button @click="deleteFriendship(friendship.id)">Unfollow</button>
               </li>
             </ul>
@@ -50,7 +52,9 @@
             <h3>Requested</h3>
             <ul>
               <li v-for="(friendship, index) in filteredRequested" :key="index">
-                <span>{{ friendship.friendUsername }}</span>
+                <router-link :to="`/user/${friendship.friend}`">
+                  <span>{{ friendship.friendUsername }}</span>
+                </router-link>
                 <button @click="deleteFriendship(friendship.id)">Cancel Request</button>
               </li>
             </ul>
@@ -60,7 +64,9 @@
             <h3>Followers</h3>
             <ul>
               <li v-for="(friendship, index) in filteredFollowers" :key="index">
-                <span>{{ friendship.userUsername }}</span>
+                <router-link :to="`/user/${friendship.user}`">
+                  <span>{{ friendship.userUsername }}</span>
+                </router-link>
                 <button @click="deleteFriendship(friendship.id)">Remove</button>
               </li>
             </ul>
@@ -69,7 +75,9 @@
             <h3>Pending Followers</h3>
             <ul>
               <li v-for="(friendship, index) in filteredPending" :key="index">
-                <span>{{ friendship.userUsername }}</span>
+                <router-link :to="`/user/${friendship.user}`">
+                  <span>{{ friendship.userUsername }}</span>
+                </router-link>
                 <button @click="acceptFriendship(friendship.id)">Accept</button>
                 <button @click="deleteFriendship(friendship.id)">Remove</button>
               </li>

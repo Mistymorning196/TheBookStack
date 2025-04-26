@@ -20,6 +20,10 @@
           <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === reader.id)"
             :key="index" class="book-container">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
+              <div v-if="userBook.cover_image">
+                <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
+              </div>
+              <p v-else>No cover image available</p>
               <p class="book-title">Title: {{ userBook.title }}</p>
               <p class="book-author">Author: {{ userBook.author }}</p>
             </router-link>
@@ -31,6 +35,10 @@
           <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === reader.id)"
             :key="index" class="book-container">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
+              <div v-if="userBook.cover_image">
+                <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
+              </div>
+              <p v-else>No cover image available</p>
               <p class="book-title">Title: {{ userBook.title }}</p>
               <p class="book-author">Author: {{ userBook.author }}</p>
             </router-link>
@@ -43,6 +51,10 @@
             v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === reader.id)"
             :key="index" class="book-container">
             <router-link :to="`/book/${userBook.book}`" class="book-link">
+              <div v-if="userBook.cover_image">
+                <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
+              </div>
+              <p v-else>No cover image available</p>
               <p class="book-title">Title: {{ userBook.title }}</p>
               <p class="book-author">Author: {{ userBook.author }}</p>
             </router-link>
@@ -71,7 +83,7 @@
     },
     async mounted() {
       const route = useRoute();
-      const readerId = parseInt(route.params.id);
+      const readerId = parseInt(String(route.params.id));
       let reader = await this.readerStore.fetchReaderReturn(readerId);
   
       const responseFriendship = await fetch("http://localhost:8000/friendships/");
@@ -304,5 +316,21 @@
     font-size: 0.9rem;
     color: #cfd8dc;
   }
+
+  
+.book-cover {
+  width: 60px;           /* Smaller width */
+  height: 60px;          /* Smaller height */
+  object-fit: cover;
+  border-radius: 4px;
+  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+  margin-bottom: 0.3rem;
+}
+
+
+.book-cover:hover {
+  transform: scale(1.03);
+}
   </style>
   
