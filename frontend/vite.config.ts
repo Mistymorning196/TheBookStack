@@ -4,18 +4,16 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-    base:
-        mode == "development"
-            ? "http://localhost:5173/"
-            : "/static/api/spa/",
-    build: {
-        emptyOutDir: true,
-        outDir: "../api/static/api/spa",
+  base: mode === 'development' ? '/' : '/', // Base path for production, adjust as necessary
+  build: {
+    emptyOutDir: true,
+    outDir: 'dist', // For deployment to Vercel (static hosting)
+  },
+  plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
-    plugins: [vue()],
-    resolve: {
-        alias: {
-            '@': path.resolve(__dirname, './src'),
-        },
-    },
+  },
 }));
+
