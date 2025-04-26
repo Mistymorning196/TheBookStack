@@ -71,3 +71,5 @@ pip install django-cors-headers
 pip install pillow
 
 npm install vue3-cookies
+
+npm install shx --save-dev

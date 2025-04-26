@@ -4,10 +4,10 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === 'development' ? '/' : '/', // Base path for production, adjust as necessary
+  base: mode === 'development' ? '/' : '/', // You can leave this as '/' unless you need a different base for production
   build: {
     emptyOutDir: true,
-    outDir: 'dist', // For deployment to Vercel (static hosting)
+    outDir: 'dist', // This will be the output folder where Vite builds the app (you move files from here later)
   },
   plugins: [vue()],
   resolve: {
