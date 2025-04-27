@@ -16,7 +16,7 @@ export const useUserBookStore = defineStore("userBook", {
     // Fetch a single user book by ID from the backend
     async fetchUserBook(userBookId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/user_book/${userBookId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/user_book/${userBookId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch user book data");
@@ -31,7 +31,7 @@ export const useUserBookStore = defineStore("userBook", {
 
     async fetchUserBookReturn(userBookId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/user_book/${userBookId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/user_book/${userBookId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch user book data");

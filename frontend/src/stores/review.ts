@@ -17,7 +17,7 @@ export const useReviewStore = defineStore("review", {
     // Fetch a single review by ID from the backend
     async fetchReview(reviewId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/review/${reviewId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/review/${reviewId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch review data");
@@ -32,7 +32,7 @@ export const useReviewStore = defineStore("review", {
 
     async fetchReviewReturn(reviewId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/review/${reviewId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/review/${reviewId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch review data");

@@ -16,7 +16,7 @@ export const useAuthorBlogStore = defineStore("authorBlog", {
     // Fetch a single author Blog by ID from the backend
     async fetchAuthorBlog(authorBlogId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/author_blog/${authorBlogId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/author_blog/${authorBlogId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch author Blog data");
@@ -31,7 +31,7 @@ export const useAuthorBlogStore = defineStore("authorBlog", {
 
     async fetchAuthorBlogReturn(authorBlogId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/author_blog/${authorBlogId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/author_blog/${authorBlogId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch author Blog data");

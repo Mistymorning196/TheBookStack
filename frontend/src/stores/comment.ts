@@ -17,7 +17,7 @@ export const useCommentStore = defineStore("comment", {
     // Fetch a single comment by ID from the backend
     async fetchComment(commentId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/comment/${commentId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/comment/${commentId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch comment data");
@@ -32,7 +32,7 @@ export const useCommentStore = defineStore("comment", {
 
     async fetchCommentReturn(commentId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/comment/${commentId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/comment/${commentId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch comment data");

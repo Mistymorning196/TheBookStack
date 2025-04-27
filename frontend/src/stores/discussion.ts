@@ -17,7 +17,7 @@ export const useDiscussionStore = defineStore("discussion", {
     // Fetch a single discussion by ID from the backend
     async fetchDiscussion(discussionId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/discussion/${discussionId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/discussion/${discussionId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch discussion data");
@@ -32,7 +32,7 @@ export const useDiscussionStore = defineStore("discussion", {
 
     async fetchDiscussionReturn(discussionId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/discussion/${discussionId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/discussion/${discussionId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch discussion data");

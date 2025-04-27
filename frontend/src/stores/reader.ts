@@ -20,7 +20,7 @@ export const useReaderStore = defineStore("reader", {
     // Fetch a single reader by ID from the backend
     async fetchReader(readerId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/reader/${readerId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/reader/${readerId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch reader data");
@@ -35,7 +35,7 @@ export const useReaderStore = defineStore("reader", {
 
     async fetchReaderReturn(readerId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/reader/${readerId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/reader/${readerId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch reader data");

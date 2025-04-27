@@ -20,7 +20,7 @@ export const useBookGenreStore = defineStore("bookGenre", {
     // Fetch a single bookGenre by ID from the backend
     async fetchBookGenre(bookGenreId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/book_genre/${bookGenreId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/book_genre/${bookGenreId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch bookGenre data");
@@ -35,7 +35,7 @@ export const useBookGenreStore = defineStore("bookGenre", {
 
     async fetchBookGenreReturn(bookGenreId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/book_genre/${bookGenreId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/book_genre/${bookGenreId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch bookGenre data");

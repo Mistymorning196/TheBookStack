@@ -16,7 +16,7 @@ export const useAuthorBookStore = defineStore("authorBook", {
     // Fetch a single author book by ID from the backend
     async fetchAuthorBook(authorBookId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/author_book/${authorBookId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/author_book/${authorBookId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch author book data");
@@ -31,7 +31,7 @@ export const useAuthorBookStore = defineStore("authorBook", {
 
     async fetchAuthorBookReturn(authorBookId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/author_book/${authorBookId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/author_book/${authorBookId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch author book data");

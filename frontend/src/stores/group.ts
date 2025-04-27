@@ -17,7 +17,7 @@ export const useGroupStore = defineStore("group", {
     // Fetch a single group by ID from the backend
     async fetchGroup(groupId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/group/${groupId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/group/${groupId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch group data");
@@ -32,7 +32,7 @@ export const useGroupStore = defineStore("group", {
 
     async fetchGroupReturn(groupId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/group/${groupId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/group/${groupId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch group data");

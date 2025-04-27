@@ -17,7 +17,7 @@ export const useBlogStore = defineStore("blog", {
     // Fetch a single blog by ID from the backend
     async fetchBlog(blogId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/blog/${blogId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/blog/${blogId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch blog data");
@@ -32,7 +32,7 @@ export const useBlogStore = defineStore("blog", {
 
     async fetchBlogReturn(blogId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/blog/${blogId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/blog/${blogId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch blog data");

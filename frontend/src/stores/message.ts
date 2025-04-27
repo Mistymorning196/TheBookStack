@@ -18,7 +18,7 @@ export const useMessageStore = defineStore("friendship", {
     // Fetch a single message by ID from the backend
     async fetchMessage(messageId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/message/${messageId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/message/${messageId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch message data");

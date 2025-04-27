@@ -18,7 +18,7 @@ export const useFriendshipStore = defineStore("friendship", {
     // Fetch a single friendship by ID from the backend
     async fetchFriendship(friendshipId: number) {
       try {
-        const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/friendship/${friendshipId}/`);
   
         if (!response.ok) {
           throw new Error("Failed to fetch friendship data");
