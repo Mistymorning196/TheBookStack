@@ -99,16 +99,17 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Defined URLs
-READER_REDIRECT_URL = 'http://localhost:5173/'
-AUTHOR_REDIRECT_URL = 'http://localhost:5173/authorHome'
-LOGIN_REDIRECT_URL = 'http://localhost:5173/'
+READER_REDIRECT_URL = 'https://frontend-fmz69gsyk-evies-projects-69270de7.vercel.app/'
+AUTHOR_REDIRECT_URL = 'https://frontend-fmz69gsyk-evies-projects-69270de7.vercel.app/authorHome'
+LOGIN_REDIRECT_URL = 'https://frontend-fmz69gsyk-evies-projects-69270de7.vercel.app/'
 LOGIN_URL = '/login/'
 
 CORS_ALLOW_HEADERS = "*"
-CORS_ORGIN_WHITELIST = ["http://localhost:5173",]
+CORS_ORGIN_WHITELIST = ["http://localhost:5173", "https://frontend-fmz69gsyk-evies-projects-69270de7.vercel.app/",]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://frontend-fmz69gsyk-evies-projects-69270de7.vercel.app/",
 ]
 CORS_ALLOW_CREDENTIALS = True 
 
@@ -131,6 +132,7 @@ SESSION_COOKIE_HTTPONLY = False
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://frontend-fmz69gsyk-evies-projects-69270de7.vercel.app/",
 ]
 
 # Internationalization

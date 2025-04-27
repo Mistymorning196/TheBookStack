@@ -9,7 +9,7 @@
     <div v-for="(book, index) in recommendedBooks" :key="index">
       <router-link :to="`/book/${book.id}`" class="book-link">
         <div v-if="book.cover_image">
-          <img :src="`http://localhost:8000/${book.cover_image}`" alt="Book Cover" class="book-cover"/>
+          <img :src="`https://thebookstack-2.onrender.com/${book.cover_image}`" alt="Book Cover" class="book-cover"/>
         </div>
         <p v-else>No cover image available</p>
         <p>Title: {{ book.title }}</p>
@@ -82,12 +82,12 @@ export default defineComponent({
         userBooksRes,
         friendshipRes
       ] = await Promise.all([
-        fetch("http://localhost:8000/books/"),
-        fetch("http://localhost:8000/readers/"),
-        fetch("http://localhost:8000/book_genres/"),
-        fetch("http://localhost:8000/reader_genres/"),
-        fetch("http://localhost:8000/user_books/"),
-        fetch("http://localhost:8000/friendships/") // Fetch friendships
+        fetch("https://thebookstack-2.onrender.com/books/"),
+        fetch("https://thebookstack-2.onrender.com/readers/"),
+        fetch("https://thebookstack-2.onrender.com/book_genres/"),
+        fetch("https://thebookstack-2.onrender.com/reader_genres/"),
+        fetch("https://thebookstack-2.onrender.com/user_books/"),
+        fetch("https://thebookstack-2.onrender.com/friendships/") // Fetch friendships
       ]);
 
       const books = (await bookRes.json()).books as Book[];

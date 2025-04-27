@@ -39,7 +39,7 @@ export default defineComponent({
     // Fetch author info
     try {
       const { cookies } = useCookies(); 
-      const response = await fetch(`http://localhost:8000/author/${this.author_id}`, {
+      const response = await fetch(`https://thebookstack-2.onrender.com/author/${this.author_id}`, {
         headers: {
           Authorization: `Bearer ${cookies.get("access_token")}`,
         },
@@ -62,7 +62,7 @@ export default defineComponent({
 
       try {
         const { cookies } = useCookies(); 
-        const blogResponse = await fetch("http://localhost:8000/blogs/", {
+        const blogResponse = await fetch("https://thebookstack-2.onrender.com/blogs/", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -77,7 +77,7 @@ export default defineComponent({
 
         const createdBlog = await blogResponse.json();
 
-        const authorBlogResponse = await fetch("http://localhost:8000/author_blogs/", {
+        const authorBlogResponse = await fetch("https://thebookstack-2.onrender.com/author_blogs/", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,

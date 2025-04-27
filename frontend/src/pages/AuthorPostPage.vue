@@ -58,7 +58,7 @@
 
 
   
-      let responseComment = await fetch("http://localhost:8000/comments/");
+      let responseComment = await fetch("https://thebookstack-2.onrender.com/comments/");
       let dataComment = await responseComment.json();
       const storeComment = useCommentsStore();
       storeComment.saveComments(dataComment.comments);
@@ -81,7 +81,7 @@
       try {
         const { cookies } = useCookies(); 
         const payload = { [fieldKey]: this.editedBlog[fieldKey] };
-        const response = await fetch(`http://localhost:8000/blog/${this.blog.id}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/blog/${this.blog.id}/`, {
           method: "PUT",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,

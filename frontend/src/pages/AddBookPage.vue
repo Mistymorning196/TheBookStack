@@ -101,7 +101,7 @@ export default defineComponent({
 
       try {
         const { cookies } = useCookies(); 
-        const response = await fetch("http://localhost:8000/books/", {
+        const response = await fetch("https://thebookstack-2.onrender.com/books/", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -114,7 +114,7 @@ export default defineComponent({
         if (!response.ok) throw new Error("Book creation failed");
         const createdBook = await response.json();
 
-        await fetch("http://localhost:8000/author_books/", {
+        await fetch("https://thebookstack-2.onrender.com/author_books/", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -129,7 +129,7 @@ export default defineComponent({
         });
 
         for (const genreId of selectedGenres.value) {
-          await fetch("http://localhost:8000/book_genres/", {
+          await fetch("https://thebookstack-2.onrender.com/book_genres/", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -158,7 +158,7 @@ export default defineComponent({
 
     const fetchInitialData = async () => {
       try {
-        const genreResponse = await fetch("http://localhost:8000/genres/");
+        const genreResponse = await fetch("https://thebookstack-2.onrender.com/genres/");
         const data = await genreResponse.json();
         genresStore.saveGenres(data.genres ?? data);
         genres.value = genresStore.genres;
@@ -168,7 +168,7 @@ export default defineComponent({
 
       try {
         const { cookies } = useCookies(); 
-        const authorResponse = await fetch(`http://localhost:8000/author/${author_id}`, {
+        const authorResponse = await fetch(`https://thebookstack-2.onrender.com/author/${author_id}`, {
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
           },

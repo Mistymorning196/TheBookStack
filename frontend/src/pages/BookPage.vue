@@ -6,7 +6,7 @@
       <h2>Book Info</h2>
 
       <div v-if="book.cover_image">
-        <img :src="`http://localhost:8000/${book.cover_image}`" alt="Book Cover" />
+        <img :src="`https://thebookstack-2.onrender.com/${book.cover_image}`" alt="Book Cover" />
       </div>
       <p v-else>No cover image available</p>
 
@@ -143,20 +143,20 @@ export default defineComponent({
 
     await this.bookStore.fetchBookReturn(bookId);
 
-    let responseReview = await fetch("http://localhost:8000/reviews/");
+    let responseReview = await fetch("https://thebookstack-2.onrender.com/reviews/");
     let dataReview = await responseReview.json();
     const storeReview = useReviewsStore();
     storeReview.saveReviews(dataReview.reviews);
 
     this.newReview.book = bookId;
 
-    let responseUserBook = await fetch("http://localhost:8000/user_books/");
+    let responseUserBook = await fetch("https://thebookstack-2.onrender.com/user_books/");
     let dataUserBook = await responseUserBook.json();
     const storeUserBook = useUserBooksStore();
     storeUserBook.saveUserBooks(dataUserBook.user_books as UserBook[]);
 
     try {
-      const responseGenres = await fetch("http://localhost:8000/book_genres/");
+      const responseGenres = await fetch("https://thebookstack-2.onrender.com/book_genres/");
       const dataGenres = await responseGenres.json();
       this.bookGenres = dataGenres.book_genre;
     } catch (error) {
@@ -180,7 +180,7 @@ export default defineComponent({
           [field]: this.editedReview[field],
         };
 
-        const response = await fetch(`http://localhost:8000/review/${reviewID}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/review/${reviewID}/`, {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -229,7 +229,7 @@ export default defineComponent({
         rating: this.newReview.rating,
       };
 
-      const response = await fetch("http://localhost:8000/reviews/", {
+      const response = await fetch("https://thebookstack-2.onrender.com/reviews/", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -253,7 +253,7 @@ export default defineComponent({
     async deleteReview(reviewId: number) {
       try {
         const { cookies } = useCookies();
-        const response = await fetch(`http://localhost:8000/review/${reviewId}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/review/${reviewId}/`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -293,7 +293,7 @@ export default defineComponent({
           status: "WISHLIST",
         };
 
-        const response = await fetch("http://localhost:8000/user_books/", {
+        const response = await fetch("https://thebookstack-2.onrender.com/user_books/", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,

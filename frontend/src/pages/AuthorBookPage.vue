@@ -6,7 +6,7 @@
       <h2>Book Info</h2>
         <!-- Display cover image if available -->
         <div v-if="book.cover_image">
-        <img :src="`http://localhost:8000/${book.cover_image}`" alt="Book Cover" />
+        <img :src="`https://thebookstack-2.onrender.com/${book.cover_image}`" alt="Book Cover" />
       </div>
       <p v-else>No cover image available</p>
       <p v-for="field in editableFields" :key="field.key">
@@ -82,18 +82,18 @@ export default defineComponent({
 
 
     // Fetch reviews
-    const responseReview = await fetch("http://localhost:8000/reviews/");
+    const responseReview = await fetch("https://thebookstack-2.onrender.com/reviews/");
     const dataReview = await responseReview.json();
     const storeReview = useReviewsStore();
     storeReview.saveReviews(dataReview.reviews);
 
     // Fetch book_genre relationships
-    const bookGenresResponse = await fetch("http://localhost:8000/book_genres/");
+    const bookGenresResponse = await fetch("https://thebookstack-2.onrender.com/book_genres/");
     const bookGenresData = await bookGenresResponse.json();
     this.bookGenres = bookGenresData.book_genre;
 
     // Fetch all genres
-    const genresResponse = await fetch("http://localhost:8000/genres/");
+    const genresResponse = await fetch("https://thebookstack-2.onrender.com/genres/");
     const genresData = await genresResponse.json();
     this.genres = genresData.genres ?? genresData;
   },
@@ -138,7 +138,7 @@ export default defineComponent({
         const { cookies } = useCookies(); 
         const payload = { [fieldKey]: this.editedBook[fieldKey] };
         const response = await fetch(
-          `http://localhost:8000/book/${this.book.id}/`,
+          `https://thebookstack-2.onrender.com/book/${this.book.id}/`,
           {
             method: "PUT",
             headers: {

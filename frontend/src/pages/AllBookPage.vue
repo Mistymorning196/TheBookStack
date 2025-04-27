@@ -17,7 +17,7 @@
       <div v-for="book in filteredBooks" :key="book.id" class="book-card">
         <router-link :to="`/book/${book.id}`" class="book-link">
           <div v-if="book.cover_image">
-            <img :src="`http://localhost:8000/${book.cover_image}`" alt="Book Cover" class="book-cover"/>
+            <img :src="`https://thebookstack-2.onrender.com/${book.cover_image}`" alt="Book Cover" class="book-cover"/>
           </div>
           <p v-else>No cover image available</p>
           <p><strong>{{ book.title }}</strong></p>
@@ -77,10 +77,10 @@ export default defineComponent({
   methods: {
     async fetchAllData() {
       const [bookRes, genreRes, bookGenreRes, userBookRes] = await Promise.all([
-        fetch("http://localhost:8000/books/"),
-        fetch("http://localhost:8000/genres/"),
-        fetch("http://localhost:8000/book_genres/"),
-        fetch("http://localhost:8000/user_books/"),
+        fetch("https://thebookstack-2.onrender.com/books/"),
+        fetch("https://thebookstack-2.onrender.com/genres/"),
+        fetch("https://thebookstack-2.onrender.com/book_genres/"),
+        fetch("https://thebookstack-2.onrender.com/user_books/"),
       ]);
 
       const bookData = await bookRes.json();

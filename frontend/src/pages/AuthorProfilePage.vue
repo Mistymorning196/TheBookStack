@@ -5,7 +5,7 @@
       <!-- Profile Box -->
       <div id="profile-box">
         <h2>Welcome {{ author.first_name }}</h2>
-        <p>Username: {{ author.username }} <button> <a href="http://localhost:8000/updateUser/"> Change Username </a> </button></p>
+        <p>Username: {{ author.username }} <button> <a href="https://thebookstack-2.onrender.com/updateUser/"> Change Username </a> </button></p>
 
         <p v-for="field in editableFields" :key="field.key">
           <span v-if="!field.isEditing">{{ field.label }}: {{ author[field.key] }}</span>
@@ -17,7 +17,7 @@
           <button v-else @click="saveField(field.key)">Save</button>
         </p>
 
-        <button> <a href="http://localhost:8000/updatePass/"> Change Password </a> </button>
+        <button> <a href="https://thebookstack-2.onrender.com/updatePass/"> Change Password </a> </button>
       </div>
        <!-- Biography Box -->
       <div id="bio-box">
@@ -104,7 +104,7 @@ export default defineComponent({
       try {
         const { cookies } = useCookies();
         const payload = { [fieldKey]: this.editedAuthor[fieldKey] };
-        const response = await fetch(`http://localhost:8000/author/${this.author.id}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/author/${this.author.id}/`, {
           method: "PUT",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,
@@ -131,7 +131,7 @@ export default defineComponent({
       try {
         const { cookies } = useCookies();
         const payload = { biography: this.editedBiography };
-        const response = await fetch(`http://localhost:8000/author/${this.author.id}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/author/${this.author.id}/`, {
           method: "PUT",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,

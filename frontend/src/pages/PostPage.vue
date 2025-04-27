@@ -81,7 +81,7 @@ export default defineComponent({
     const blogId = parseInt(String(route.params.id)); // Ensure blogId is a number
     this.blog = await this.blogStore.fetchBlogReturn(blogId);
 
-    let responseComment = await fetch("http://localhost:8000/comments/");
+    let responseComment = await fetch("https://thebookstack-2.onrender.com/comments/");
     let dataComment = await responseComment.json();
     const storeComment = useCommentsStore();
     storeComment.saveComments(dataComment.comments);
@@ -135,7 +135,7 @@ export default defineComponent({
         comment: this.newComment.comment,
       };
 
-      let response = await fetch("http://localhost:8000/comments/", {
+      let response = await fetch("https://thebookstack-2.onrender.com/comments/", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -165,7 +165,7 @@ export default defineComponent({
     async deleteComment(commentId: number) {
       try {
         const { cookies } = useCookies();
-        const response = await fetch(`http://localhost:8000/comment/${commentId}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/comment/${commentId}/`, {
           method: "DELETE",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,

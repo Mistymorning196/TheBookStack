@@ -63,7 +63,7 @@ export default defineComponent({
     // Fetch blogs from the API and store them
     async fetchBlogs() {
       try {
-        const response = await fetch("http://localhost:8000/blogs/");
+        const response = await fetch("https://thebookstack-2.onrender.com/blogs/");
         const data = await response.json();
         const blogs = data.blogs as Blog[];
         const storeBlog = useBlogsStore();
@@ -85,7 +85,7 @@ export default defineComponent({
     // Fetch blogs filtered by search query (by title or author)
     async fetchBlogsByQuery() {
       try {
-        const response = await fetch(`http://localhost:8000/blogs/?search=${this.query}`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/blogs/?search=${this.query}`);
         const data = await response.json();
         const blogs = data.blogs as Blog[];
         const storeBlog = useBlogsStore();

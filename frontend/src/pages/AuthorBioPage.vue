@@ -18,7 +18,7 @@
         >
           <router-link :to="`/book/${authorBook.book}`" class="book-link">
             <div v-if="authorBook.cover_image">
-              <img :src="`http://localhost:8000/${authorBook.cover_image}`" alt="Book Cover" class="book-cover"/>
+              <img :src="`https://thebookstack-2.onrender.com/${authorBook.cover_image}`" alt="Book Cover" class="book-cover"/>
             </div>
             <p v-else>No cover image available</p>
             <p class="book-title">Title: {{ authorBook.title }}</p>
@@ -66,12 +66,12 @@ export default defineComponent({
     await this.authorStore.fetchAuthorReturn(authorId); // ✅ no unused variables
 
 
-    let responseAuthorBook = await fetch("http://localhost:8000/author_books/");
+    let responseAuthorBook = await fetch("https://thebookstack-2.onrender.com/author_books/");
     let dataAuthorBook = await responseAuthorBook.json();
     const storeAuthorBook = useAuthorBooksStore();
     storeAuthorBook.saveAuthorBooks(dataAuthorBook.author_books);
 
-    let responseAuthorBlog = await fetch("http://localhost:8000/author_blogs/");
+    let responseAuthorBlog = await fetch("https://thebookstack-2.onrender.com/author_blogs/");
     let dataAuthorBlog = await responseAuthorBlog.json();
     const storeAuthorBlog = useAuthorBlogsStore();
     storeAuthorBlog.saveAuthorBlogs(dataAuthorBlog.author_blogs);

@@ -71,12 +71,12 @@ export default defineComponent({
 
     await this.readerStore.fetchReaderReturn(readerId); // ✅ no unused variables
 
-    const responseFriendship = await fetch("http://localhost:8000/friendships/");
+    const responseFriendship = await fetch("https://thebookstack-2.onrender.com/friendships/");
     const dataFriendship = await responseFriendship.json();
     const friendships = dataFriendship.friendships as Friendship[];
     useFriendshipsStore().saveFriendships(friendships);
 
-    const responseUserBook = await fetch("http://localhost:8000/user_books/");
+    const responseUserBook = await fetch("https://thebookstack-2.onrender.com/user_books/");
     const dataUserBook = await responseUserBook.json();
     const userBooks = dataUserBook.user_books as UserBook[];
     useUserBooksStore().saveUserBooks(userBooks);
@@ -108,7 +108,7 @@ export default defineComponent({
         headers["X-CSRFToken"] = csrfToken;
       }
 
-      const friendshipResponse = await fetch("http://localhost:8000/friendships/", {
+      const friendshipResponse = await fetch("https://thebookstack-2.onrender.com/friendships/", {
         method: "POST",
         headers,
         credentials: "include",

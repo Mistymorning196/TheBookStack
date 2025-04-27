@@ -7,7 +7,7 @@
       <div v-for="(authorBook, index) in authorBooks.filter(book => book.user === reader_id)" :key="index">
         <router-link :to="`/authorBook/${authorBook.book}`" class="book-link">
           <div v-if="authorBook.cover_image">
-            <img :src="`http://localhost:8000/${authorBook.cover_image}`" alt="Book Cover" class="book-cover"/>
+            <img :src="`https://thebookstack-2.onrender.com/${authorBook.cover_image}`" alt="Book Cover" class="book-cover"/>
           </div>
           <p v-else>No cover image available</p>
           <p class="book-title">Title: {{ authorBook.title }}</p>
@@ -78,12 +78,12 @@ export default defineComponent({
   methods: {
     async fetchBooksAndBlogs() {
       try {
-        const responseAuthorBook = await fetch("http://localhost:8000/author_books/");
+        const responseAuthorBook = await fetch("https://thebookstack-2.onrender.com/author_books/");
         const dataAuthorBook = await responseAuthorBook.json();
         const authorBooks = dataAuthorBook.author_books as AuthorBook[];
         useAuthorBooksStore().saveAuthorBooks(authorBooks);
 
-        const responseAuthorBlog = await fetch("http://localhost:8000/author_blogs/");
+        const responseAuthorBlog = await fetch("https://thebookstack-2.onrender.com/author_blogs/");
         const dataAuthorBlog = await responseAuthorBlog.json();
         const authorBlogs = dataAuthorBlog.author_blogs as AuthorBlog[];
         useAuthorBlogsStore().saveAuthorBlogs(authorBlogs);
@@ -97,7 +97,7 @@ export default defineComponent({
 
       try {
         const { cookies } = useCookies(); 
-        const response = await fetch(`http://localhost:8000/book/${bookId}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/book/${bookId}/`, {
           method: "DELETE",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,
@@ -122,7 +122,7 @@ export default defineComponent({
 
       try {
         const { cookies } = useCookies(); 
-        const response = await fetch(`http://localhost:8000/blog/${blogId}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/blog/${blogId}/`, {
           method: "DELETE",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,

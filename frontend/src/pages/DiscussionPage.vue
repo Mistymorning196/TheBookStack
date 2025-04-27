@@ -72,7 +72,7 @@ export default defineComponent({
     this.group = await this.groupStore.fetchGroupReturn(groupId);
 
     if (this.group) {
-      let responseDiscussion = await fetch("http://localhost:8000/discussions/");
+      let responseDiscussion = await fetch("https://thebookstack-2.onrender.com/discussions/");
       let dataDiscussion = await responseDiscussion.json();
       const storeDiscussion = useDiscussionsStore();
       storeDiscussion.saveDiscussions(dataDiscussion.discussions);
@@ -134,7 +134,7 @@ export default defineComponent({
         discussion: this.newDiscussion.discussion,
       };
 
-      let response = await fetch("http://localhost:8000/discussions/", {
+      let response = await fetch("https://thebookstack-2.onrender.com/discussions/", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -165,7 +165,7 @@ export default defineComponent({
     async deleteDiscussion(discussionId: number) {
       try {
         const { cookies } = useCookies();
-        const response = await fetch(`http://localhost:8000/discussion/${discussionId}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/discussion/${discussionId}/`, {
           method: "DELETE",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,

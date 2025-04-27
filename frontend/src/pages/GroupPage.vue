@@ -61,7 +61,7 @@ export default defineComponent({
     // Fetch groups from the API and store them
     async fetchGroups() {
       try {
-        const response = await fetch("http://localhost:8000/groups/");
+        const response = await fetch("https://thebookstack-2.onrender.com/groups/");
         const data = await response.json();
         const groups = data.groups as Group[];
         const storeGroup = useGroupsStore();
@@ -83,7 +83,7 @@ export default defineComponent({
     // Fetch groups filtered by search query (by title or author)
     async fetchGroupsByQuery() {
       try {
-        const response = await fetch(`http://localhost:8000/groups/?search=${this.query}`);
+        const response = await fetch(`https://thebookstack-2.onrender.com/groups/?search=${this.query}`);
         const data = await response.json();
         const groups = data.groups as Group[];
         const storeGroup = useGroupsStore();

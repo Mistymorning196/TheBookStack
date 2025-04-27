@@ -8,7 +8,7 @@
     <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === reader_id)" :key="index">
       <router-link :to="`/book/${userBook.book}`" class="book-link">
         <div v-if="userBook.cover_image">
-          <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
+          <img :src="`https://thebookstack-2.onrender.com/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
         </div>
         <p v-else>No cover image available</p>
         <p class="book-title">Title: {{ userBook.title }}</p>
@@ -23,7 +23,7 @@
     <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === reader_id)" :key="index">
       <router-link :to="`/book/${userBook.book}`" class="book-link">
         <div v-if="userBook.cover_image">
-          <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
+          <img :src="`https://thebookstack-2.onrender.com/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
         </div>
         <p class="book-title">Title: {{ userBook.title }}</p>
         <p class="book-author">Author: {{ userBook.author }}</p>
@@ -37,7 +37,7 @@
     <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === reader_id)" :key="index">
       <router-link :to="`/book/${userBook.book}`" class="book-link">
         <div v-if="userBook.cover_image">
-          <img :src="`http://localhost:8000/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
+          <img :src="`https://thebookstack-2.onrender.com/${userBook.cover_image}`" alt="Book Cover" class="book-cover"/>
         </div>
         <p class="book-title">Title: {{ userBook.title }}</p>
         <p class="book-author">Author: {{ userBook.author }}</p>
@@ -64,15 +64,15 @@ export default defineComponent({
     };
   },
   async mounted() {
-    const readerRes = await fetch("http://localhost:8000/readers/");
+    const readerRes = await fetch("https://thebookstack-2.onrender.com/readers/");
     const readerData = await readerRes.json();
     useReadersStore().saveReaders(readerData.users);
 
-    const bookRes = await fetch("http://localhost:8000/books/");
+    const bookRes = await fetch("https://thebookstack-2.onrender.com/books/");
     const bookData = await bookRes.json();
     useBooksStore().saveBooks(bookData.books);
 
-    const userBookRes = await fetch("http://localhost:8000/user_books/");
+    const userBookRes = await fetch("https://thebookstack-2.onrender.com/user_books/");
     const userBookData = await userBookRes.json();
     useUserBooksStore().saveUserBooks(userBookData.user_books);
   },
@@ -85,7 +85,7 @@ export default defineComponent({
 
       try {
         const { cookies } = useCookies();
-        const response = await fetch(`http://localhost:8000/user_book/${userBook.id}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/user_book/${userBook.id}/`, {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -97,9 +97,9 @@ export default defineComponent({
         });
 
         if (response.ok && newStatus === "COMPLETED") {
-          const userRes = await fetch(`http://localhost:8000/reader/${this.reader_id}/`);
+          const userRes = await fetch(`https://thebookstack-2.onrender.com/reader/${this.reader_id}/`);
           const userData = await userRes.json();
-          await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
+          await fetch(`https://thebookstack-2.onrender.com/reader/${this.reader_id}/`, {
             method: "PUT",
             headers: {
               Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -111,7 +111,7 @@ export default defineComponent({
           });
 
           // Fetch and filter book genres
-          const bookGenreRes = await fetch(`http://localhost:8000/book_genres/`);
+          const bookGenreRes = await fetch(`https://thebookstack-2.onrender.com/book_genres/`);
           const bookGenreData = await bookGenreRes.json();
           const bookGenres: BookGenre[] = bookGenreData.book_genre || []; // Ensure it's typed as BookGenre[]
 
@@ -119,7 +119,7 @@ export default defineComponent({
 
           console.log('Filtered Book Genres:', bookGenresForBook);
 
-          const readerGenreRes = await fetch(`http://localhost:8000/reader_genres/`);
+          const readerGenreRes = await fetch(`https://thebookstack-2.onrender.com/reader_genres/`);
           const readerGenreData = await readerGenreRes.json();
           const readerGenres = readerGenreData.reader_genre || [];
 
@@ -127,7 +127,7 @@ export default defineComponent({
             const existing = readerGenres.find((rg: ReaderGenre) => rg.user === this.reader_id && rg.genre === bg.genre);
 
             if (existing) {
-              await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
+              await fetch(`https://thebookstack-2.onrender.com/reader_genre/${existing.id}/`, {
                 method: "PUT",
                 headers: {
                   Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -138,7 +138,7 @@ export default defineComponent({
                 body: JSON.stringify({ count: existing.count + 1 }),
               });
             } else {
-              await fetch(`http://localhost:8000/reader_genres/`, {
+              await fetch(`https://thebookstack-2.onrender.com/reader_genres/`, {
                 method: "POST",
                 headers: {
                   Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -166,7 +166,7 @@ export default defineComponent({
         const { cookies } = useCookies();
         const userBook = this.userBooks.find(book => book.id === userBookId);
 
-        const response = await fetch(`http://localhost:8000/user_book/${userBookId}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/user_book/${userBookId}/`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -177,9 +177,9 @@ export default defineComponent({
         });
 
         if (response.ok && userBook?.status === "COMPLETED") {
-          const userRes = await fetch(`http://localhost:8000/reader/${this.reader_id}/`);
+          const userRes = await fetch(`https://thebookstack-2.onrender.com/reader/${this.reader_id}/`);
           const userData = await userRes.json();
-          await fetch(`http://localhost:8000/reader/${this.reader_id}/`, {
+          await fetch(`https://thebookstack-2.onrender.com/reader/${this.reader_id}/`, {
             method: "PUT",
             headers: {
               Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -190,11 +190,11 @@ export default defineComponent({
             body: JSON.stringify({ book_count: Math.max(userData.book_count - 1, 0) }),
           });
 
-          const bookGenreRes = await fetch(`http://localhost:8000/book_genres/`);
+          const bookGenreRes = await fetch(`https://thebookstack-2.onrender.com/book_genres/`);
           const bookGenreData = await bookGenreRes.json();
           const bookGenres: BookGenre[] = bookGenreData.book_genre || [];
 
-          const readerGenreRes = await fetch(`http://localhost:8000/reader_genres/`);
+          const readerGenreRes = await fetch(`https://thebookstack-2.onrender.com/reader_genres/`);
           const readerGenreData = await readerGenreRes.json();
           const readerGenres = readerGenreData.reader_genre || [];
 
@@ -205,7 +205,7 @@ export default defineComponent({
             if (existing) {
               const newCount = existing.count - 1;
               if (newCount <= 0) {
-                await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
+                await fetch(`https://thebookstack-2.onrender.com/reader_genre/${existing.id}/`, {
                   method: "DELETE",
                   headers: {
                     Authorization: `Bearer ${cookies.get("access_token")}`,
@@ -215,7 +215,7 @@ export default defineComponent({
                   credentials: "include",
                 });
               } else {
-                await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
+                await fetch(`https://thebookstack-2.onrender.com/reader_genre/${existing.id}/`, {
                   method: "PUT",
                   headers: {
                     Authorization: `Bearer ${cookies.get("access_token")}`,

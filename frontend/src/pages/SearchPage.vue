@@ -23,7 +23,7 @@
         <div v-if="searchType === 'books'">
           <router-link :to="`/book/${item.id}`" class="book-link">
             <div v-if="item.cover_image">
-              <img :src="`http://localhost:8000/${item.cover_image}`" alt="Book Cover" class="book-cover"/>
+              <img :src="`https://thebookstack-2.onrender.com/${item.cover_image}`" alt="Book Cover" class="book-cover"/>
             </div>
             <p v-else>No cover image available</p>
             <strong class="book-title">{{ item.title }}</strong>
@@ -63,7 +63,7 @@ export default defineComponent({
     // Fetch all books
     const fetchBooks = async () => {
       try {
-        const res = await fetch("http://localhost:8000/books/");
+        const res = await fetch("https://thebookstack-2.onrender.com/books/");
         results.value = (await res.json()).books;
       } catch (err) {
         console.error("Error fetching books:", err);
@@ -73,7 +73,7 @@ export default defineComponent({
     // Fetch all readers
     const fetchReaders = async () => {
       try {
-        const res = await fetch("http://localhost:8000/readers/");
+        const res = await fetch("https://thebookstack-2.onrender.com/readers/");
         results.value = (await res.json()).readers;
       } catch (err) {
         console.error("Error fetching readers:", err);
@@ -83,7 +83,7 @@ export default defineComponent({
     // Fetch all authors
     const fetchAuthors = async () => {
       try {
-        const res = await fetch("http://localhost:8000/authors/");
+        const res = await fetch("https://thebookstack-2.onrender.com/authors/");
         results.value = (await res.json()).authors;
       } catch (err) {
         console.error("Error fetching authors:", err);
@@ -95,13 +95,13 @@ export default defineComponent({
       let url = "";
       switch (searchType.value) {
         case "books":
-          url = `http://localhost:8000/books/?search=${query.value}`;
+          url = `https://thebookstack-2.onrender.com/books/?search=${query.value}`;
           break;
         case "readers":
-          url = `http://localhost:8000/readers/?search=${query.value}`;
+          url = `https://thebookstack-2.onrender.com/readers/?search=${query.value}`;
           break;
         case "authors": 
-          url = `http://localhost:8000/authors/?search=${query.value}`;
+          url = `https://thebookstack-2.onrender.com/authors/?search=${query.value}`;
           break;
       }
 

@@ -48,7 +48,7 @@ export default defineComponent({
 
     await this.readerStore.fetchReaderReturn(readerId); // ✅ no unused variables
 
-    let responseMessage = await fetch("http://localhost:8000/messages/");
+    let responseMessage = await fetch("https://thebookstack-2.onrender.com/messages/");
     let dataMessage = await responseMessage.json();
     let messages = dataMessage.messages;
     const storeMessages = useMessagesStore();
@@ -70,7 +70,7 @@ export default defineComponent({
 
       const { cookies } = useCookies(); 
 
-      const response = await fetch("http://localhost:8000/messages/", {
+      const response = await fetch("https://thebookstack-2.onrender.com/messages/", {
         method: "POST",
         headers: {
           'Authorization': `Bearer ${cookies.get('access_token')}`,
@@ -100,7 +100,7 @@ export default defineComponent({
 
       const { cookies } = useCookies(); 
       // Call API to delete the message
-      const response = await fetch(`http://localhost:8000/message/${messageId}/`, {
+      const response = await fetch(`https://thebookstack-2.onrender.com/message/${messageId}/`, {
         method: "DELETE",
         headers: {
           'Authorization': `Bearer ${cookies.get('access_token')}`,

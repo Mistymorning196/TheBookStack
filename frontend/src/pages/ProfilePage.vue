@@ -5,7 +5,7 @@
       <!-- Profile Box -->
       <div id="profile-box">
         <h2>Welcome {{ reader.first_name }}</h2>
-        <p>Username: {{ reader.username }} <button> <a href="http://localhost:8000/updateUser/"> Change Username </a> </button></p>
+        <p>Username: {{ reader.username }} <button> <a href="https://thebookstack-2.onrender.com/updateUser/"> Change Username </a> </button></p>
 
         <p v-for="field in editableFields" :key="field.key">
           <span v-if="!field.isEditing">{{ field.label }}: {{ reader[field.key] }}</span>
@@ -17,7 +17,7 @@
           <button v-else @click="saveField(field.key)">Save</button>
         </p>
 
-        <button> <a href="http://localhost:8000/updatePass/"> Change Password </a> </button>
+        <button> <a href="https://thebookstack-2.onrender.com/updatePass/"> Change Password </a> </button>
       </div>
 
       <!-- Connections Box -->
@@ -168,7 +168,7 @@ export default defineComponent({
       console.error("Error fetching user:", error);
     }
 
-    const response = await fetch("http://localhost:8000/friendships/");
+    const response = await fetch("https://thebookstack-2.onrender.com/friendships/");
     const data = await response.json();
     this.friendshipsStore.saveFriendships(data.friendships);
   },
@@ -227,7 +227,7 @@ export default defineComponent({
       try {
         const { cookies } = useCookies(); 
         const payload = { [fieldKey]: this.editedReader[fieldKey] };
-        const response = await fetch(`http://localhost:8000/reader/${this.reader.id}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/reader/${this.reader.id}/`, {
           method: "PUT",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,
@@ -251,7 +251,7 @@ export default defineComponent({
       try {
         const { cookies } = useCookies();
         const payload = { [goalKey]: value };
-        const response = await fetch(`http://localhost:8000/reader/${this.reader.id}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/reader/${this.reader.id}/`, {
           method: "PUT",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,
@@ -282,7 +282,7 @@ export default defineComponent({
 
       try {
         const { cookies } = useCookies();
-        const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/friendship/${friendshipId}/`, {
           method: "PUT",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,
@@ -304,7 +304,7 @@ export default defineComponent({
     async deleteFriendship(friendshipId: number) {
       try {
         const { cookies } = useCookies();
-        const response = await fetch(`http://localhost:8000/friendship/${friendshipId}/`, {
+        const response = await fetch(`https://thebookstack-2.onrender.com/friendship/${friendshipId}/`, {
           method: "DELETE",
           headers: {
             "Authorization": `Bearer ${cookies.get("access_token")}`,
