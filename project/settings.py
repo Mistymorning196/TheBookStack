@@ -43,10 +43,6 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
-SECURE_CONTENT_TYPE_NOSNIFF = True
-
-SECURE_SSL_REDIRECT = True
-
 ROOT_URLCONF = 'project.urls'
 
 TEMPLATES = [
@@ -107,7 +103,6 @@ CORS_ALLOW_HEADERS = [
     'authorization', 
     'content-type', 
     'x-csrftoken',
-    'access-control-allow-credentials',
 ]
 
 CORS_EXPOSE_HEADERS = [ 
@@ -125,16 +120,15 @@ CSRF_TRUSTED_ORIGINS = [
 SESSION_COOKIE_SAMESITE = None
 CSRF_COOKIE_SAMESITE = None
 
+CSRF_COOKIE_DOMAIN = '.thebookstack-2.onrender.com'  # Cross-subdomain cookies
+SESSION_COOKIE_DOMAIN = '.thebookstack-2.onrender.com'  # Cross-subdomain cookies
+
 SESSION_COOKIE_HTTPONLY = False
 
-SESSION_COOKIE_DOMAIN = '.thebookstack-2.onrender.com'
-
+SESSION_COOKIE_DOMAIN = '.com'
 # Important for HTTPS
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Default session backend (uses DB for sessions)
-SESSION_COOKIE_AGE = 3600  # Cookie expiration in seconds (e.g., 1 hour)
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
