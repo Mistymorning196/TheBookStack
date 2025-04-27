@@ -245,7 +245,7 @@ def update_username(request: HttpRequest) -> HttpResponse:
         return render(request, "api/auth/updateUsername.html", {"form": form})
     
 
-@csrf_exempt
+
 def books_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Book"""
 
