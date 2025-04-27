@@ -36,7 +36,7 @@ export default defineComponent({
     };
   },
   async mounted() {
-    // Fetch author info
+    // Fetch author info please work
     try {
       const { cookies } = useCookies(); 
       const response = await fetch(`http://localhost:8000/author/${this.author_id}`, {
