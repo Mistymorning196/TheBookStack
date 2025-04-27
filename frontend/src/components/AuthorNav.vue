@@ -14,7 +14,7 @@
       <!--Go to home page -->
       <router-link class="link" :to="{name: 'Author Profile Page'}">Profile</router-link>
       <!-- Logout -->
-      <a href='http://localhost:8000/logout/'>Log Out</a>
+      <a href='https://thebookstack-2.onrender.com/logout/'>Log Out</a>
     </div>
   </div>
 </template>

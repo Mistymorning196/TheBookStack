@@ -132,7 +132,7 @@ SESSION_COOKIE_HTTPONLY = False
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://frontend-fmz69gsyk-evies-projects-69270de7.vercel.app/",
+    "https://frontend-pink-nine.vercel.app",
 ]
 
 # Internationalization

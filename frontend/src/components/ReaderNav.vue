@@ -14,7 +14,7 @@
         <router-link class="link" :to="{ name: 'Blog Page' }">Blog</router-link>
         <router-link class="link" :to="{ name: 'Group Page' }">Groups</router-link>
         <router-link class="link" :to="{ name: 'Profile Page' }">Profile</router-link>
-        <a href="http://localhost:8000/logout/">Log Out</a>
+        <a href="https://thebookstack-2.onrender.com/logout/">Log Out</a>
       </div>
     </div>
   </template>
