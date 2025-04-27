@@ -227,6 +227,8 @@ export default defineComponent({
       try {
         const { cookies } = useCookies(); 
         const payload = { [fieldKey]: this.editedReader[fieldKey] };
+        console.log(cookies.get("access_token"));
+        console.log(cookies.get("csrftoken"));
         const response = await fetch(`https://thebookstack-2.onrender.com/reader/${this.reader.id}/`, {
           method: "PUT",
           headers: {

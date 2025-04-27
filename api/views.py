@@ -95,6 +95,7 @@ def login_site_user(request):
             if user is not None:
                 # Log the user in
                 auth_login(request, user)
+                print(f"Session cookie for user {user.username}: {request.session.session_key}")
 
                 # Generate and send the 2FA token if the user is authenticated
                 token = generate_2fa_token()
