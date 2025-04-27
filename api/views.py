@@ -30,6 +30,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.http import JsonResponse
 
+from django.views.decorators.csrf import csrf_exempt
+
 
 
 
@@ -55,22 +57,22 @@ def verify_2fa(request):
                     # Check if the user is a Reader
                     reader = Reader.objects.filter(id=user.id).first()
                     if reader:
-                        print(f"Redirecting Reader with ID {user.id}")
+
                         return redirect(settings.READER_REDIRECT_URL + f'?u={user.id}')
 
                     # Check if the user is an Author
                     author = Author.objects.filter(id=user.id).first()
                     if author:
-                        print(f"Redirecting Author with ID {user.id}")
+
                         return redirect(settings.AUTHOR_REDIRECT_URL + f'?u={user.id}')
 
                 except User.DoesNotExist:
                     # If the user doesn't exist in either table, fallback to default redirect
-                    print(f"Error: User with ID {user.id} not found in Reader or Author.")
+         
                     return redirect(settings.LOGIN_REDIRECT_URL)
 
                 # If the user is neither a Reader nor an Author, fall back to a default redirect
-                print(f"Unknown user type with ID {user.id}")
+
                 return redirect(settings.LOGIN_REDIRECT_URL)
 
             else:
@@ -95,7 +97,7 @@ def login_site_user(request):
             if user is not None:
                 # Log the user in
                 auth_login(request, user)
-                print(f"Session cookie for user {user.username}: {request.session.session_key}")
+
 
                 # Generate and send the 2FA token if the user is authenticated
                 token = generate_2fa_token()
@@ -140,24 +142,22 @@ def signup_site_user(request: HttpRequest) -> HttpResponse:
             if existing_user:
                 return render(request, "api/auth/signup.html", {"form": form, "message": "User already exists with that username."})
 
-            # Debug: Log user type before user creation
-            print(f"Creating a user with type: {user_type}")
+    
 
             # Create either a Reader or an Author
             if user_type == "reader":
                 user = Reader.objects.create_user(username=username, email=email, password=password)
-                print(f"Created Reader user: {user}")
+    
             else:  # user_type == "author"
                 user = Author.objects.create_user(username=username, email=email, password=password)
-                print(f"Created Author user: {user}")
+
 
             user.first_name = first_name
             user.last_name = last_name
             user.date_of_birth = date_of_birth
             user.save()
 
-            # Debug: Log the type of the created user
-            print(f"User created: {user} (Type: {type(user)})")
+
 
             auth_login(request, user)
              # Create either a Reader or an Author
@@ -243,6 +243,7 @@ def update_username(request: HttpRequest) -> HttpResponse:
         return render(request, "api/auth/updateUsername.html", {"form": form})
     
 
+@csrf_exempt
 def books_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Book"""
 
@@ -272,7 +273,7 @@ def books_api(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"books": [book.as_dict() for book in books]}, safe=False)
 
 
-
+@csrf_exempt
 def book_api(request: HttpRequest, book_id: int) -> JsonResponse:
     """API endpoint for a single book"""
     try:
@@ -314,6 +315,7 @@ def book_api(request: HttpRequest, book_id: int) -> JsonResponse:
     return JsonResponse(book.as_dict())
 
 # APIs for book model below
+@csrf_exempt
 def blogs_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Blog"""
     
@@ -338,7 +340,7 @@ def blogs_api(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"blogs": [blog.as_dict() for blog in blogs]})
 
  
-
+@csrf_exempt
 def blog_api(request: HttpRequest, blog_id: int) -> JsonResponse:
     """API endpoint for a single book"""
     try:
@@ -367,6 +369,7 @@ def blog_api(request: HttpRequest, blog_id: int) -> JsonResponse:
     return JsonResponse(blog.as_dict())
 
 # APIs for group model below
+@csrf_exempt
 def groups_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Group"""
     
@@ -387,6 +390,7 @@ def groups_api(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"groups": [group.as_dict() for group in groups]})
 
 
+@csrf_exempt
 def group_api(request: HttpRequest, group_id: int) -> JsonResponse:
     """API endpoint for a single Group"""
     try:
@@ -399,6 +403,7 @@ def group_api(request: HttpRequest, group_id: int) -> JsonResponse:
 
 
 # APIs for user model below
+@csrf_exempt
 def site_users_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the SiteUsers"""
 
@@ -433,6 +438,7 @@ def site_users_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def site_user_api(request: HttpRequest, user_id: int) -> JsonResponse:
     """API endpoint for a single site user"""
     try:
@@ -465,7 +471,7 @@ def site_user_api(request: HttpRequest, user_id: int) -> JsonResponse:
     return JsonResponse(site_user.as_dict())
 
 
-
+@csrf_exempt
 def readers_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for all Readers"""
     
@@ -500,6 +506,7 @@ def readers_api(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"readers": [reader.as_dict() for reader in readers]})
 
 
+@csrf_exempt
 def reader_api(request: HttpRequest, reader_id: int) -> JsonResponse:
     """API endpoint for a single Reader"""
     try:
@@ -537,6 +544,7 @@ def reader_api(request: HttpRequest, reader_id: int) -> JsonResponse:
     # GET method (Retrieve reader details)
     return JsonResponse(reader.as_dict())
 
+@csrf_exempt
 def authors_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for all Authors"""
     
@@ -570,7 +578,7 @@ def authors_api(request: HttpRequest) -> JsonResponse:
 
     return JsonResponse({"authors": [author.as_dict() for author in authors]})
 
-
+@csrf_exempt
 def author_api(request: HttpRequest, author_id: int) -> JsonResponse:
     """API endpoint for a single Author"""
     try:
@@ -606,6 +614,7 @@ def author_api(request: HttpRequest, author_id: int) -> JsonResponse:
 
 
 # APIs for genre model below
+@csrf_exempt
 def genres_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the SiteUsers"""
 
@@ -637,6 +646,7 @@ def genres_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def genre_api(request: HttpRequest, genre_id: int) -> JsonResponse:
     """API endpoint for a single genre"""
     try:
@@ -666,6 +676,7 @@ def genre_api(request: HttpRequest, genre_id: int) -> JsonResponse:
 
 
 # APIs for friendship model below
+@csrf_exempt
 def friendships_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Friendship"""
 
@@ -691,6 +702,7 @@ def friendships_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def friendship_api(request: HttpRequest, friendship_id: int) -> JsonResponse:
     """API endpoint for a single friendship"""
     try:
@@ -718,6 +730,7 @@ def friendship_api(request: HttpRequest, friendship_id: int) -> JsonResponse:
     return JsonResponse(friendship.as_dict())
 
 # APIs for message model below
+@csrf_exempt
 def messages_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Message"""
 
@@ -743,6 +756,7 @@ def messages_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def message_api(request: HttpRequest, message_id: int) -> JsonResponse:
     """API endpoint for a single friendship"""
     try:
@@ -770,6 +784,7 @@ def message_api(request: HttpRequest, message_id: int) -> JsonResponse:
     return JsonResponse(message.as_dict())
 
 # APIs for UserBook model below
+@csrf_exempt
 def user_books_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the UserBook"""
 
@@ -795,6 +810,7 @@ def user_books_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def user_book_api(request: HttpRequest, user_book_id: int) -> JsonResponse:
     """API endpoint for a single user_book"""
     try:
@@ -822,6 +838,7 @@ def user_book_api(request: HttpRequest, user_book_id: int) -> JsonResponse:
     return JsonResponse(user_book.as_dict())
 
 # APIs for AuthorBook model below
+@csrf_exempt
 def author_books_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the AuthorBook"""
 
@@ -846,6 +863,7 @@ def author_books_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def author_book_api(request: HttpRequest, author_book_id: int) -> JsonResponse:
     """API endpoint for a single author_book"""
     try:
@@ -864,6 +882,7 @@ def author_book_api(request: HttpRequest, author_book_id: int) -> JsonResponse:
     return JsonResponse(author_book.as_dict())
 
 # APIs for AuthorBlog model below
+@csrf_exempt
 def author_blogs_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the AuthorBlog"""
 
@@ -888,6 +907,7 @@ def author_blogs_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def author_blog_api(request: HttpRequest, author_blog_id: int) -> JsonResponse:
     """API endpoint for a single author_blog"""
     try:
@@ -907,6 +927,7 @@ def author_blog_api(request: HttpRequest, author_blog_id: int) -> JsonResponse:
 
 
 # APIs for ReaderGenre model below
+@csrf_exempt
 def reader_genres_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the ReaderGenre"""
 
@@ -931,6 +952,7 @@ def reader_genres_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def reader_genre_api(request: HttpRequest, reader_genre_id: int) -> JsonResponse:
     """API endpoint for a single reader_genre"""
     try:
@@ -958,6 +980,7 @@ def reader_genre_api(request: HttpRequest, reader_genre_id: int) -> JsonResponse
     return JsonResponse(reader_genre.as_dict())
 
 # APIs for bookGenre model below
+@csrf_exempt
 def book_genres_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the bookGenre"""
 
@@ -982,6 +1005,7 @@ def book_genres_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def book_genre_api(request: HttpRequest, book_genre_id: int) -> JsonResponse:
     """API endpoint for a single book_genre"""
     try:
@@ -1000,6 +1024,7 @@ def book_genre_api(request: HttpRequest, book_genre_id: int) -> JsonResponse:
     return JsonResponse(book_genre.as_dict())
 
 # APIs for review model below
+@csrf_exempt
 def reviews_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the review"""
 
@@ -1028,6 +1053,7 @@ def reviews_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def review_api(request: HttpRequest, review_id: int) -> JsonResponse:
     """API endpoint for a single review"""
     try:
@@ -1058,6 +1084,7 @@ def review_api(request: HttpRequest, review_id: int) -> JsonResponse:
     return JsonResponse(review.as_dict())
 
 # APIs for comments model below
+@csrf_exempt
 def comments_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the comment"""
 
@@ -1084,6 +1111,7 @@ def comments_api(request: HttpRequest) -> JsonResponse:
         ]
     })
 
+@csrf_exempt
 def comment_api(request: HttpRequest, comment_id: int) -> JsonResponse:
     """API endpoint for a single comment"""
     try:
@@ -1112,6 +1140,7 @@ def comment_api(request: HttpRequest, comment_id: int) -> JsonResponse:
     return JsonResponse(comment.as_dict())
 
 # APIs for discussions model below
+@csrf_exempt
 def discussions_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the discussion"""
 
@@ -1137,6 +1166,7 @@ def discussions_api(request: HttpRequest) -> JsonResponse:
     })
 
 
+@csrf_exempt
 def discussion_api(request: HttpRequest, discussion_id: int) -> JsonResponse:
     """API endpoint for a single discussion"""
     try:
