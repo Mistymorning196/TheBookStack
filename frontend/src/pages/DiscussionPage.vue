@@ -57,6 +57,7 @@ export default defineComponent({
   data() {
     return {
       reader_id: Number(window.sessionStorage.getItem("reader_id")),
+      //modal data and empty template
       showModal: false,
       newDiscussion: {
         discussion: "",
@@ -67,10 +68,12 @@ export default defineComponent({
     };
   },
   async mounted() {
+    //fetch group info
     const route = useRoute();
     const groupId = parseInt(String(route.params.id)); 
     this.group = await this.groupStore.fetchGroupReturn(groupId);
 
+    //get all discussions
     if (this.group) {
       let responseDiscussion = await fetch("http://localhost:8000/discussions/");
       let dataDiscussion = await responseDiscussion.json();
@@ -98,6 +101,7 @@ export default defineComponent({
       });
     },
 
+    //open modals
     toggleModal() {
       this.showModal = !this.showModal;
       const modalOverlay = document.querySelector('.modal-overlay');
@@ -112,6 +116,7 @@ export default defineComponent({
       }
     },
 
+    //submit discussion  using post
     async submitDiscussion() {
       if (!this.newDiscussion.discussion) {
         alert("Please fill out all fields!");
@@ -162,6 +167,7 @@ export default defineComponent({
       }
     },
 
+    //delete discussion
     async deleteDiscussion(discussionId: number) {
       try {
         const { cookies } = useCookies();
@@ -227,13 +233,13 @@ export default defineComponent({
 /* Discussion Box Styling */
 #discussion-box {
   width: 100%;
-  max-width: 700px; /* Keep original max-width */
+  max-width: 700px; 
   background-color: #2f4a54;
   color: white;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 3px 3px 15px rgba(0, 0, 0, 0.25);
-  display: block; /* Keep the original layout for discussions */
+  display: block; 
 }
 
 /* "Add Message" Button Styling */
@@ -241,18 +247,18 @@ export default defineComponent({
   background-color: #4b6c6f;
   color: white;
   padding: 10px 15px;
-  margin-top: 1rem; /* Adjusted margin */
+  margin-top: 1rem;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  width: auto; /* This ensures the button's width is automatically adjusted to the content */
+  width: auto; 
 }
 
 /* Center the "Add Message" button in its container */
 .add-button-container {
   display: flex;
   justify-content: center;
-  width: 100%; /* Ensure the container stretches fully to help with centering */
+  width: 100%;
   margin-top: 1rem;
 }
 

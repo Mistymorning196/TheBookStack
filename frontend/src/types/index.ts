@@ -1,3 +1,4 @@
+//below are all the types for the objects like reader, author, book, genre etc.
 export interface Reader {
     id: number;
     api: string;

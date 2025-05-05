@@ -1,5 +1,6 @@
 <template>
   <AuthorNavBarComponent />
+   <!--Form to submit blog-->
   <form @submit.prevent="submitBlog" id="blog-form">
     <h2>Write a New Blog</h2>
     <div class="form-group">
@@ -28,6 +29,7 @@ export default defineComponent({
   data() {
     return {
       author_id: Number(window.sessionStorage.getItem("reader_id")),
+      //blank template
       blog: {
         title: "",
         post: "",
@@ -36,7 +38,7 @@ export default defineComponent({
     };
   },
   async mounted() {
-    // Fetch author info please work
+    //fetch author info
     try {
       const { cookies } = useCookies(); 
       const response = await fetch(`http://localhost:8000/author/${this.author_id}`, {
@@ -54,6 +56,7 @@ export default defineComponent({
     }
   },
   methods: {
+    //method to submit blog
     async submitBlog() {
       if (!this.blog.title || !this.blog.post) {
         alert("Please fill out all fields!");
@@ -73,6 +76,7 @@ export default defineComponent({
           body: JSON.stringify(this.blog),
         });
 
+        //if the blog post is succesfully created make author blog through
         if (!blogResponse.ok) throw new Error("Failed to create blog");
 
         const createdBlog = await blogResponse.json();
@@ -105,6 +109,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/*styles for the form */
 #blog-form {
   max-width: 350px;
   margin: 0.5rem auto;
@@ -158,6 +163,8 @@ textarea {
   min-height: 150px;
   resize: vertical;
 }
+
+/*Style for the buttons */
 
 button {
   width: 100%;

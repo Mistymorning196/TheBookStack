@@ -1,6 +1,7 @@
 <template>
   <ReaderNavBarComponent />
   <div class="body">
+       <!-- Display author info-->
     <div id="profile-box">
       <h2>Author Info</h2>
       <p>Username: {{ author.username }}</p>
@@ -8,6 +9,7 @@
       <p>Biography: {{ author.biography }}</p>
     </div>
 
+       <!--Display all of the author books with links-->
     <div class="display-books">
       <h2>Books</h2>
       <div class="grid-scroll">
@@ -27,6 +29,7 @@
         </div>
       </div>
 
+         <!--Display all of the authors blogs with links-->
       <h2>Blogs</h2>
       <div class="grid-scroll">
         <div
@@ -61,16 +64,18 @@ export default defineComponent({
   },
   async mounted() {
     const route = useRoute();
-    const authorId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+    const authorId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); 
 
-    await this.authorStore.fetchAuthorReturn(authorId); // ✅ no unused variables
+    //fetch author info
+    await this.authorStore.fetchAuthorReturn(authorId);
 
-
+    //fetch author books
     let responseAuthorBook = await fetch("http://localhost:8000/author_books/");
     let dataAuthorBook = await responseAuthorBook.json();
     const storeAuthorBook = useAuthorBooksStore();
     storeAuthorBook.saveAuthorBooks(dataAuthorBook.author_books);
 
+    //fetch author blogs
     let responseAuthorBlog = await fetch("http://localhost:8000/author_blogs/");
     let dataAuthorBlog = await responseAuthorBlog.json();
     const storeAuthorBlog = useAuthorBlogsStore();
@@ -178,6 +183,7 @@ h2 {
   transform: scale(1.02);
 }
 
+/*book styling*/
 .book-link {
   display: block;
   text-decoration: none;

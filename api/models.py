@@ -5,6 +5,9 @@ from django.contrib.auth.models import AbstractUser
 
 # Genre Model
 class Genre(models.Model):
+    """
+    Class for the model genre
+    """ 
     type = models.CharField(max_length=100)
     description = models.CharField(max_length=100)
 
@@ -18,7 +21,7 @@ class Genre(models.Model):
             'description': self.description,
         }
 
-# SiteUser Model (must be defined before Book, Friendship, UserBook, Review)
+# SiteUser Model 
 class SiteUser(AbstractUser):
     """
     Class for the model user extending abstract user 
@@ -49,6 +52,7 @@ class SiteUser(AbstractUser):
  
         }
 
+#reader model
 class Reader(SiteUser):
     """
     Reader model extending SiteUser with additional attributes.
@@ -72,7 +76,7 @@ class Reader(SiteUser):
         return f"Reader: {self.first_name} {self.last_name}"
 
     def as_dict(self):
-        data = super().as_dict()  # Get the parent class dictionary
+        data = super().as_dict()  
         data.update({
             'book_count': self.book_count,
             'goal_one': self.goal_one,
@@ -84,6 +88,7 @@ class Reader(SiteUser):
         })
         return data
 
+#author model
 class Author(SiteUser):
     """
     Author model extending SiteUser with additional attributes.
@@ -100,13 +105,13 @@ class Author(SiteUser):
         return f"Author: {self.first_name} {self.last_name}"
 
     def as_dict(self):
-        data = super().as_dict()  # Get the parent class dictionary
+        data = super().as_dict() 
         data.update({
             'biography': self.biography,
         })
         return data   
 
-
+#book model
 class Book(models.Model):
     """
     Class for the model Book
@@ -149,9 +154,11 @@ class Blog(models.Model):
             'author': self.author,
         }
     
-
-    
+#Comment model    
 class Comment(models.Model):
+    """
+    Class for the model comment which is a through model for blog and reader
+    """ 
     blog = models.ForeignKey(Blog, on_delete=models.CASCADE)
     user = models.ForeignKey(Reader, on_delete=models.CASCADE)
     username = models.CharField(max_length=100, default="username")
@@ -182,8 +189,12 @@ class Group(models.Model):
             'api': reverse('blog api', args=[self.id]),
             'name': self.name,
         }
-      
+
+ #discussion model     
 class Discussion(models.Model):
+    """
+    Class for the model discussion which is a through model for group and reader
+    """ 
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     user = models.ForeignKey(Reader, on_delete=models.CASCADE)
     username = models.CharField(max_length=100, default="username")
@@ -249,7 +260,7 @@ class AuthorBlog(models.Model):
 class ReaderGenre(models.Model):  
     """
     This class is the ReaderGenres Model which is a through model 
-    which creates a many-to-many relationship between users and books.
+    which creates a many-to-many relationship between readers and books.
     """
     user = models.ForeignKey(Reader, on_delete=models.CASCADE)
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
@@ -270,7 +281,7 @@ class ReaderGenre(models.Model):
 class BookGenre(models.Model):  
     """
     This class is the BookGenres Model which is a through model 
-    which creates a many-to-many relationship between users and books.
+    which creates a many-to-many relationship between genres and books.
     """
     book = models.ForeignKey(Book, on_delete=models.CASCADE)
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
@@ -307,7 +318,8 @@ class Friendship(models.Model):
             'friendUsername': self.friend.username,
             'accepted': self.accepted,
         }
-    
+
+#message model   
 class Message(models.Model):
     """
     This class is the Message Model which is a through model 
@@ -334,7 +346,7 @@ class Message(models.Model):
 class UserBook(models.Model): 
     """
     This class is the UserBooks Model which is a through model 
-    which creates a many-to-many relationship between users and books.
+    which creates a many-to-many relationship between readers and books.
     """
     STATUS_CHOICES = [
         ("COMPLETED", 'Completed'),
@@ -362,10 +374,10 @@ class UserBook(models.Model):
         }
 
 # Review Model
-class Review(models.Model):  # Corrected from models.model to models.Model
+class Review(models.Model): 
     """
     This class is the Review Model which is a through model 
-    which creates a many-to-many relationship between users and books.
+    which creates a many-to-many relationship between readers and books.
     """
     RATING_CHOICES = [
         (0, '0 Stars'),
@@ -376,8 +388,8 @@ class Review(models.Model):  # Corrected from models.model to models.Model
         (5, '5 Stars'),
     ]
 
-    user = models.ForeignKey(Reader, on_delete=models.CASCADE)  # Added on_delete to prevent migration errors
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)  # Foreign key for book reference
+    user = models.ForeignKey(Reader, on_delete=models.CASCADE)  
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)  
     title = models.CharField(max_length=100, default='Title')
     username = models.CharField(max_length=100, default='username')
     rating = models.IntegerField(default=0, choices=RATING_CHOICES)

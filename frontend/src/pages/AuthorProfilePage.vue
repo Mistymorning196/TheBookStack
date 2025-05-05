@@ -45,6 +45,7 @@ import AuthorNavBarComponent from "../components/AuthorNav.vue";
 export default defineComponent({
   data() {
     return {
+      //for editing info
       editableFields: [
         { key: "first_name", label: "First Name", type: "text", isEditing: false },
         { key: "last_name", label: "Last Name", type: "text", isEditing: false },
@@ -59,6 +60,7 @@ export default defineComponent({
   },
   async mounted() {
     try {
+      //fetch author
       const authorId = this.author_id;
       const author = await this.authorStore.fetchAuthorReturn(authorId);
 
@@ -91,6 +93,7 @@ export default defineComponent({
     },
   },
   methods: {
+    //switch fields to editable
     toggleEditField(fieldKey: string) {
       const field = this.editableFields.find(f => f.key === fieldKey);
       if (field) {
@@ -100,6 +103,7 @@ export default defineComponent({
         }
       }
     },
+    //save edited fields using put method
     async saveField(fieldKey: string) {
       try {
         const { cookies } = useCookies();
@@ -124,9 +128,11 @@ export default defineComponent({
         alert(`Failed to update ${fieldKey}.`);
       }
     },
+    //make it so you can edit bio
     toggleBioEdit() {
       this.isEditingBio = !this.isEditingBio;
     },
+    //save edited bio using put method
     async saveBiography() {
       try {
         const { cookies } = useCookies();
@@ -171,8 +177,8 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5em;  /* Reduced gap between elements */
-  padding: 0.5em;  /* Reduced padding */
+  gap: 0.5em;  
+  padding: 0.5em;  
   background-color: #EFE0CB;
 
 }
@@ -180,33 +186,33 @@ export default defineComponent({
 .top-section {
   display: flex;
   justify-content: space-between;
-  gap: 0.5em;  /* Reduced gap between profile and connections */
+  gap: 0.5em;  
   width: 100%;
 }
 
 #profile-box, #bio-box {
   background-color: #2f4a54;
-  padding: 0.6em;  /* Reduced padding */
+  padding: 0.6em;  
   border-radius: 12px;
   width: 45%;
-  min-width: 280px;  /* Adjusted width for better fit */
+  min-width: 280px;  
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
-  max-height: 350px;  /* Reduced max-height */
+  max-height: 350px;  
 }
 
 h2,
 h3 {
-  font-size: 1.4em;  /* Reduced font size */
+  font-size: 1.4em; 
   color: #ffffff;
   text-align: center;
-  margin-bottom: 0.6em;  /* Reduced margin */
+  margin-bottom: 0.6em;  
   font-weight: 600;
 }
 
 #profile-box p, #bio-box p {
   color: #ffffff;
   background-color: #1e3640;
-  padding: 0.4em;  /* Reduced padding */
+  padding: 0.4em;  
   border-radius: 8px;
   margin-bottom: 0.3em;
   display: flex;
@@ -225,8 +231,8 @@ h3 {
 .tabs {
   display: flex;
   justify-content: space-between;
-  gap: 0.4em;  /* Reduced gap */
-  margin-bottom: 0.8em;  /* Reduced margin */
+  gap: 0.4em;  
+  margin-bottom: 0.8em; 
 }
 
 .tab-group {
@@ -245,7 +251,7 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.3em 0;  /* Reduced padding */
+  padding: 0.3em 0;  
   border-bottom: 1px solid #56707d;
 }
 
@@ -283,7 +289,7 @@ button:disabled {
 }
 
 button + button {
-  margin-left: 6px;  /* Reduced margin */
+  margin-left: 6px;  
 }
 
 a {
@@ -291,6 +297,7 @@ a {
     color: inherit;
 }
 
+/*media styles */
 @media (max-width: 768px) {
   .top-section {
     flex-direction: column;

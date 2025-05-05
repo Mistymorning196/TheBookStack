@@ -34,11 +34,15 @@ from django.http import JsonResponse
 
 
 def generate_2fa_token():
+
     """Generates a random 6-digit token."""
+
     return ''.join(random.choices(string.digits, k=6))
 
 def verify_2fa(request):
+
     """View to handle 2FA token verification and redirect user based on their type."""
+
     if request.method == "POST":
         token = request.POST.get('token')  # The token entered by the user
         user = request.user  # Current logged-in user
@@ -82,7 +86,9 @@ def verify_2fa(request):
     return render(request, 'api/auth/verify_2fa.html')
 
 def login_site_user(request):
+
     """ Function to validate a potential registered site_user with 2FA """
+
     if request.method == "POST":
         form = LoginForm(request.POST)
         
@@ -123,7 +129,9 @@ def login_site_user(request):
 
 # Authenticate signup and login before Vue SPA redirect
 def signup_site_user(request: HttpRequest) -> HttpResponse:
+
     """ Function to register a new site_user as a Reader or Author. """
+    
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
@@ -241,10 +249,11 @@ def update_username(request: HttpRequest) -> HttpResponse:
         form = UpdateUserForm()
         return render(request, "api/auth/updateUsername.html", {"form": form})
     
-
+#api for books below
 def books_api(request: HttpRequest) -> JsonResponse:
-    """API endpoint for the Book"""
+    """API endpoint for the Books"""
 
+    #post requests
     if request.method == 'POST':
         # Handle multipart/form-data for file upload
         title = request.POST.get('title')
@@ -262,23 +271,28 @@ def books_api(request: HttpRequest) -> JsonResponse:
         )
         return JsonResponse(book.as_dict(), status=201)
 
+    #search queries
     search_query = request.GET.get("search", "").strip()
     if search_query:
         books = Book.objects.filter(Q(title__icontains=search_query) | Q(author__icontains=search_query))
     else:
         books = Book.objects.all()
 
+    #get all requests
     return JsonResponse({"books": [book.as_dict() for book in books]}, safe=False)
 
 
 
 def book_api(request: HttpRequest, book_id: int) -> JsonResponse:
     """API endpoint for a single book"""
+
+    #check books exist 
     try:
         book = Book.objects.get(id=book_id)
     except Book.DoesNotExist:
         return JsonResponse({"error": "Book not found."}, status=404)
 
+    #put request
     if request.method == 'PUT':
         if request.content_type.startswith('multipart/form-data'):
             # Update via multipart (e.g., image updates)
@@ -306,13 +320,15 @@ def book_api(request: HttpRequest, book_id: int) -> JsonResponse:
 
         return JsonResponse(book.as_dict())
 
+    #delete request
     if request.method == 'DELETE':
         book.delete()
         return JsonResponse({}, status=204)
 
+    #get request
     return JsonResponse(book.as_dict())
 
-# APIs for book model below
+# APIs for blog model below
 def blogs_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Blog"""
     
@@ -327,19 +343,23 @@ def blogs_api(request: HttpRequest) -> JsonResponse:
             author = POST['author'],
         )
         return JsonResponse(blog.as_dict())
-    
+
+    #search query  
     search_query = request.GET.get("search", "").strip()
     if search_query:
         blogs = Blog.objects.filter(Q(title__icontains=search_query) | Q(author__icontains=search_query))
     else:
         blogs = Blog.objects.all()
 
+    #get all request
     return JsonResponse({"blogs": [blog.as_dict() for blog in blogs]})
 
  
 
 def blog_api(request: HttpRequest, blog_id: int) -> JsonResponse:
-    """API endpoint for a single book"""
+    """API endpoint for a single blog"""
+
+    #check blog exists
     try:
         blog = Blog.objects.get(id=blog_id)
     except Blog.DoesNotExist:
@@ -362,13 +382,14 @@ def blog_api(request: HttpRequest, blog_id: int) -> JsonResponse:
         blog.delete()
         return JsonResponse({}, status=204)  # 204 No Content
 
-    # GET book data
+    # GET blog data
     return JsonResponse(blog.as_dict())
 
 # APIs for group model below
 def groups_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the Group"""
-    
+
+    #post request  
     if request.method == 'POST':
         # Create a new group
         POST = json.loads(request.body)
@@ -377,17 +398,21 @@ def groups_api(request: HttpRequest) -> JsonResponse:
         )
         return JsonResponse(group.as_dict())
 
+    #search query
     search_query = request.GET.get("search", "").strip()
     if search_query:
         groups = Group.objects.filter(Q(name__icontains=search_query))
     else:
         groups = Group.objects.all()
 
+    #get all request
     return JsonResponse({"groups": [group.as_dict() for group in groups]})
 
 
 def group_api(request: HttpRequest, group_id: int) -> JsonResponse:
     """API endpoint for a single Group"""
+
+    #check it exists
     try:
         group = Group.objects.get(id=group_id)
     except Group.DoesNotExist:
@@ -401,6 +426,7 @@ def group_api(request: HttpRequest, group_id: int) -> JsonResponse:
 def site_users_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the SiteUsers"""
 
+    #post request
     if request.method == 'POST':
         try:
             POST = json.loads(request.body)
@@ -434,6 +460,8 @@ def site_users_api(request: HttpRequest) -> JsonResponse:
 
 def site_user_api(request: HttpRequest, user_id: int) -> JsonResponse:
     """API endpoint for a single site user"""
+
+    #check it exists
     try:
         site_user = SiteUser.objects.get(id=user_id)
     except SiteUser.DoesNotExist:
@@ -458,16 +486,17 @@ def site_user_api(request: HttpRequest, user_id: int) -> JsonResponse:
     # DELETE method
     if request.method == 'DELETE':
         site_user.delete()
-        return JsonResponse({})
+        return JsonResponse({}, status=204)  # 204 No Content
 
     # GET method
     return JsonResponse(site_user.as_dict())
 
 
-
+#reader apis below
 def readers_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for all Readers"""
     
+    #post method
     if request.method == 'POST':
         try:
             POST = json.loads(request.body)
@@ -489,18 +518,22 @@ def readers_api(request: HttpRequest) -> JsonResponse:
         
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
-        
+
+    #search query    
     search_query = request.GET.get("search", "").strip()
     if search_query:
         readers = Reader.objects.filter(Q(username__icontains=search_query))
     else:
         readers = Reader.objects.all()
 
+    #get all
     return JsonResponse({"readers": [reader.as_dict() for reader in readers]})
 
 
 def reader_api(request: HttpRequest, reader_id: int) -> JsonResponse:
     """API endpoint for a single Reader"""
+
+    #check it exists
     try:
         reader = Reader.objects.get(id=reader_id)
     except Reader.DoesNotExist:
@@ -531,14 +564,16 @@ def reader_api(request: HttpRequest, reader_id: int) -> JsonResponse:
     # DELETE method (Remove reader)
     if request.method == 'DELETE':
         reader.delete()
-        return JsonResponse({})
+        return JsonResponse({}, status=204)  # 204 No Content
 
     # GET method (Retrieve reader details)
     return JsonResponse(reader.as_dict())
 
+#below are all author apis
 def authors_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for all Authors"""
     
+    #post method
     if request.method == 'POST':
         try:
             POST = json.loads(request.body)
@@ -560,18 +595,21 @@ def authors_api(request: HttpRequest) -> JsonResponse:
         
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
-        
+
+    #search query    
     search_query = request.GET.get("search", "").strip()
     if search_query:
         authors = Author.objects.filter(Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query))
     else:
         authors = Author.objects.all()
 
+    #get all 
     return JsonResponse({"authors": [author.as_dict() for author in authors]})
 
 
 def author_api(request: HttpRequest, author_id: int) -> JsonResponse:
     """API endpoint for a single Author"""
+    #checks it exists
     try:
         author = Author.objects.get(id=author_id)
     except Author.DoesNotExist:
@@ -597,7 +635,7 @@ def author_api(request: HttpRequest, author_id: int) -> JsonResponse:
     # DELETE method (Remove author)
     if request.method == 'DELETE':
         author.delete()
-        return JsonResponse({})
+        return JsonResponse({}, status=204) 
 
     # GET method (Retrieve author details)
     return JsonResponse(author.as_dict())
@@ -606,8 +644,9 @@ def author_api(request: HttpRequest, author_id: int) -> JsonResponse:
 
 # APIs for genre model below
 def genres_api(request: HttpRequest) -> JsonResponse:
-    """API endpoint for the SiteUsers"""
+    """API endpoint for the genres"""
 
+    #post method
     if request.method == 'POST':
         try:
             POST = json.loads(request.body)
@@ -624,11 +663,11 @@ def genres_api(request: HttpRequest) -> JsonResponse:
 
             return JsonResponse(genre.as_dict(), status=201)
     
-        #general error hendler 
+
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=500)
 
-    # GET Method
+    # GET all Method
     return JsonResponse({
         'genres': [
             genre.as_dict()
@@ -638,6 +677,7 @@ def genres_api(request: HttpRequest) -> JsonResponse:
 
 def genre_api(request: HttpRequest, genre_id: int) -> JsonResponse:
     """API endpoint for a single genre"""
+    #check it exists
     try:
         genre = Genre.objects.get(id=genre_id)
     except Genre.DoesNotExist:
@@ -658,7 +698,7 @@ def genre_api(request: HttpRequest, genre_id: int) -> JsonResponse:
     # DELETE method
     if request.method == 'DELETE':
         genre.delete()
-        return JsonResponse({})
+        return JsonResponse({}, status=204)  # 204 No Content
 
     # GET method
     return JsonResponse(genre.as_dict())
@@ -682,7 +722,7 @@ def friendships_api(request: HttpRequest) -> JsonResponse:
         )
         return JsonResponse(friendship.as_dict())
 
-    # GET method which allows the user to view all hobbies
+    # GET method which allows the user to view all friendships
     return JsonResponse({
         'friendships': [
             friendship.as_dict()
@@ -692,28 +732,24 @@ def friendships_api(request: HttpRequest) -> JsonResponse:
 
 def friendship_api(request: HttpRequest, friendship_id: int) -> JsonResponse:
     """API endpoint for a single friendship"""
+    #check it exists
     try:
         friendship = Friendship.objects.get(id=friendship_id)
     except Friendship.DoesNotExist:
         return JsonResponse({"error": "Friendship not found."}, status=404)
 
+    #put method
     if request.method == 'PUT':
-        # Ensure the user has permission to accept the friendship
-        if request.user.id != friendship.friend.id:
-            return JsonResponse({"error": "Unauthorized to accept this friendship."}, status=403)
-
         friendship.accepted = True
         friendship.save()
         return JsonResponse({"friendship": friendship.as_dict()})
 
+    #delete method
     elif request.method == 'DELETE':
-        # Ensure the user has permission to delete the friendship
-        if request.user.id != friendship.user.id and request.user.id != friendship.friend.id:
-            return JsonResponse({"error": "Unauthorized to delete this friendship."}, status=403)
-
         friendship.delete()
-        return JsonResponse({}, status=204)  # 204 No Content
+        return JsonResponse({}, status=204)  
 
+    #return friendship
     return JsonResponse(friendship.as_dict())
 
 # APIs for message model below
@@ -734,7 +770,7 @@ def messages_api(request: HttpRequest) -> JsonResponse:
         )
         return JsonResponse(message.as_dict())
 
-    # GET method which allows the user to view all hobbies
+    # GET method which allows the user to view all messages
     return JsonResponse({
         'messages': [
             message.as_dict()
@@ -743,29 +779,20 @@ def messages_api(request: HttpRequest) -> JsonResponse:
     })
 
 def message_api(request: HttpRequest, message_id: int) -> JsonResponse:
-    """API endpoint for a single friendship"""
+    """API endpoint for a single message"""
+
+    #check it exists
     try:
         message = Message.objects.get(id=message_id)
     except Message.DoesNotExist:
         return JsonResponse({"error": "Message not found."}, status=404)
 
-    if request.method == 'PUT':
-        # Ensure the user has permission to accept the friendship
-        # if request.user.id != friendship.friend.id:
-        #     return JsonResponse({"error": "Unauthorized to accept this friendship."}, status=403)
-
-        message.message = PUT.get("message", message.message)
-        message.save()
-        return JsonResponse({"message": message.as_dict()})
-
-    elif request.method == 'DELETE':
-        # Ensure the user has permission to delete the friendship
-        # if request.user.id != friendship.user.id and request.user.id != friendship.friend.id:
-        #     return JsonResponse({"error": "Unauthorized to delete this friendship."}, status=403)
-
+    #delete method
+    if request.method == 'DELETE':
         message.delete()
-        return JsonResponse({}, status=204)  # 204 No Content
+        return JsonResponse({}, status=204) 
 
+    #get specific method
     return JsonResponse(message.as_dict())
 
 # APIs for UserBook model below
@@ -774,7 +801,7 @@ def user_books_api(request: HttpRequest) -> JsonResponse:
 
     # POST method which is the create method
     if request.method == 'POST':
-        # Create a new friendship
+        # Create a new user book
         POST = json.loads(request.body)
         user = Reader.objects.get(id=POST.get("user_id"))
         book = Book.objects.get(id=POST.get("book_id"))
@@ -786,7 +813,7 @@ def user_books_api(request: HttpRequest) -> JsonResponse:
         )
         return JsonResponse(user_book.as_dict())
 
-    # GET method which allows the user to view all hobbies
+    # GET method which allows the user to view all userbook
     return JsonResponse({
         'user_books': [
             user_book.as_dict()
@@ -796,11 +823,13 @@ def user_books_api(request: HttpRequest) -> JsonResponse:
 
 def user_book_api(request: HttpRequest, user_book_id: int) -> JsonResponse:
     """API endpoint for a single user_book"""
+    #check it exists
     try:
         user_book = UserBook.objects.get(id=user_book_id)
     except UserBook.DoesNotExist:
         return JsonResponse({"error": "User Book not found."}, status=404)
 
+    #put method
     if request.method == 'PUT':
         # Ensure the user has permission to edit user_book
         if request.user.id != user_book.user.id:
@@ -810,14 +839,16 @@ def user_book_api(request: HttpRequest, user_book_id: int) -> JsonResponse:
         user_book.save()
         return JsonResponse({"User book": user_book.as_dict()})
 
+    #delete method
     elif request.method == 'DELETE':
         # Ensure the user has permission to delete the user book
         if request.user.id != user_book.user.id:
             return JsonResponse({"error": "Unauthorized to delete this user_book."}, status=403)
 
         user_book.delete()
-        return JsonResponse({}, status=204)  # 204 No Content
+        return JsonResponse({}, status=204)  
 
+    #get method
     return JsonResponse(user_book.as_dict())
 
 # APIs for AuthorBook model below
@@ -826,7 +857,7 @@ def author_books_api(request: HttpRequest) -> JsonResponse:
 
     # POST method which is the create method
     if request.method == 'POST':
-        # Create a new 
+        # Create a new authorbook
         POST = json.loads(request.body)
         user = Author.objects.get(id=POST.get("user_id"))
         book = Book.objects.get(id=POST.get("book_id"))
@@ -847,19 +878,22 @@ def author_books_api(request: HttpRequest) -> JsonResponse:
 
 def author_book_api(request: HttpRequest, author_book_id: int) -> JsonResponse:
     """API endpoint for a single author_book"""
+    #check it exists
     try:
         author_book = AuthorBook.objects.get(id=author_book_id)
     except AuthorBook.DoesNotExist:
         return JsonResponse({"error": "Author Book not found."}, status=404)
 
+    #delete method
     if request.method == 'DELETE':
         # Ensure the user has permission to delete the user book
         if request.user.id != author_book.user.id:
             return JsonResponse({"error": "Unauthorized to delete this author_book."}, status=403)
 
         author_book.delete()
-        return JsonResponse({}, status=204)  # 204 No Content
+        return JsonResponse({}, status=204)  
 
+    #get specific author book
     return JsonResponse(author_book.as_dict())
 
 # APIs for AuthorBlog model below
@@ -889,19 +923,22 @@ def author_blogs_api(request: HttpRequest) -> JsonResponse:
 
 def author_blog_api(request: HttpRequest, author_blog_id: int) -> JsonResponse:
     """API endpoint for a single author_blog"""
+    #check it exists
     try:
         author_blog = AuthorBlog.objects.get(id=author_blog_id)
     except AuthorBlog.DoesNotExist:
         return JsonResponse({"error": "Author Blog not found."}, status=404)
 
+    #delete method
     if request.method == 'DELETE':
         # Ensure the user has permission to delete the user book
         if request.user.id != author_blog.user.id:
             return JsonResponse({"error": "Unauthorized to delete this author_blog."}, status=403)
 
         author_blog.delete()
-        return JsonResponse({}, status=204)  # 204 No Content
+        return JsonResponse({}, status=204)  
 
+    #get specific one
     return JsonResponse(author_blog.as_dict())
 
 
@@ -911,7 +948,7 @@ def reader_genres_api(request: HttpRequest) -> JsonResponse:
 
     # POST method which is the create method
     if request.method == 'POST':
-        # Create a new friendship
+        # Create a new readergenre
         POST = json.loads(request.body)
         user = Reader.objects.get(id=POST.get("user_id"))
         genre = Genre.objects.get(id=POST.get("genre_id"))
@@ -922,7 +959,7 @@ def reader_genres_api(request: HttpRequest) -> JsonResponse:
         )
         return JsonResponse(reader_genre.as_dict())
 
-    # GET method which allows the user to view all hobbies
+    # GET method which allows the user to view all readergenres
     return JsonResponse({
         'reader_genre': [
             reader_genre.as_dict()
@@ -932,11 +969,13 @@ def reader_genres_api(request: HttpRequest) -> JsonResponse:
 
 def reader_genre_api(request: HttpRequest, reader_genre_id: int) -> JsonResponse:
     """API endpoint for a single reader_genre"""
+    #check it exists
     try:
         reader_genre = ReaderGenre.objects.get(id=reader_genre_id)
     except ReaderGenre.DoesNotExist:
         return JsonResponse({"error": "Reader genre not found."}, status=404)
     
+    #put method
     if request.method == 'PUT':
         # Ensure the user has permission to edit user_book
         if request.user.id != reader_genre.user.id:
@@ -946,6 +985,7 @@ def reader_genre_api(request: HttpRequest, reader_genre_id: int) -> JsonResponse
         reader_genre.save()
         return JsonResponse({"User book": reader_genre.as_dict()})    
 
+    #delete method
     elif request.method == 'DELETE':
         # Ensure the user has permission to delete the user book
         if request.user.id != reader_genre.user.id:
@@ -954,6 +994,7 @@ def reader_genre_api(request: HttpRequest, reader_genre_id: int) -> JsonResponse
         reader_genre.delete()
         return JsonResponse({}, status=204)  # 204 No Content
 
+    #get one method
     return JsonResponse(reader_genre.as_dict())
 
 # APIs for bookGenre model below
@@ -962,7 +1003,7 @@ def book_genres_api(request: HttpRequest) -> JsonResponse:
 
     # POST method which is the create method
     if request.method == 'POST':
-        # Create a new friendship
+        # Create a new book_genre
         POST = json.loads(request.body)
         book= Book.objects.get(id=POST.get("book_id"))
         genre = Genre.objects.get(id=POST.get("genre_id"))
@@ -983,25 +1024,24 @@ def book_genres_api(request: HttpRequest) -> JsonResponse:
 
 def book_genre_api(request: HttpRequest, book_genre_id: int) -> JsonResponse:
     """API endpoint for a single book_genre"""
+
+    #check it exists
     try:
         book_genre = BookGenre.objects.get(id=book_genre_id)
     except BookGenre.DoesNotExist:
         return JsonResponse({"error": "Reader genre not found."}, status=404)
 
+    #delete method
     if request.method == 'DELETE':
-        # Ensure the user has permission to delete the user book
-        if request.user.id != book_genre.user.id:
-            return JsonResponse({"error": "Unauthorized to delete this user_book."}, status=403)
-
         book_genre.delete()
-        return JsonResponse({}, status=204)  # 204 No Content
+        return JsonResponse({}, status=204)  
 
+    #get one method
     return JsonResponse(book_genre.as_dict())
 
 # APIs for review model below
 def reviews_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the review"""
-
 
     # POST method which is the create method
     if request.method == 'POST':
@@ -1019,7 +1059,7 @@ def reviews_api(request: HttpRequest) -> JsonResponse:
         )
         return JsonResponse(review.as_dict())
 
-    # GET method which allows the user to view all hobbies
+    # GET method which allows the user to view all reviews
     return JsonResponse({
         'reviews': [
             review.as_dict()
@@ -1029,11 +1069,14 @@ def reviews_api(request: HttpRequest) -> JsonResponse:
 
 def review_api(request: HttpRequest, review_id: int) -> JsonResponse:
     """API endpoint for a single review"""
+
+    #check it exists
     try:
         review = Review.objects.get(id=review_id)
     except Review.DoesNotExist:
         return JsonResponse({"error": "Review not found."}, status=404)
 
+    #put method
     if request.method == 'PUT':
         # Ensure the user has permission to edit the review
         if request.user.id != review.user.id:
@@ -1046,6 +1089,7 @@ def review_api(request: HttpRequest, review_id: int) -> JsonResponse:
         review.save()
         return JsonResponse({"Review": review.as_dict()})
 
+    #delete method
     elif request.method == 'DELETE':
         # Ensure the user has permission to delete this review
         if request.user.id != review.user.id:
@@ -1054,12 +1098,12 @@ def review_api(request: HttpRequest, review_id: int) -> JsonResponse:
         review.delete()
         return JsonResponse({}, status=204)  # 204 No Content
 
+    #get one method
     return JsonResponse(review.as_dict())
 
 # APIs for comments model below
 def comments_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the comment"""
-
 
     # POST method which is the create method
     if request.method == 'POST':
@@ -1085,22 +1129,14 @@ def comments_api(request: HttpRequest) -> JsonResponse:
 
 def comment_api(request: HttpRequest, comment_id: int) -> JsonResponse:
     """API endpoint for a single comment"""
+    #check it exists
     try:
         comment = Comment.objects.get(id=comment_id)
     except Comment.DoesNotExist:
         return JsonResponse({"error": "Comment not found."}, status=404)
 
-    if request.method == 'PUT':
-        # Ensure the user has permission to edit the comment
-        if request.user.id != comment.user.id:
-            return JsonResponse({"error": "Unauthorized to accept this comment."}, status=403)
-
-        PUT = json.loads(request.body)
-        comment.comment = PUT.get("comment", comment.commnet)
-        comment.save()
-        return JsonResponse({"Comment": comment.as_dict()})
-
-    elif request.method == 'DELETE':
+    #delete method
+    if request.method == 'DELETE':
         # Ensure the user has permission to delete this comment
         if request.user.id != comment.user.id:
             return JsonResponse({"error": "Unauthorized to delete this Comment."}, status=403)
@@ -1108,12 +1144,14 @@ def comment_api(request: HttpRequest, comment_id: int) -> JsonResponse:
         comment.delete()
         return JsonResponse({}, status=204)  # 204 No Content
 
+    #get a specifc one method
     return JsonResponse(comment.as_dict())
 
 # APIs for discussions model below
 def discussions_api(request: HttpRequest) -> JsonResponse:
     """API endpoint for the discussion"""
 
+    #post method
     if request.method == 'POST':
         # Create a new discussion
         POST = json.loads(request.body)
@@ -1138,15 +1176,18 @@ def discussions_api(request: HttpRequest) -> JsonResponse:
 
 def discussion_api(request: HttpRequest, discussion_id: int) -> JsonResponse:
     """API endpoint for a single discussion"""
+
+    #check it exists
     try:
         discussion = Discussion.objects.get(id=discussion_id)
     except Discussion.DoesNotExist:
         return JsonResponse({"error": "Discussion not found."}, status=404)
 
-   
-
+    #delete method
     if request.method == 'DELETE':
         discussion.delete()
         return JsonResponse({}, status=204)
 
+    #get one specifc one
     return JsonResponse(discussion.as_dict())
+

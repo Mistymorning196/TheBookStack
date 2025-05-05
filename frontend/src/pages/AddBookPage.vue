@@ -1,11 +1,18 @@
 <template>
+     <!-- Nav bar -->
   <AuthorNavBarComponent />
+     <!-- form to make book-->
   <form @submit.prevent="submitBook" id="book-form" enctype="multipart/form-data">
     <h2>Upload a New Book</h2>
 
     <div class="form-group">
       <label for="bookTitle">Title</label>
       <input type="text" id="bookTitle" v-model="book.title" required />
+    </div>
+
+    <div class="form-group">
+      <label for="bookAuthor">Author</label>
+      <input type="text" id="bookAuthor" v-model="book.author" required />
     </div>
 
     <div class="form-group">
@@ -18,6 +25,7 @@
       <input type="text" id="bookISBN" v-model="book.isbn" required />
     </div>
 
+       <!-- upload cover image -->
     <div class="form-group">
       <label for="bookCover">Cover Image</label>
       <input type="file" id="bookCover" accept="image/*" @change="handleImageUpload" />
@@ -27,6 +35,7 @@
       </div>
     </div>
 
+       <!-- add genres -->
     <div class="form-group">
       <label for="bookGenre">Genre</label>
       <div v-if="genres.length" class="genres-container">
@@ -43,15 +52,41 @@
       <div v-else>
         <p>Loading genres...</p>
       </div>
+
+      <!-- Button to open the Add Genre modal -->
+      <button type="button" @click="openGenreModal" class="btn btn-secondary">Add New Genre</button>
     </div>
 
     <button type="submit">Submit Book</button>
   </form>
+
+  <!-- Modal to Add a New Genre -->
+  <div 
+    v-if="showGenreModal"
+    v-bind:class="['modal', { show: showGenreModal }]" 
+    class="modal"
+  >
+    <div class="modal-content">
+      <h4>Add New Genre</h4>
+      <form @submit.prevent="addGenre">
+        <div class="form-group">
+          <label for="newGenre">Genre Name</label>
+          <input type="text" id="newGenre" v-model="newGenre.type" required />
+        </div>
+        <div class="form-group">
+          <label for="newDescription">Description</label>
+          <input type="text" id="newDescription" v-model="newGenre.description" required />
+        </div>
+        <button type="submit" class="btn btn-success">Add Genre</button>
+        <button type="button" @click="closeGenreModal" class="btn btn-secondary">Cancel</button>
+      </form>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import {useCookies} from "vue3-cookies";
+import { useCookies } from "vue3-cookies";
 import AuthorNavBarComponent from "../components/AuthorNav.vue";
 import { useGenresStore } from "../stores/genres";
 
@@ -60,6 +95,7 @@ export default defineComponent({
     AuthorNavBarComponent,
   },
   setup() {
+    //empty template
     const book = ref({
       title: "",
       author: "",
@@ -67,11 +103,20 @@ export default defineComponent({
       isbn: "",
     });
 
+    //store genres
     const selectedGenres = ref<number[]>([]);
     const genresStore = useGenresStore();
     const genres = ref(genresStore.genres);
+    //open modal flag
+    const showGenreModal = ref(false); 
+    const newGenre = ref({
+      type: "",
+      description: ""
+    });
 
     const author_id = Number(window.sessionStorage.getItem("reader_id"));
+
+    //for cover image
     const coverFile = ref<File | null>(null);
     const previewUrl = ref<string | null>(null);
 
@@ -84,6 +129,7 @@ export default defineComponent({
       }
     };
 
+    //method for submitting a book
     const submitBook = async () => {
       if (!book.value.title || !book.value.blurb || !book.value.isbn) {
         alert("Please fill out all fields!");
@@ -111,6 +157,7 @@ export default defineComponent({
           body: formData,
         });
 
+        //if successfully made then make author book through
         if (!response.ok) throw new Error("Book creation failed");
         const createdBook = await response.json();
 
@@ -128,6 +175,7 @@ export default defineComponent({
           }),
         });
 
+        //makes book genre relationship for each of the selected genres
         for (const genreId of selectedGenres.value) {
           await fetch("http://localhost:8000/book_genres/", {
             method: "POST",
@@ -156,6 +204,7 @@ export default defineComponent({
       }
     };
 
+    //fetch genres
     const fetchInitialData = async () => {
       try {
         const genreResponse = await fetch("http://localhost:8000/genres/");
@@ -166,19 +215,47 @@ export default defineComponent({
         console.error("Failed to fetch genres", err);
       }
 
+    };
+    //modal methods
+    const openGenreModal = () => {
+      showGenreModal.value = true;
+      console.log("openGenreModal called", showGenreModal.value);
+    };
+
+    const closeGenreModal = () => {
+      showGenreModal.value = false;
+      console.log("closeGenreModal called", showGenreModal.value);
+    };
+
+    //method to create a new modal
+    const addGenre = async () => {
       try {
-        const { cookies } = useCookies(); 
-        const authorResponse = await fetch(`http://localhost:8000/author/${author_id}`, {
+        const { cookies } = useCookies();
+        const response = await fetch("http://localhost:8000/genres/", {
+          method: "POST",
           headers: {
             Authorization: `Bearer ${cookies.get("access_token")}`,
+            "Content-Type": "application/json",
+            "X-CSRFToken": cookies.get("csrftoken"),
           },
           credentials: "include",
+          body: JSON.stringify({
+            type: newGenre.value.type,
+            description: newGenre.value.description,
+          }),
         });
-        const data = await authorResponse.json();
-        book.value.author = `${data.first_name} ${data.last_name}`;
+
+        if (!response.ok) {
+          throw new Error("Failed to add genre");
+        }
+
+        const data = await response.json();
+        genres.value.push(data); // Add the new genre to the list
+        closeGenreModal();
+        newGenre.value = { type: "", description: "" }; // Clear the input
       } catch (err) {
-        console.error("Failed to fetch author info", err);
-        book.value.author = "Unknown Author";
+        console.error("Error adding genre:", err);
+        alert("Error adding genre.");
       }
     };
 
@@ -191,12 +268,18 @@ export default defineComponent({
       handleImageUpload,
       submitBook,
       previewUrl,
+      showGenreModal,
+      newGenre,
+      openGenreModal,
+      closeGenreModal,
+      addGenre,
     };
   },
 });
 </script>
 
 <style scoped>
+/*styling for form */
 #book-form {
   max-width: 600px;
   margin: 2rem auto;
@@ -249,6 +332,7 @@ textarea {
   resize: vertical;
 }
 
+/*styling for buttons*/
 button {
   width: 100%;
   margin-top: 1rem;
@@ -266,6 +350,7 @@ button:hover {
   background-color: #5d7f82;
 }
 
+/*styling for genres*/
 .genres-container {
   display: flex;
   flex-wrap: wrap;
@@ -284,6 +369,7 @@ button:hover {
   color: #e0e0e0;
 }
 
+/*styling for image*/
 .preview-container {
   margin-top: 1rem;
 }
@@ -294,4 +380,37 @@ button:hover {
   border-radius: 8px;
   margin-top: 0.5rem;
 }
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.modal-content {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  width: 300px;
+}
+
+.modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+button[type="button"] {
+  margin-top: 1rem;
+}
 </style>
+

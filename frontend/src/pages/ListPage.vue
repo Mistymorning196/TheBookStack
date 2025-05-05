@@ -3,6 +3,7 @@
   <section>
     <h2>Your Books:</h2>
   </section>
+    <!-- Users current books -->
   <h3>Currently Reading</h3>
   <section class="display">
     <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'READING' && book.user === reader_id)" :key="index">
@@ -14,10 +15,12 @@
         <p class="book-title">Title: {{ userBook.title }}</p>
         <p class="book-author">Author: {{ userBook.author }}</p>
       </router-link>
+        <!-- Change status and delete -->
       <button @click="updateUserBookStatus(userBook, 'COMPLETED')">Completed</button>
       <button @click="deleteUserBook(userBook.id)">Delete</button>
     </div>
   </section>
+    <!-- Wishlist books -->
   <h3>WishList</h3>
   <section class="display">
     <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'WISHLIST' && book.user === reader_id)" :key="index">
@@ -28,10 +31,12 @@
         <p class="book-title">Title: {{ userBook.title }}</p>
         <p class="book-author">Author: {{ userBook.author }}</p>
       </router-link>
+        <!-- Change status and delete-->
       <button @click="updateUserBookStatus(userBook, 'READING')">Reading</button>
       <button @click="deleteUserBook(userBook.id)">Delete</button>
     </div>
   </section>
+    <!-- Complete books -->
   <h3>Completed</h3>
   <section class="display">
     <div v-for="(userBook, index) in userBooks.filter(book => book.status === 'COMPLETED' && book.user === reader_id)" :key="index">
@@ -42,6 +47,7 @@
         <p class="book-title">Title: {{ userBook.title }}</p>
         <p class="book-author">Author: {{ userBook.author }}</p>
       </router-link>
+        <!-- delete -->
       <button @click="deleteUserBook(userBook.id)">Delete</button>
     </div>
   </section>
@@ -64,14 +70,17 @@ export default defineComponent({
     };
   },
   async mounted() {
+    //fetch readers
     const readerRes = await fetch("http://localhost:8000/readers/");
     const readerData = await readerRes.json();
     useReadersStore().saveReaders(readerData.users);
 
+    //fetch books
     const bookRes = await fetch("http://localhost:8000/books/");
     const bookData = await bookRes.json();
     useBooksStore().saveBooks(bookData.books);
 
+    //fetch user books
     const userBookRes = await fetch("http://localhost:8000/user_books/");
     const userBookData = await userBookRes.json();
     useUserBooksStore().saveUserBooks(userBookData.user_books);
@@ -80,6 +89,7 @@ export default defineComponent({
     ReaderNavBarComponent,
   },
   methods: {
+    //update the status of the book  uisng put
     async updateUserBookStatus(userBook: UserBook, newStatus: string) {
       console.log('updateUserBookStatus triggered', userBook, newStatus);
 
@@ -96,6 +106,8 @@ export default defineComponent({
           body: JSON.stringify({ status: newStatus }),
         });
 
+        //if the status is updated to completed make reader genre relationships using book genres
+        //these will be used to update recommendations
         if (response.ok && newStatus === "COMPLETED") {
           const userRes = await fetch(`http://localhost:8000/reader/${this.reader_id}/`);
           const userData = await userRes.json();
@@ -113,9 +125,9 @@ export default defineComponent({
           // Fetch and filter book genres
           const bookGenreRes = await fetch(`http://localhost:8000/book_genres/`);
           const bookGenreData = await bookGenreRes.json();
-          const bookGenres: BookGenre[] = bookGenreData.book_genre || []; // Ensure it's typed as BookGenre[]
+          const bookGenres: BookGenre[] = bookGenreData.book_genre || []; 
 
-          const bookGenresForBook = bookGenres.filter((bg: BookGenre) => bg.book === userBook.book); // Explicitly type bg
+          const bookGenresForBook = bookGenres.filter((bg: BookGenre) => bg.book === userBook.book); 
 
           console.log('Filtered Book Genres:', bookGenresForBook);
 
@@ -123,9 +135,11 @@ export default defineComponent({
           const readerGenreData = await readerGenreRes.json();
           const readerGenres = readerGenreData.reader_genre || [];
 
+          //get all of the genres for the book
           for (const bg of bookGenresForBook) {
             const existing = readerGenres.find((rg: ReaderGenre) => rg.user === this.reader_id && rg.genre === bg.genre);
 
+            //if the genre already has reader genre update count using put
             if (existing) {
               await fetch(`http://localhost:8000/reader_genre/${existing.id}/`, {
                 method: "PUT",
@@ -137,7 +151,9 @@ export default defineComponent({
                 credentials: "include",
                 body: JSON.stringify({ count: existing.count + 1 }),
               });
-            } else {
+            } 
+            //or make a new reader genre using post
+            else {
               await fetch(`http://localhost:8000/reader_genres/`, {
                 method: "POST",
                 headers: {
@@ -161,6 +177,7 @@ export default defineComponent({
       }
     },
 
+    //delete the relationship user book
     async deleteUserBook(userBookId: number) {
       try {
         const { cookies } = useCookies();
@@ -176,6 +193,7 @@ export default defineComponent({
           credentials: "include",
         });
 
+        //if the status was completed delete reader genres so it doesn effect reader genre
         if (response.ok && userBook?.status === "COMPLETED") {
           const userRes = await fetch(`http://localhost:8000/reader/${this.reader_id}/`);
           const userData = await userRes.json();
@@ -260,93 +278,90 @@ export default defineComponent({
 /* Body Styling */
 .body {
     font-family: 'Arial', Helvetica, sans-serif;
-    background-color: #EFE0CB; /* Light background */
+    background-color: #EFE0CB; 
     min-height: 100vh;
-    padding: 0.1rem; /* Further reduced padding */
+    padding: 0.1rem; 
     margin: 0;
 }
 
 /* Specific adjustments for h3 (for "Reading", "WishList", "Completed") */
 h3 {
-    font-size: 1.1rem; /* Smaller font size */
-    margin-bottom: 0.2em; /* Reduced bottom margin */
-    max-width: 80%; /* Limit width to make it more compact */
-    text-align: center; /* Center the headings */
-    margin-left: auto; /* Center horizontally */
-    margin-right: auto; /* Center horizontally */
+    font-size: 1.1rem; 
+    margin-bottom: 0.2em; 
+    max-width: 80%; 
+    text-align: center;
+    margin-left: auto; 
+    margin-right: auto; 
 }
 
 
 
 /* Section Titles Styling */
 h2, h3 {
-    background: linear-gradient(135deg, #542F2F, #955D5C); /* Gradient background */
-    color: #ffffff; /* White text */
-    padding: 0.2rem 0.5rem; /* Reduced padding */
-    margin: 0.4em 0; /* Reduced margins */
-    border-radius: 8px; /* Slightly reduced border-radius */
-    font-size: 1.3rem; /* Smaller font size for better fit */
+    background: linear-gradient(135deg, #542F2F, #955D5C); 
+    color: #ffffff; 
+    padding: 0.2rem 0.5rem; 
+    margin: 0.4em 0; 
+    border-radius: 8px; 
+    font-size: 1.3rem; 
     font-weight: bold;
     letter-spacing: 0.3px;
     text-transform: uppercase;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Subtle text shadow */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); 
     border-bottom: 3px solid #955D5C;
     position: relative;
     display: inline-block;
-    width: auto; /* Reduce width of headings */
+    width: auto; 
 }
 
 
-
-/* Smaller h2 */
 h2 {
-    font-size: 1.5rem; /* Reduced font size */
-    margin-top: 0.8em; /* Reduced top margin */
+    font-size: 1.5rem; 
+    margin-top: 0.8em;
 }
 
-/* Smaller h3 */
 h3 {
-    font-size: 1.1rem; /* Reduced font size */
-    margin-bottom: 0.2em; /* Reduced bottom margin */
+    font-size: 1.1rem;
+    margin-bottom: 0.2em; 
 }
 
 /* General Display Section Styling */
 .display {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.3rem; /* Reduced space between items */
+    gap: 0.3rem; 
     justify-content: start;
 }
 
 /* Book Card Styling */
 .display > div {
-    background-color: #2f4a54; /* Book container background */
-    padding: 0.5rem; /* Reduced padding */
-    margin: 0.2rem; /* Further reduced margin */
-    border-radius: 8px; /* Slightly reduced border-radius */
-    flex-basis: 28%; /* Adjusted width of each item */
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); /* Slightly lighter shadow */
+    background-color: #2f4a54; 
+    padding: 0.5rem; 
+    margin: 0.2rem; 
+    border-radius: 8px; 
+    flex-basis: 28%;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2); 
     transition: all 0.3s ease-in-out;
-    max-height: 180px; /* Further reduced max height */
-    overflow: hidden; /* Hide overflow */
+    max-height: 180px; 
+    overflow: hidden; 
 }
 
-/* Book Card Hover Effect */
+
 .display > div:hover {
     transform: translateY(-4px);
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); /* Elevated effect */
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3); 
 }
 
 /* Book Link Styling */
 .book-link {
     text-decoration: none;
     color: white;
-    font-size: 0.9rem; /* Smaller font size */
+    font-size: 0.9rem; 
     font-weight: bold;
     transition: all 0.3s ease;
 }
 
-/* Book Link Hover Effect */
+
 .book-link:hover {
 
     transform: scale(1.05);
@@ -354,27 +369,27 @@ h3 {
 
 /* Book Title Styling */
 .book-title {
-    background-color: #71929f; /* Lighter background for title */
-    padding: 0.3em; /* Reduced padding */
-    margin: 0.2em 0; /* Reduced margin */
+    background-color: #71929f; 
+    padding: 0.3em;
+    margin: 0.2em 0; 
     border-radius: 5px;
     font-weight: bold;
-    font-size: 1rem; /* Slightly smaller font size */
+    font-size: 1rem; 
 }
 
-/* Book Author Styling */
+
 .book-author {
-    background-color: #71929f; /* Lighter background for author */
-    padding: 0.3em; /* Reduced padding */
-    margin: 0.2em 0; /* Reduced margin */
+    background-color: #71929f; 
+    padding: 0.3em; 
+    margin: 0.2em 0;
     border-radius: 5px;
-    font-size: 1rem; /* Adjusted font size */
-    color: #c1d3d9; /* Soft color for author */
+    font-size: 1rem; 
+    color: #c1d3d9; 
 }
 
 .book-cover {
-  width: 60px;           /* Smaller width */
-  height: 60px;          /* Smaller height */
+  width: 60px;          
+  height: 60px;          
   object-fit: cover;
   border-radius: 4px;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
@@ -396,13 +411,13 @@ h3 {
     }
 
     .display > div {
-        flex-basis: 100%; /* Stack items on smaller screens */
-        max-height: none; /* Remove max height */
+        flex-basis: 100%; 
+        max-height: none; 
     }
 
     h2, h3 {
-        font-size: 1.1rem; /* Reduced heading size */
-        width: 90%; /* Reduced width of headings */
+        font-size: 1.1rem;
+        width: 90%; 
     }
 }
 

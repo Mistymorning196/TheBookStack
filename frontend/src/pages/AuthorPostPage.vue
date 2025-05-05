@@ -1,7 +1,7 @@
 <template>
   <AuthorNavBarComponent />
     <div class="body">
-      <!-- Post Section -->
+      <!-- Post Section which author can edit-->
       <div id="profile-box">
         <h2>Post</h2>
         <p v-for="field in editableFields" :key="field.key">
@@ -51,13 +51,14 @@
       };
     },
     async mounted() {
+      //fetch blogs
       const route = useRoute();
-      const blogId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+      const blogId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); 
 
-      await this.blogStore.fetchBlogReturn(blogId); // ✅ no unused variables
+      await this.blogStore.fetchBlogReturn(blogId); 
 
 
-  
+      //fetch comments
       let responseComment = await fetch("http://localhost:8000/comments/");
       let dataComment = await responseComment.json();
       const storeComment = useCommentsStore();
@@ -68,6 +69,7 @@
       AuthorNavBarComponent,
     },
     methods: {
+      //make fields editable
       toggleEditField(fieldKey: string) {
       const field = this.editableFields.find(f => f.key === fieldKey);
       if (field) {
@@ -77,6 +79,7 @@
         }
       }
     },
+    //save the changes using put method
     async saveField(fieldKey: string) {
       try {
         const { cookies } = useCookies(); 
@@ -130,7 +133,7 @@
   
   /* Post Section */
   #profile-box {
-    flex: 2; /* Make this section take more space */
+    flex: 2;
     min-width: 400px;
     background-color: #2f4a54;
     color: white;
@@ -168,7 +171,7 @@
   
   /* Comment Section */
   #comment-box {
-    flex: 1; /* Smaller size for comments */
+    flex: 1; 
     min-width: 300px;
     background-color: #2f4a54;
     color: white;
@@ -176,7 +179,7 @@
     margin: 1em;
     border-radius: 10px;
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-    max-height: 75vh; /* Give some height for comments */
+    max-height: 75vh; 
   }
   
   #comment-box button {

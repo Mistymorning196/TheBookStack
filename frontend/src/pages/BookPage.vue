@@ -94,6 +94,7 @@
   </div>
 </template>
 <script lang="ts">
+
 import ReaderNavBarComponent from "../components/ReaderNav.vue";
 import { defineComponent } from "vue";
 import { useBookStore } from "../stores/book";
@@ -117,6 +118,7 @@ export default defineComponent({
       reader_id: Number(window.sessionStorage.getItem("reader_id")),
       bookGenres: [] as { id: number; book: number; genre: number; name: string }[],
 
+      //modal data
       showModal: false,
       newReview: {
         title: "",
@@ -126,23 +128,27 @@ export default defineComponent({
         user: Number(window.sessionStorage.getItem("reader_id")),
       } as NewReview,
 
+      //edit data
       editTitle: false,
       editMessage: false,
       editRating: false,
 
+      //empty data
       editedReview: {
         title: "",
         message: "",
-        rating: 5, // FIXED: rating is number
+        rating: 5, 
       },
     };
   },
   async mounted() {
+    //fetch book
     const route = useRoute();
     const bookId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id);
 
     await this.bookStore.fetchBookReturn(bookId);
 
+    //fetch reviews
     let responseReview = await fetch("http://localhost:8000/reviews/");
     let dataReview = await responseReview.json();
     const storeReview = useReviewsStore();
@@ -150,11 +156,13 @@ export default defineComponent({
 
     this.newReview.book = bookId;
 
+    //fetch user books
     let responseUserBook = await fetch("http://localhost:8000/user_books/");
     let dataUserBook = await responseUserBook.json();
     const storeUserBook = useUserBooksStore();
     storeUserBook.saveUserBooks(dataUserBook.user_books as UserBook[]);
 
+    //fectch genres
     try {
       const responseGenres = await fetch("http://localhost:8000/book_genres/");
       const dataGenres = await responseGenres.json();
@@ -167,12 +175,14 @@ export default defineComponent({
     ReaderNavBarComponent,
   },
   methods: {
+    //toggle fields to edit for review
     toggleEditField(field: 'Title' | 'Message' | 'Rating') {
       const key = `edit${field}` as 'editTitle' | 'editMessage' | 'editRating';
       (this as any)[key] = !(this as any)[key];
     },
 
 
+    //save  edited review using put
     async saveField(field: 'title' | 'message' | 'rating', reviewID: number) {
       try {
         const { cookies } = useCookies();
@@ -194,13 +204,14 @@ export default defineComponent({
         if (!response.ok) throw new Error("Failed to update field");
 
         window.location.reload();
-        alert(`${field} updated successfully!`);
+    
       } catch (error) {
         console.error(error);
         alert(`Failed to update ${field}.`);
       }
     },
 
+    //submit new review using modal
     async submitReview() {
       const { cookies } = useCookies();
       if (!this.newReview.title || !this.newReview.message) {
@@ -241,15 +252,15 @@ export default defineComponent({
       });
 
       if (response.ok) {
-  
-        // Re-fetch reviews or reload instead of directly saving wrong type
+
         window.location.reload();
-        alert("Review added successfully");
+    
       } else {
         alert("Failed to add review");
       }
     },
 
+    //delete you review
     async deleteReview(reviewId: number) {
       try {
         const { cookies } = useCookies();
@@ -276,6 +287,7 @@ export default defineComponent({
       }
     },
 
+    //add book to wishlist by making bookuser relationship
     async addWishlist() {
       try {
         const { cookies } = useCookies();
@@ -310,7 +322,7 @@ export default defineComponent({
         const storeUserBook = useUserBooksStore();
         storeUserBook.saveUserBooks([...storeUserBook.userBooks, newUserBook]);
 
-        alert("Book added to wishlist!");
+   
       } catch (error) {
         console.error(error);
         alert("Error adding book to wishlist.");
@@ -328,12 +340,14 @@ export default defineComponent({
     userBooks() {
       return this.storeUserBook.userBooks;
     },
+    //find if user has book already stored
     statusBook() {
       const userBookEntry = this.userBooks.find(
         (entry) => entry.user === this.reader_id && entry.book === this.book.id
       );
       return userBookEntry ? userBookEntry.status : undefined;
     },
+    //calculate rating from reviews
     averageRating() {
       const bookReviews = this.reviews.filter((review) => review.book === this.book.id);
       if (bookReviews.length === 0) return "No ratings yet";
@@ -341,6 +355,7 @@ export default defineComponent({
       const total = bookReviews.reduce((sum, review) => sum + review.rating, 0);
       return (total / bookReviews.length).toFixed(1) + " Stars";
     },
+    //get the genres for this book
     bookGenresForThisBook() {
       return this.bookGenres.filter((bg) => bg.book === this.book.id);
     },
@@ -361,33 +376,33 @@ export default defineComponent({
 #profile-box {
   flex: 1;
   min-width: 300px;
-  background-color: #2f4a54; /* Original background color */
-  color: white; /* White text */
-  padding: 1.5em; /* Reduced padding */
+  background-color: #2f4a54; 
+  color: white; 
+  padding: 1.5em; 
   margin: 1em;
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s ease, transform 0.3s ease;
-  max-height: 70vh; /* Set the max-height to be a percentage of the viewport */
-  overflow-y: auto;   /* Enable vertical scrolling */
+  max-height: 70vh; 
+  overflow-y: auto;   
 }
 
 
 
 #profile-box h2 {
   text-align: center;
-  background-color: #6a8b91; /* Light grayish-blue background */
+  background-color: #6a8b91; 
   padding: 10px;
   border-radius: 5px;
-  color: white; /* White text for the title */
+  color: white; 
   font-size: 1.5rem;
 }
 
 
-/* Paragraph text inside #profile-box */
+
 #profile-box p {
   font-size: 1rem;
-  color: white; /* White text */
+  color: white; 
   margin: 0.5em 0;
   background-color: #527a8a;
   padding: 0.2rem;
@@ -403,13 +418,13 @@ export default defineComponent({
   flex: 2;
   min-width: 400px;
   background-color: #2f4a54;
-  padding: 1.5em; /* Reduced padding */
+  padding: 1.5em; 
   margin: 1em;
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s ease, transform 0.3s ease;
-  max-height: 70vh; /* Set the max-height to be a percentage of the viewport */
-  overflow: hidden; /* Hide overflow outside this container */
+  max-height: 70vh; 
+  overflow: hidden; 
 }
 
 
@@ -425,10 +440,10 @@ export default defineComponent({
 
 /* Scrollable container for reviews */
 .reviews-container {
-  max-height: calc(100% - 60px);  /* Adjust the height based on container's height */
-  overflow-y: auto;   /* Enable vertical scrolling */
-  padding-right: 15px; /* Ensure scrollbar doesn't overlap with content */
-  box-sizing: border-box; /* Make sure padding is accounted for */
+  max-height: calc(100% - 60px);  
+  overflow-y: auto;  
+  padding-right: 15px; 
+  box-sizing: border-box; 
 }
 
 /* Review Cards */
@@ -481,7 +496,7 @@ export default defineComponent({
   background-color: white;
   padding: 2rem;
   border-radius: 8px;
-  width: 350px; /* Reduced width */
+  width: 350px; 
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
@@ -523,7 +538,7 @@ export default defineComponent({
   margin: 2rem;
 }
 
-/* Ensure the content in modal is vertically centered */
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -576,19 +591,19 @@ button:focus {
 
 /* Styling for book cover image */
 #profile-box img {
-  width: 100%; /* Make image fill the width of the container */
-  height: 300px;  /* Maintain aspect ratio */
-  max-width: 350px; /* Limit the maximum size of the image */
-  object-fit: cover; /* Ensure the image scales well and fills the container without distortion */
-  border-radius: 10px; /* Optional: to add a slight border radius */
+  width: 100%; 
+  height: 300px;  
+  max-width: 350px; 
+  object-fit: cover; 
+  border-radius: 10px; 
 }
 
 /* Media query for smaller screens */
 @media (max-width: 768px) {
   /* On mobile screens, make the image smaller and adapt */
   #profile-box img {
-    max-width: 100%; /* Ensure the image fills the screen width */
-    height: 300px; /* Keep aspect ratio */
+    max-width: 100%; 
+    height: 300px; 
   }
 
   .body{
@@ -598,8 +613,8 @@ button:focus {
   }
 
   #profile-box {
-    height: 400vh; /* Set the max-height to be a percentage of the viewport */
-    overflow-y: auto;   /* Enable vertical scrolling */
+    height: 400vh;
+    overflow-y: auto;   
   }
 }
 
@@ -607,7 +622,7 @@ button:focus {
 @media (max-width: 480px) {
   /* Ensure image fits within smaller containers */
   #profile-box img {
-    max-width: 90%; /* Further reduce the image width on very small screens */
+    max-width: 90%; 
   }
 }
 

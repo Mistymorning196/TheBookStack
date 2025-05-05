@@ -7,6 +7,7 @@
         ☰
       </button>
   
+       <!--Links for different parts of the web app -->
       <div class="nav-parts" :class="{ 'show-menu': isMenuOpen }">
         <router-link class="link" :to="{ name: 'Home Page' }">Home</router-link>
         <router-link class="link" :to="{ name: 'Search Page' }">Search</router-link>
@@ -24,6 +25,7 @@
   
   export default defineComponent({
     name: "ReaderNavBarComponent",
+    //for toggle menu
     setup() {
       const isMenuOpen = ref(false);
       const toggleMenu = () => {
@@ -35,6 +37,7 @@
   </script>
   
   <style scoped>
+  /* Styles for navbar and buttons */
   .navbar {
     display: flex;
     justify-content: space-between;

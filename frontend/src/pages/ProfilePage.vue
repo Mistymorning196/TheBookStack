@@ -20,7 +20,7 @@
         <button> <a href="http://localhost:8000/updatePass/"> Change Password </a> </button>
       </div>
 
-      <!-- Connections Box -->
+      <!-- Connections Box for friends including toggle -->
       <div id="connections-box">
         <h2>Connections</h2>
         <div class="tabs">
@@ -132,6 +132,7 @@ import { useCookies } from "vue3-cookies";
 export default defineComponent({
   data() {
     return {
+      //edit data
       editableFields: [
         { key: "first_name", label: "First Name", type: "text", isEditing: false },
         { key: "last_name", label: "Last Name", type: "text", isEditing: false },
@@ -139,9 +140,14 @@ export default defineComponent({
         { key: "date_of_birth", label: "Date of Birth", type: "date", isEditing: false },
       ],
       editedReader: {} as Record<string, string>,
+
+      //toggle friends
       activeTab: "following",
       activeTabFollowers: "followers",
+
       reader_id: Number(window.sessionStorage.getItem("reader_id")),
+
+      //goals data
       goals: [
         { key: "goal_one", value: 0, isEditing: false },
         { key: "goal_two", value: 0, isEditing: false },
@@ -153,6 +159,7 @@ export default defineComponent({
   },
   async mounted() {
     try {
+      //fetch user info
       const readerId = this.reader_id;
 
       const reader = await this.readerStore.fetchReaderReturn(readerId);
@@ -168,6 +175,7 @@ export default defineComponent({
       console.error("Error fetching user:", error);
     }
 
+    //fetch friendships
     const response = await fetch("http://localhost:8000/friendships/");
     const data = await response.json();
     this.friendshipsStore.saveFriendships(data.friendships);
@@ -182,6 +190,7 @@ export default defineComponent({
     friendships() {
       return this.friendshipsStore.friendships;
     },
+    //get specific friends
     filteredFollowing() {
       return this.friendships.filter(f => f.user === this.reader.id && f.accepted === true);
     },
@@ -194,6 +203,7 @@ export default defineComponent({
     filteredPending() {
       return this.friendships.filter(f => f.friend === this.reader.id && f.accepted === false);
     },
+    //calculate milestones
     bookMilestone() {
       const milestones = [this.reader.goal_one, this.reader.goal_two, this.reader.goal_three, this.reader.goal_four, this.reader.goal_five];
       const currentCount = this.reader.book_count;
@@ -203,6 +213,7 @@ export default defineComponent({
       }
       return "You've reached an incredible milestone! Keep reading! 📚";
     },
+    //create progress bar
     bookProgressWidth() {
       const milestones = [this.reader.goal_one, this.reader.goal_two, this.reader.goal_three, this.reader.goal_four, this.reader.goal_five];
       const currentCount = this.reader.book_count;
@@ -214,6 +225,7 @@ export default defineComponent({
     },
   },
   methods: {
+    //toggle fields to editable
     toggleEditField(fieldKey: string) {
       const field = this.editableFields.find(f => f.key === fieldKey);
       if (field) {
@@ -223,6 +235,7 @@ export default defineComponent({
         }
       }
     },
+    //save edited field using put method
     async saveField(fieldKey: string) {
       try {
         const { cookies } = useCookies(); 
@@ -247,6 +260,7 @@ export default defineComponent({
         alert(`Failed to update ${fieldKey}.`);
       }
     },
+    //save edited goal using put
     async saveGoal(goalKey: string, value: number) {
       try {
         const { cookies } = useCookies();
@@ -271,6 +285,7 @@ export default defineComponent({
         alert(`Failed to update ${goalKey}.`);
       }
     },
+    //toggle goal to edit mode
     toggleGoalEdit(index: number) {
       const goal = this.goals[index];
       if (goal.isEditing) {
@@ -278,6 +293,7 @@ export default defineComponent({
       }
       goal.isEditing = !goal.isEditing;
     },
+    //accept friendship using put
     async acceptFriendship(friendshipId: number) {
 
       try {
@@ -301,6 +317,7 @@ export default defineComponent({
         alert("Failed to accept friendship.");
       }
     },
+    //delete friendship
     async deleteFriendship(friendshipId: number) {
       try {
         const { cookies } = useCookies();
@@ -341,12 +358,13 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5em;  /* Reduced gap between elements */
-  padding: 0.5em;  /* Reduced padding */
+  gap: 0.5em;  
+  padding: 0.5em;  
   background-color: #EFE0CB;
 
 }
 
+/*style sections */
 .top-section {
   display: flex;
   justify-content: space-between;
@@ -365,33 +383,34 @@ export default defineComponent({
 #profile-box,
 #connections-box {
   background-color: #2f4a54;
-  padding: 0.6em;  /* Reduced padding */
+  padding: 0.6em;  
   border-radius: 12px;
   width: 45%;
-  min-width: 280px;  /* Adjusted width for better fit */
+  min-width: 280px;  
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
-  max-height: 350px;  /* Reduced max-height */
+  max-height: 350px; 
 }
 
 #connections-box {
   overflow-y: auto;
 }
 
+/*milestone  and goal sections*/
 .milestone-message {
-  color: #ffd700; /* Gold color for highlighting */
+  color: #ffd700; 
   font-weight: bold;
-  margin-top: 0.2em;  /* Reduced margin */
+  margin-top: 0.2em;  
   text-align: center;
 }
 
 .book-count-display , .goals-section {
-  background-color: #2f4a54; /* Same as profile and connections */
-  padding: 0.8em;  /* Reduced padding */
+  background-color: #2f4a54; 
+  padding: 0.8em;  
   border-radius: 12px;
   width: 50%;
-  max-width: 450px;  /* Reduced max width */
+  max-width: 450px; 
   text-align: center;
-  margin-top: 0.3em;  /* Reduced margin */
+  margin-top: 0.3em;  
   height: 150px;
 }
 
@@ -401,7 +420,7 @@ export default defineComponent({
 
 .book-count-badge {
   background-color: #ffd700;
-  padding: 0.4em 0.8em;  /* Reduced padding */
+  padding: 0.4em 0.8em;  
   border-radius: 50px;
   color: #2f4a54;
   font-weight: bold;
@@ -411,10 +430,10 @@ export default defineComponent({
 
 .book-count-progress {
   background-color: #ddd;
-  height: 15px;  /* Reduced height */
+  height: 15px; 
   border-radius: 10px;
   width: 100%;
-  margin: 0.3em 0;  /* Reduced margin */
+  margin: 0.3em 0;  
 }
 
 .progress-bar {
@@ -425,17 +444,17 @@ export default defineComponent({
 
 h2,
 h3 {
-  font-size: 1.4em;  /* Reduced font size */
+  font-size: 1.4em;  
   color: #ffffff;
   text-align: center;
-  margin-bottom: 0.6em;  /* Reduced margin */
+  margin-bottom: 0.6em;  
   font-weight: 600;
 }
 
 #profile-box p {
   color: #ffffff;
   background-color: #1e3640;
-  padding: 0.4em;  /* Reduced padding */
+  padding: 0.4em;  
   border-radius: 8px;
   margin-bottom: 0.3em;
   display: flex;
@@ -454,8 +473,8 @@ h3 {
 .tabs {
   display: flex;
   justify-content: space-between;
-  gap: 0.4em;  /* Reduced gap */
-  margin-bottom: 0.8em;  /* Reduced margin */
+  gap: 0.4em; 
+  margin-bottom: 0.8em; 
 }
 
 .tab-group {
@@ -466,17 +485,17 @@ h3 {
 .connections-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.8em;  /* Reduced gap */
-  max-height: 280px;  /* Reduced max height */
+  gap: 0.8em;  
+  max-height: 280px;  
   overflow-y: auto;
 }
 
 .connections-card {
   background-color: #1e3640;
-  padding: 0.8em;  /* Reduced padding */
+  padding: 0.8em; 
   border-radius: 12px;
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
-  max-height: 230px;  /* Reduced max height */
+  max-height: 230px;  
   overflow-y: auto;
 }
 
@@ -492,13 +511,15 @@ li {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.3em 0;  /* Reduced padding */
+  padding: 0.3em 0;  
   border-bottom: 1px solid #56707d;
 }
 
 li:last-child {
   border-bottom: none;
 }
+
+/*button styles */
 
 button {
   background-color: #71929f;
@@ -530,13 +551,15 @@ button:disabled {
 }
 
 button + button {
-  margin-left: 6px;  /* Reduced margin */
+  margin-left: 6px;  
 }
 
 a {
     text-decoration: none;
     color: inherit;
 }
+
+/*responsive styles*/
 
 @media (max-width: 768px) {
   .top-section, .bottom-section {

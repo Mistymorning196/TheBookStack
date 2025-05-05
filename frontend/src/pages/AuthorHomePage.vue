@@ -2,6 +2,7 @@
   <AuthorNavBarComponent />
 
   <h2>Books:</h2>
+    <!-- Display the books the author has created -->
   <div class="scroll-container">
     <section class="display">
       <div v-for="(authorBook, index) in authorBooks.filter(book => book.user === reader_id)" :key="index">
@@ -17,8 +18,10 @@
       </div>
     </section>
   </div>
+    <!-- Link to add new one -->
   <router-link :to="`/addBook/`" class="book-link">Add Book</router-link>
 
+    <!-- Display the blogs the author has created -->
   <h2>Blog Posts:</h2>
   <div class="scroll-container">
     <section class="display">
@@ -31,6 +34,7 @@
       </div>
     </section>
   </div>
+    <!-- Link to add new blog -->
   <router-link :to="`/addBlog/`" class="book-link">Add Blog</router-link>
 </template>
 
@@ -49,6 +53,7 @@ export default defineComponent({
     };
   },
   async mounted() {
+    //fetch cookies when author logs in
     const sessionCookie = document.cookie.split(";");
     let currentSessionid = "";
 
@@ -78,11 +83,13 @@ export default defineComponent({
   methods: {
     async fetchBooksAndBlogs() {
       try {
+        //fetch all author books
         const responseAuthorBook = await fetch("http://localhost:8000/author_books/");
         const dataAuthorBook = await responseAuthorBook.json();
         const authorBooks = dataAuthorBook.author_books as AuthorBook[];
         useAuthorBooksStore().saveAuthorBooks(authorBooks);
 
+        //fetch all author blogs
         const responseAuthorBlog = await fetch("http://localhost:8000/author_blogs/");
         const dataAuthorBlog = await responseAuthorBlog.json();
         const authorBlogs = dataAuthorBlog.author_blogs as AuthorBlog[];
@@ -92,6 +99,7 @@ export default defineComponent({
       }
     },
 
+    //delete book
     async deleteBook(bookId: number) {
       if (!confirm("Are you sure you want to delete this book?")) return;
 
@@ -117,6 +125,7 @@ export default defineComponent({
       }
     },
 
+    //delete blog
     async deleteBlog(blogId: number) {
       if (!confirm("Are you sure you want to delete this blog post?")) return;
 
@@ -154,6 +163,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/*general styles */
 body {
   font-family: Arial, Helvetica, sans-serif;
   background-color: #efe0cb;
@@ -173,6 +183,7 @@ h1, h2 {
   letter-spacing: 1px;
 }
 
+/*book and blog displays */
 .scroll-container {
   max-height: 250px;
   overflow-y: auto;
@@ -205,6 +216,7 @@ h1, h2 {
   transform: translateY(-2px);
 }
 
+/*blog and book cards */
 .book-link, .blog-link {
   display: inline-block;
   background-color: #71929f;
@@ -250,9 +262,10 @@ h1, h2 {
   background-color: #c0392b;
 }
 
+/*cover image*/
 .book-cover {
-  width: 60px;           /* Smaller width */
-  height: 60px;          /* Smaller height */
+  width: 60px;          
+  height: 60px;      
   object-fit: cover;
   border-radius: 4px;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
@@ -264,7 +277,7 @@ h1, h2 {
   transform: scale(1.03);
 }
 
-
+/* responsive styles */
 @media (max-width: 768px) {
   .display {
     flex-direction: column;

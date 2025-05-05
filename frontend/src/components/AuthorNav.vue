@@ -11,7 +11,7 @@
     <div class="nav-parts" :class="{ 'show-menu': isMenuOpen }">
       <!--Go to home page -->
       <router-link class="link" :to="{name: 'Author Home Page'}">Home</router-link>
-      <!--Go to home page -->
+      <!--Go to profile page -->
       <router-link class="link" :to="{name: 'Author Profile Page'}">Profile</router-link>
       <!-- Logout -->
       <a href='http://localhost:8000/logout/'>Log Out</a>
@@ -24,6 +24,7 @@ import { defineComponent, ref } from "vue";
 export default defineComponent({
   name: "AuthorNavBarComponent",
   setup() {
+    //for toggle menu
     const isMenuOpen = ref(false);
 
     const toggleMenu = () => {
@@ -35,6 +36,7 @@ export default defineComponent({
 });
 </script>
 <style scoped>
+/* Styles for navbar and buttons */
 .navbar {
   display: flex;
   justify-content: space-between;

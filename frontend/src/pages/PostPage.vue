@@ -77,17 +77,19 @@ export default defineComponent({
     };
   },
   async mounted() {
+    //get blog
     const route = useRoute();
-    const blogId = parseInt(String(route.params.id)); // Ensure blogId is a number
+    const blogId = parseInt(String(route.params.id)); 
     this.blog = await this.blogStore.fetchBlogReturn(blogId);
 
+    //get comments
     let responseComment = await fetch("http://localhost:8000/comments/");
     let dataComment = await responseComment.json();
     const storeComment = useCommentsStore();
     storeComment.saveComments(dataComment.comments);
 
     if (this.blog) {
-      this.newComment.blog = this.blog.id; // Set blog ID for new comment
+      this.newComment.blog = this.blog.id; 
     }
   },
   components: {
@@ -127,11 +129,11 @@ export default defineComponent({
 
       // Create commentData that matches the Comment interface
       const commentData = {
-        id: 0,  // Set to 0 or generate an actual ID if needed
-        api: "", // Set an actual value if required for the API
+        id: 0,  
+        api: "", 
         blog_id: this.newComment.blog,
         user_id: this.reader_id,
-        username: "Default Username", // Use actual username from session or store
+        username: "Default Username", 
         comment: this.newComment.comment,
       };
 
@@ -184,7 +186,7 @@ export default defineComponent({
         commentsStore.removeComment(commentId);
 
         window.location.reload();
-        alert("Comment deleted successfully!");
+      
       } catch (error) {
         console.error("Error deleting comment:", error);
         alert("Failed to delete comment. Please try again.");
@@ -216,7 +218,7 @@ export default defineComponent({
   
   /* Post Section */
   #profile-box {
-    flex: 2; /* Make this section take more space */
+    flex: 2; 
     min-width: 400px;
     background-color: #2f4a54;
     color: white;
@@ -254,7 +256,7 @@ export default defineComponent({
   
   /* Comment Section */
   #comment-box {
-    flex: 1; /* Smaller size for comments */
+    flex: 1; 
     min-width: 300px;
     background-color: #2f4a54;
     color: white;
@@ -262,7 +264,7 @@ export default defineComponent({
     margin: 1em;
     border-radius: 10px;
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
-    max-height: 75vh; /* Give some height for comments */
+    max-height: 75vh; 
   }
   
   #comment-box button {

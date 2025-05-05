@@ -105,7 +105,7 @@ export default defineComponent({
 /* General Styling */
 .body {
   font-family: "Arial", sans-serif;
-  background-color: #efe0cb; /* Light background */
+  background-color: #efe0cb; 
   min-height: 100vh;
   padding: 1rem;
   margin: 0;
@@ -115,11 +115,11 @@ export default defineComponent({
 /* Heading Styling */
 h1 {
     color: white;
-    background-color: #2f4a54; /* Dark background for headers */
-    padding: 0.3rem 1rem; /* Reduced padding for better space usage */
-    margin: 0.3rem 0; /* Reduced margin between titles */
+    background-color: #2f4a54; 
+    padding: 0.3rem 1rem;
+    margin: 0.3rem 0; 
     border-radius: 5px;
-    font-size: 1.6rem; /* Reduced font size for smaller headings */
+    font-size: 1.6rem; 
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -137,7 +137,7 @@ h1 {
 
 /* Scrollable Section */
 .scrollable-container {
-  max-height: 500px; /* Limit height for scrolling */
+  max-height: 500px; 
   overflow-y: auto;
   background-color: #2f4a54;
   padding: 1rem;
@@ -192,7 +192,7 @@ h1 {
 /* Responsive Design */
 @media (max-width: 768px) {
   .scrollable-container {
-    max-height: 400px; /* Adjust for mobile */
+    max-height: 400px; 
   }
 
   .blog-card {

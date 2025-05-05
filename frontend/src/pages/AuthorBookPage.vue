@@ -1,7 +1,7 @@
 <template>
   <AuthorNavBarComponent />
   <div class="body">
-    <!-- Book Info Section -->
+    <!-- Book Info Section - Author can edit this -->
     <div id="profile-box">
       <h2>Book Info</h2>
         <!-- Display cover image if available -->
@@ -63,6 +63,7 @@ export default defineComponent({
   data() {
     return {
       reader_id: Number(window.sessionStorage.getItem("reader_id")),
+      //for editing the book
       editableFields: [
         { key: "title", label: "Title", type: "text", isEditing: false },
         { key: "author", label: "Author", type: "text", isEditing: false },
@@ -70,15 +71,17 @@ export default defineComponent({
         { key: "isbn", label: "ISBN", type: "text", isEditing: false },
       ],
       editedBook: {} as Record<string, string>,
+      //fetch genres
       bookGenres: [] as { book: number; genre: number }[],
       genres: [] as { id: number; type: string }[],
     };
   },
   async mounted() {
     const route = useRoute();
-    const bookId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+    //fetch book info
+    const bookId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); 
 
-    await this.bookStore.fetchBookReturn(bookId); // ✅ no unused variables
+    await this.bookStore.fetchBookReturn(bookId); 
 
 
     // Fetch reviews
@@ -108,6 +111,7 @@ export default defineComponent({
       const storeReview = useReviewsStore();
       return storeReview.reviews;
     },
+    //calculate rating
     averageRating() {
       const bookReviews = this.reviews.filter(
         (review) => review.book === this.book.id
@@ -116,6 +120,7 @@ export default defineComponent({
       const total = bookReviews.reduce((sum, review) => sum + review.rating, 0);
       return (total / bookReviews.length).toFixed(1) + " Stars";
     },
+    //get the genres for this book
     bookGenresForThisBook() {
       return this.bookGenres
         .filter((bg) => bg.book === this.book.id)
@@ -124,6 +129,7 @@ export default defineComponent({
     },
   },
   methods: {
+    //toggle field to edit mode
     toggleEditField(fieldKey: string) {
       const field = this.editableFields.find((f) => f.key === fieldKey);
       if (field) {
@@ -133,6 +139,7 @@ export default defineComponent({
         }
       }
     },
+    //save changes and edit the field using put method
     async saveField(fieldKey: string) {
       try {
         const { cookies } = useCookies(); 
@@ -176,33 +183,32 @@ export default defineComponent({
 #profile-box {
   flex: 1;
   min-width: 300px;
-  background-color: #2f4a54; /* Original background color */
-  color: white; /* White text */
-  padding: 1.5em; /* Reduced padding */
+  background-color: #2f4a54; 
+  color: white; 
+  padding: 1.5em; 
   margin: 1em;
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s ease, transform 0.3s ease;
-  max-height: 70vh; /* Set the max-height to be a percentage of the viewport */
-  overflow-y: auto;   /* Enable vertical scrolling */
+  max-height: 70vh; 
+  overflow-y: auto;   
 }
 
 
 
 #profile-box h2 {
   text-align: center;
-  background-color: #6a8b91; /* Light grayish-blue background */
+  background-color: #6a8b91; 
   padding: 10px;
   border-radius: 5px;
-  color: white; /* White text for the title */
+  color: white; 
   font-size: 1.5rem;
 }
 
 
-/* Paragraph text inside #profile-box */
 #profile-box p {
   font-size: 1rem;
-  color: white; /* White text */
+  color: white; 
   margin: 0.5em 0;
   background-color: #527a8a;
   padding: 0.2rem;
@@ -218,13 +224,13 @@ export default defineComponent({
   flex: 2;
   min-width: 400px;
   background-color: #2f4a54;
-  padding: 1.5em; /* Reduced padding */
+  padding: 1.5em; 
   margin: 1em;
   border-radius: 10px;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s ease, transform 0.3s ease;
-  max-height: 70vh; /* Set the max-height to be a percentage of the viewport */
-  overflow: hidden; /* Hide overflow outside this container */
+  max-height: 70vh; 
+  overflow: hidden; 
 }
 
 
@@ -240,10 +246,10 @@ export default defineComponent({
 
 /* Scrollable container for reviews */
 .reviews-container {
-  max-height: calc(100% - 60px);  /* Adjust the height based on container's height */
-  overflow-y: auto;   /* Enable vertical scrolling */
-  padding-right: 15px; /* Ensure scrollbar doesn't overlap with content */
-  box-sizing: border-box; /* Make sure padding is accounted for */
+  max-height: calc(100% - 60px);  
+  overflow-y: auto;  
+  padding-right: 15px; 
+  box-sizing: border-box; 
 }
 
 /* Review Cards */
@@ -260,24 +266,6 @@ export default defineComponent({
 
 
 
-/* Edit and Delete Buttons inside Reviews */
-#review-box button {
-  background-color: #4b6c6f;
-  margin: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-#review-box button:hover {
-  background-color: #5d7f82;
-}
-
-#review-box button:active {
-  background-color: #4b6c6f;
-}
 
 /* Modal Styling */
 .modal {
@@ -391,19 +379,19 @@ button:focus {
 
 /* Styling for book cover image */
 #profile-box img {
-  width: 100%; /* Make image fill the width of the container */
-  height: 300px; /* Maintain aspect ratio */
-  max-width: 350px; /* Limit the maximum size of the image */
-  object-fit: cover; /* Ensure the image scales well and fills the container without distortion */
-  border-radius: 10px; /* Optional: to add a slight border radius */
+  width: 100%; 
+  height: 300px; 
+  max-width: 350px; 
+  object-fit: cover; 
+  border-radius: 10px; 
 }
 
 /* Media query for smaller screens */
 @media (max-width: 768px) {
   /* On mobile screens, make the image smaller and adapt */
   #profile-box img {
-    max-width: 100%; /* Ensure the image fills the screen width */
-    height: 300px; /* Keep aspect ratio */
+    max-width: 100%; 
+    height: 300px; 
   }
 
   .body{
@@ -413,8 +401,8 @@ button:focus {
   }
 
   #profile-box {
-    height: 400vh; /* Set the max-height to be a percentage of the viewport */
-    overflow-y: auto;   /* Enable vertical scrolling */
+    height: 400vh; 
+    overflow-y: auto;   
   }
 }
 
@@ -422,7 +410,7 @@ button:focus {
 @media (max-width: 480px) {
   /* Ensure image fits within smaller containers */
   #profile-box img {
-    max-width: 90%; /* Further reduce the image width on very small screens */
+    max-width: 90%; 
   }
 }
 

@@ -1,19 +1,20 @@
 <template>
   <ReaderNavBarComponent />
+     <!--Display user info-->
   <div class="body">
     <div id="profile-box">
       <h2>User Info</h2>
       <p>Username: {{ reader.username }}</p>
-
+         <!--Shows friend status-->
       <button @click="addFriendship(reader.id)" v-if="hasFriendship === null">Request</button>
       <div v-else>
         <p v-if="hasFriendship === true">FOLLOWING</p>
         <p v-else>REQUESTED</p>
       </div>
-
+         <!--Link to message them-->
       <router-link :to="`/message/${reader.id}`" class="message-link">Message</router-link>
     </div>
-
+       <!--Display the user's books-->
     <div class="display-books">
       <h2>Wishlist</h2>
       <div class="book-scroll-container">
@@ -66,16 +67,19 @@ export default defineComponent({
     };
   },
   async mounted() {
+    //fetch reader
     const route = useRoute();
-    const readerId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+    const readerId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); 
 
-    await this.readerStore.fetchReaderReturn(readerId); // ✅ no unused variables
+    await this.readerStore.fetchReaderReturn(readerId); 
 
+    //fetch friendships
     const responseFriendship = await fetch("http://localhost:8000/friendships/");
     const dataFriendship = await responseFriendship.json();
     const friendships = dataFriendship.friendships as Friendship[];
     useFriendshipsStore().saveFriendships(friendships);
 
+    //fetch userBooks
     const responseUserBook = await fetch("http://localhost:8000/user_books/");
     const dataUserBook = await responseUserBook.json();
     const userBooks = dataUserBook.user_books as UserBook[];
@@ -85,6 +89,7 @@ export default defineComponent({
     ReaderNavBarComponent,
   },
   methods: {
+    //method to create friendship for user using post
     async addFriendship(friend_id: number) {
       const { cookies } = useCookies(); 
 
@@ -120,8 +125,9 @@ export default defineComponent({
       useFriendshipsStore().addFriendship(createdFriendship);
 
       window.location.reload();
-      alert(`Friendship requested successfully!`);
+
     },
+    //make sure books displayed are users
     filteredBooks(status: string) {
       return this.userBooks.filter(
         (book) => book.status === status && book.user === this.reader.id
@@ -159,6 +165,7 @@ export default defineComponent({
 
   
   <style scoped>
+  /*styles*/
   .body {
     font-family: Arial, Helvetica, sans-serif;
     display: flex;
@@ -168,6 +175,7 @@ export default defineComponent({
     background-color: #efe0cb;
   }
   
+  /*info styles*/
   #profile-box {
     background-color: #2f4a54;
     color: white;
@@ -211,6 +219,7 @@ export default defineComponent({
     color: white;
   }
   
+  /*button styling*/
   button {
     background-color: #4d707d;
     font-size: 0.9rem;
@@ -248,7 +257,8 @@ export default defineComponent({
     background-color: #5e8a97;
     transform: scale(1.05);
   }
-  
+
+  /*book display styles*/  
   .display-books {
     flex-grow: 1;
     background-color: #2f4a54;
@@ -323,8 +333,8 @@ export default defineComponent({
 
   
 .book-cover {
-  width: 60px;           /* Smaller width */
-  height: 60px;          /* Smaller height */
+  width: 60px;           
+  height: 60px;          
   object-fit: cover;
   border-radius: 4px;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);

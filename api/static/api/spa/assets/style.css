@@ -25,7 +25,7 @@ h3 {
     margin: auto;
     border-radius: 3rem;
     padding: 3rem;
-    width: 40rem; /* Reduced width for 2FA */
+    width: 40rem; 
     height: max-content;
 }
 
@@ -39,7 +39,7 @@ h3 {
 }
 
 label {
-    display: block;
+
     text-align: center;
     padding-bottom: 10px;
     font-size: 1rem;
@@ -47,14 +47,16 @@ label {
 
 input {
     width: 25rem;
-    height: 2.5rem;
-    margin-bottom: 2rem;
+    height: 1.5rem;
+    margin: 0 auto 2rem auto; 
     background-color: white;
     border-radius: 0.5rem;
     padding: 0.5rem;
     font-size: 1rem;
     border: 1px solid #ccc;
+    display: block;
 }
+
 
 input:focus {
     border-color: #71929f;
@@ -93,7 +95,7 @@ input:focus {
     margin: auto;
     border-radius: 3rem;
     padding: 3rem;
-    width: 50rem;
+    width: 60rem;
     height: max-content;
 }
 #login-form{

@@ -43,11 +43,13 @@ export default defineComponent({
     };
   },
   async mounted() {
+    //fetch reader 
     const route = useRoute();
-    const readerId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); // ✅ safe parseInt
+    const readerId = parseInt(Array.isArray(route.params.id) ? route.params.id[0] : route.params.id); 
 
-    await this.readerStore.fetchReaderReturn(readerId); // ✅ no unused variables
+    await this.readerStore.fetchReaderReturn(readerId); 
 
+    //fetch messages
     let responseMessage = await fetch("http://localhost:8000/messages/");
     let dataMessage = await responseMessage.json();
     let messages = dataMessage.messages;
@@ -61,6 +63,7 @@ export default defineComponent({
     ReaderNavBarComponent,
   },
   methods: {
+    //send message using post
     async sendMessage() {
       const newMessage = {
         user: this.reader_id,
@@ -86,7 +89,7 @@ export default defineComponent({
         const storeMessages = useMessagesStore();
         storeMessages.addMessage(savedMessage.message);
 
-        this.newMessageText = ""; // Clear message input
+        this.newMessageText = ""; 
         window.location.reload();
 
         // Scroll to the bottom after sending a message
@@ -96,10 +99,11 @@ export default defineComponent({
       }
     },
 
+    //delete user message
     async deleteMessage(messageId: number) {
 
       const { cookies } = useCookies(); 
-      // Call API to delete the message
+    
       const response = await fetch(`http://localhost:8000/message/${messageId}/`, {
         method: "DELETE",
         headers: {
@@ -135,6 +139,7 @@ export default defineComponent({
     messages() {
       return this.messagesStore.messages;
     },
+    //filter messages to make sure they are the correct ones
     filteredMessages() {
       return this.messages.filter(
         (message) =>
@@ -154,12 +159,12 @@ export default defineComponent({
 <style scoped>
 /* Title Section */
 .title-container {
-  background-color: #2f4a54;  /* Dark Blue background */
+  background-color: #2f4a54;  
   text-align: center;
-  padding: 0.5em; /* Further reduced padding */
-  margin-bottom: 0.8em; /* Reduced margin */
+  padding: 0.5em; 
+  margin-bottom: 0.8em; 
   border-radius: 8px;
-  width: 90%;  /* Same width as the message container */
+  width: 90%; 
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
@@ -167,22 +172,22 @@ export default defineComponent({
 
 /* Title Styling */
 .title-container h1 {
-  font-size: 1.4rem;  /* Slightly smaller size */
-  color: #e0f2f1;     /* Light color text */
+  font-size: 1.4rem;  
+  color: #e0f2f1;     
   margin-bottom: 0;
   font-weight: bold;
   padding: 0.3em 0;
-  border-bottom: 1px solid #5a7a87; /* Reduced border thickness */
+  border-bottom: 1px solid #5a7a87; 
   margin-top: 0;
 }
 
 /* Messages Container */
 .messages-container {
-  background-color: #2f4a54;  /* Background color for message container */
-  border: 2px solid #5a7a87; /* Border color */
+  background-color: #2f4a54;  
+  border: 2px solid #5a7a87; 
   border-radius: 8px;
-  padding: 0.8em; /* Reduced padding */
-  margin: 0.4em auto; /* Reduced margin between containers */
+  padding: 0.8em; 
+  margin: 0.4em auto; 
   width: 90%;
   max-width: 600px;
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
@@ -192,7 +197,7 @@ export default defineComponent({
 
 /* Messages List (Scrollable) */
 .messages-list {
-  max-height: 250px; /* Adjust height */
+  max-height: 250px; 
   overflow-y: auto;
   margin-bottom: 1em;
   padding-right: 10px;
@@ -203,7 +208,7 @@ export default defineComponent({
   padding: 0.5em;
   margin: 0.4em 0;
   border-radius: 8px;
-  font-size: 0.9rem;  /* Reduced font size */
+  font-size: 0.9rem; 
   word-wrap: break-word;
   border: 1px solid #5a7a87;
   box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
@@ -234,18 +239,18 @@ export default defineComponent({
   color: #e0f2f1;
 }
 
-/* Form Container (Centered) */
+/* Form Container */
 .message-form {
   display: flex;
   flex-direction: column;
-  gap: 0.5em; /* Reduced gap */
-  margin-top: 0.6em; /* Reduced margin between message container and form */
-  padding: 0.8em; /* Reduced padding */
-  background-color: #3a545d;  /* Matching message container background */
+  gap: 0.5em; 
+  margin-top: 0.6em; 
+  padding: 0.8em; 
+  background-color: #3a545d;  
   border-radius: 8px;
   box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.2);
-  border: 2px solid #5a7a87;  /* Matching border */
-  width: 90%;  /* Same width as message container */
+  border: 2px solid #5a7a87; 
+  width: 90%;  
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
@@ -254,10 +259,10 @@ export default defineComponent({
 /* Message Input Area */
 .message-form textarea {
   width: 100%;
-  padding: 0.5em;  /* Reduced padding */
+  padding: 0.5em;  
   border-radius: 6px;
   border: 1px solid #4d707d;
-  background-color: #2f4a54;  /* Matching background */
+  background-color: #2f4a54;  
   color: white;
   font-size: 0.9rem;
   resize: none;
@@ -268,7 +273,7 @@ export default defineComponent({
 .message-form button {
   background-color: #4d707d;
   font-size: 1rem;
-  padding: 0.4em 1em;  /* Reduced padding */
+  padding: 0.4em 1em;  
   border: none;
   color: white;
   border-radius: 6px;
@@ -287,7 +292,7 @@ export default defineComponent({
 
 /* Delete Button Styling */
 .message button {
-  background-color: #f44336; /* Red for delete */
+  background-color: #f44336; 
   color: white;
   border: none;
   padding: 5px 10px;

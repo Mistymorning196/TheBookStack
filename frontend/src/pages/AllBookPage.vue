@@ -2,7 +2,7 @@
   <ReaderNavBarComponent />
   <div class="body">
     <h1>Every Book</h1>
-
+       <!--Filter to filter the books by genre-->
     <div class="filter">
       <label for="genre-select">Filter by Genre:</label>
       <select id="genre-select" v-model="selectedGenre">
@@ -13,6 +13,7 @@
       </select>
     </div>
 
+       <!--Display all books with links-->
     <section class="display">
       <div v-for="book in filteredBooks" :key="book.id" class="book-card">
         <router-link :to="`/book/${book.id}`" class="book-link">
@@ -49,11 +50,13 @@ export default defineComponent({
     };
   },
   computed: {
+    //get list of genres
     genreList() {
       return this.genres
         .filter(genre => genre && genre.type)  // Ensure genre has the 'type' field
         .sort((a, b) => a.type.localeCompare(b.type));  // Sort by genre type
     },
+    //filters the book by using bookGenre
     filteredBooks() {
       let filtered = this.books;
 
@@ -75,6 +78,7 @@ export default defineComponent({
     await this.fetchAllData();
   },
   methods: {
+    //fetches books, genres, userbooks, bookgenres
     async fetchAllData() {
       const [bookRes, genreRes, bookGenreRes, userBookRes] = await Promise.all([
         fetch("http://localhost:8000/books/"),
@@ -105,9 +109,10 @@ export default defineComponent({
 </script>
 
 <style scoped>
+/*general styling*/
 .body {
   font-family: Arial, Helvetica, sans-serif;
-  padding: 0.5rem 1rem; /* Reduced padding */
+  padding: 0.5rem 1rem; 
   background-color: #EFE0CB;
 }
 
@@ -184,8 +189,8 @@ h1 {
 }
 
 .book-cover {
-  width: 60px;           /* Smaller width */
-  height: 60px;          /* Smaller height */
+  width: 60px;         
+  height: 60px;          
   object-fit: cover;
   border-radius: 4px;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
@@ -198,9 +203,7 @@ h1 {
 }
 
 
-
-
-/* Responsive Improvements */
+/* Responsive Styles */
 @media (max-width: 768px) {
   .display {
     flex-direction: column;

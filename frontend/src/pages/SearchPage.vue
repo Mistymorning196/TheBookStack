@@ -58,7 +58,7 @@ export default defineComponent({
     const query = ref("");
     const searchType = ref("books"); // Default search type is 'books'
     const results = ref<any[]>([]);
-    const reader_id = ref(Number(window.sessionStorage.getItem("reader_id"))); // Use ref for reader_id
+    const reader_id = ref(Number(window.sessionStorage.getItem("reader_id"))); 
 
     // Fetch all books
     const fetchBooks = async () => {
@@ -169,17 +169,17 @@ export default defineComponent({
 }
 
 .button-group button {
-  padding: 8px 12px; /* Smaller padding for the button */
+  padding: 8px 12px; 
   background-color: #2f4a54;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  width: 45%; /* Smaller width for buttons */
+  width: 45%; 
 }
 
 .button-group button.active {
-  background-color: #3a5f6f; /* Highlight active button */
+  background-color: #3a5f6f; 
 }
 
 /* Grid container styling */
@@ -188,12 +188,12 @@ export default defineComponent({
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-top: 20px;
-  max-height: 500px; /* Set a max-height for the container */
-  overflow-y: auto; /* Enable vertical scrolling */
-  background-color: #71929f; /* Background color for the grid */
+  max-height: 500px; 
+  overflow-y: auto; 
+  background-color: #71929f; 
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for grid */
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Grid item styling */
@@ -204,13 +204,13 @@ export default defineComponent({
   border-radius: 8px;
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease, background-color 0.3s ease;
-  min-height: 80px; /* Reduced height for the output boxes */
+  min-height: 80px; 
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-/* Hover effect for grid items */
+
 .grid-item:hover {
   transform: scale(1.05);
   background-color: #3a5f6f;
@@ -230,7 +230,7 @@ export default defineComponent({
   margin-bottom: 0.5em;
 }
 
-/* Ensures content inside grid items remains aligned */
+
 .grid-item p {
   font-size: 1rem;
   margin-bottom: 0.5em;
@@ -242,7 +242,7 @@ export default defineComponent({
 .user-link {
   text-decoration: none;
   color: inherit;
-  display: block; /* Makes the whole area clickable */
+  display: block; 
   padding: 10px;
 }
 
@@ -253,8 +253,8 @@ export default defineComponent({
 }
 
 .book-cover {
-  width: 60px;           /* Smaller width */
-  height: 60px;          /* Smaller height */
+  width: 60px;           
+  height: 60px;       
   object-fit: cover;
   border-radius: 4px;
   box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
@@ -265,13 +265,13 @@ export default defineComponent({
 /* Media query for responsive grid */
 @media (max-width: 768px) {
   .grid-container {
-    grid-template-columns: repeat(2, 1fr); /* 2 items per row on smaller screens */
+    grid-template-columns: repeat(2, 1fr); 
   }
 }
 
 @media (max-width: 480px) {
   .grid-container {
-    grid-template-columns: 1fr; /* 1 item per row on extra small screens */
+    grid-template-columns: 1fr; 
   }
 }
 </style>
