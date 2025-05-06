@@ -116,7 +116,7 @@ export default defineComponent({
       if (response.ok) {
         const storeMessages = useMessagesStore();
         storeMessages.removeMessage(messageId);
-        alert("Message deleted successfully!");
+      
       } else {
         alert("Error deleting message.");
       }

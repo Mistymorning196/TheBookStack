@@ -97,6 +97,7 @@ export default defineComponent({
       this.bookGenres = bookGenreData.book_genre || [];
       this.userBooks = userBookData.user_books || [];
 
+      //orders books by  popularity
       this.bookUserCounts = {};
       for (const ub of this.userBooks) {
         this.bookUserCounts[ub.book] = (this.bookUserCounts[ub.book] || 0) + 1;
