@@ -142,3 +142,61 @@ a{
     text-decoration: none;
     color: white;
 }
+
+/* --- Responsive Styling --- */
+@media screen and (max-width: 1024px) {
+    #verify-form, #login-form {
+        width: 80%;
+        padding: 2rem;
+    }
+
+    input {
+        width: 100%;
+    }
+
+    label {
+        padding-left: 0;
+        text-align: left;
+        display: block;
+    }
+
+    #submit-button, #login-button, #signup-button {
+        width: 80%;
+        font-size: 1rem;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    body {
+        font-size: 0.9rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h3 {
+        font-size: 1.2rem;
+    }
+
+    #verify-form, #login-form {
+        width: 90%;
+        border-radius: 2rem;
+        padding: 0.5rem;
+        width: 15m;
+    }
+
+    input {
+        font-size: 0.9rem;
+        height: 2rem;
+    }
+
+    #submit-button, #login-button, #signup-button {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+
+    #login-form {
+        height: auto;
+    }
+}
